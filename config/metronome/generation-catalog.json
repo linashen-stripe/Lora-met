@@ -81,7 +81,17 @@
   ],
   "products": {
     "creditGrant": "Lora Generate - Credit Grant",
-    "premiumSubscription": "Lora Generate - Pro Subscription"
+    "premiumSubscription": "Lora Generate - Pro Subscription",
+    "enterpriseSubscription": "Lora Generate - Enterprise Seat"
+  },
+  "powerUser": {
+    "prepaidCommitCredits": 100000,
+    "prepaidInvoiceCents": 100000,
+    "termMonths": 12,
+    "seatCount": 5,
+    "seatMonthlyCredits": 2000,
+    "seatMonthlyPriceCents": 250000,
+    "usageMultiplier": 0.85
   },
   "rateCard": {
     "name": "Lora Generate - Standard Rate Card",

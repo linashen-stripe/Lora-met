@@ -4,4 +4,5 @@ export const DEMO_METRONOME_USAGE_USER_IDS = [
   'marcus.lee@example.com',
   'sofia.alvarez@example.com',
   'ethan.brooks@example.com',
+  'noah.williams@example.com',
 ] as const;

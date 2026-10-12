@@ -34,6 +34,16 @@ type Manifest = {
   products: {
     creditGrant: string;
     premiumSubscription: string;
+    enterpriseSubscription: string;
+  };
+  powerUser: {
+    prepaidCommitCredits: number;
+    prepaidInvoiceCents: number;
+    termMonths: number;
+    seatCount: number;
+    seatMonthlyCredits: number;
+    seatMonthlyPriceCents: number;
+    usageMultiplier: number;
   };
   rateCard: { name: string; alias: string };
   packages: Array<{
@@ -164,6 +174,7 @@ async function discover(client: Metronome, manifest: Manifest) {
     ...manifest.metrics.map((metric) => metric.name),
     manifest.products.creditGrant,
     manifest.products.premiumSubscription,
+    manifest.products.enterpriseSubscription,
   ]);
 
   return {
@@ -212,6 +223,7 @@ async function plan(client: Metronome, manifest: Manifest) {
       ...manifest.metrics.map((metric) => metric.name),
       manifest.products.creditGrant,
       manifest.products.premiumSubscription,
+      manifest.products.enterpriseSubscription,
     ],
     rateCard: manifest.rateCard.name,
     packages: manifest.packages.map((pkg) => pkg.name),
@@ -373,6 +385,11 @@ async function seed(
       manifest.products.premiumSubscription,
       'SUBSCRIPTION',
     ],
+    [
+      'enterpriseSubscription',
+      manifest.products.enterpriseSubscription,
+      'SUBSCRIPTION',
+    ],
   ] as const) {
     const existing = productsByName.get(name);
     if (existing) {
@@ -450,6 +467,23 @@ async function seed(
       product_id: productIds.premiumSubscription,
       rate_type: 'FLAT',
       price: premium.monthlyPriceCents,
+      credit_type_id: USD_CREDIT_TYPE_ID,
+      billing_frequency: 'MONTHLY',
+      starting_at: '2020-01-01T00:00:00.000Z',
+      entitled: true,
+    });
+  }
+  if (
+    !currentRates.some(
+      (current) =>
+        current.product_id === productIds.enterpriseSubscription &&
+        current.billing_frequency === 'MONTHLY',
+    )
+  ) {
+    ratesToAdd.push({
+      product_id: productIds.enterpriseSubscription,
+      rate_type: 'FLAT',
+      price: manifest.powerUser.seatMonthlyPriceCents,
       credit_type_id: USD_CREDIT_TYPE_ID,
       billing_frequency: 'MONTHLY',
       starting_at: '2020-01-01T00:00:00.000Z',
