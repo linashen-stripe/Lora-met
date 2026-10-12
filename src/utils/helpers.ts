@@ -33,9 +33,31 @@ export function generateRandomCustomerToken() {
 const removeAccents = (str: string) =>
   str.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
+const SUPPLEMENTAL_FIRST_NAMES = [
+  'Avery', 'Camila', 'Darius', 'Elena', 'Felix', 'Hana', 'Imani', 'Jonah',
+  'Leila', 'Mateo', 'Nadia', 'Owen', 'Priya', 'Rafael', 'Talia', 'Zane',
+] as const;
+
+const SUPPLEMENTAL_LAST_NAMES = [
+  'Bennett', 'Castillo', 'Desai', 'Fischer', 'Gupta', 'Haddad', 'Ito', 'Kim',
+  'Laurent', 'Moreno', 'Novak', 'Okafor', 'Park', 'Rahman', 'Silva', 'Vega',
+] as const;
+
 export function generateRandomCustomerEmail(countryCode = 'US') {
   const mock = new Mock({ country: countryCode as any });
-  const { first_name, last_name } = mock.individualNames();
+  const generated = mock.individualNames();
+  const useSupplementalFirst = Math.random() < 0.5;
+  const useSupplementalLast = Math.random() < 0.5;
+  const first_name = useSupplementalFirst
+    ? SUPPLEMENTAL_FIRST_NAMES[
+        Math.floor(Math.random() * SUPPLEMENTAL_FIRST_NAMES.length)
+      ]
+    : generated.first_name;
+  const last_name = useSupplementalLast
+    ? SUPPLEMENTAL_LAST_NAMES[
+        Math.floor(Math.random() * SUPPLEMENTAL_LAST_NAMES.length)
+      ]
+    : generated.last_name;
   const first = removeAccents(first_name).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const last = removeAccents(last_name).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const suffix = Math.floor(1000 + Math.random() * 9000);
