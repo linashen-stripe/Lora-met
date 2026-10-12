@@ -6,6 +6,7 @@ import { useConfigContext } from '@/contexts/ConfigContext';
 import { useTranslation } from 'react-i18next';
 import { MetronomeAutoTopUp } from '@/utils/types';
 import useAnimatedNumber from '@/components/hooks/useAnimatedNumber';
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 
 const CreditsCard = ({
   totalAvailable,
@@ -13,6 +14,7 @@ const CreditsCard = ({
   creditBarVariant = 'remaining',
   /** Minor units are in this currency (e.g. from GET /api/stripe/credit-balance/:id). */
   balanceCurrency,
+  creditTypeName,
   autoTopUp,
   animationFrom,
 }: {
@@ -21,6 +23,7 @@ const CreditsCard = ({
   /** `used`: thick bar = consumed portion. `remaining`: Radix progress = % left. */
   creditBarVariant?: 'remaining' | 'used';
   balanceCurrency?: string;
+  creditTypeName?: string;
   autoTopUp?: MetronomeAutoTopUp;
   /** Prior balance used for a one-time count-up after upgrade hydration. */
   animationFrom?: number;
@@ -47,10 +50,17 @@ const CreditsCard = ({
           ),
         );
 
-  const fmt = (cents: number) =>
-    formatPrice(cents, settings?.language, currency);
+  const fmt = (amount: number) =>
+    creditTypeName
+      ? formatMetronomeAmount(
+          amount,
+          creditTypeName,
+          settings?.language,
+          currency,
+        )
+      : formatPrice(amount, settings?.language, currency);
 
-  const heading = t('dashboard.ai_credits');
+  const heading = creditTypeName ?? t('dashboard.ai_credits');
   const barAria = t('dashboard.ai_credits');
 
   return (

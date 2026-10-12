@@ -3,6 +3,10 @@
 import axios from 'axios';
 import { loadFromStorage } from './clientStorage';
 import { defaultDemoSettings } from '@/config/config';
+import {
+  customerStorageKey,
+  normalizeDemoMode,
+} from '@/config/demoModes';
 
 const APP_ORIGIN_HEADER = 'x-app-origin';
 
@@ -23,7 +27,14 @@ fetchClient.interceptors.request.use(function (config) {
     currency,
     language,
   } = loadFromStorage('settings', defaultDemoSettings);
-  const { id, stripeCustomerId } = loadFromStorage('customer', {}) as {
+  const demoMode = normalizeDemoMode(
+    loadFromStorage('demoMode', 'generation'),
+  );
+  const legacyCustomer = loadFromStorage('customer', {});
+  const { id, stripeCustomerId } = loadFromStorage(
+    customerStorageKey(demoMode),
+    legacyCustomer,
+  ) as {
     id?: string;
     stripeCustomerId?: string;
   };

@@ -10,6 +10,33 @@ export function initializeMetronome(headers: Headers): Metronome | null {
   return new Metronome({ bearerToken: apiKey });
 }
 
+/** Legacy-account fallback when exact-time package starts are rejected. */
+export function nextMetronomeHourBoundary(from = new Date()): Date {
+  const boundary = new Date(from);
+  const isOnBoundary =
+    boundary.getUTCMinutes() === 0 &&
+    boundary.getUTCSeconds() === 0 &&
+    boundary.getUTCMilliseconds() === 0;
+  if (!isOnBoundary) {
+    boundary.setUTCHours(boundary.getUTCHours() + 1, 0, 0, 0);
+  }
+  return boundary;
+}
+
+/** Immediate legacy fallback: floor to the current UTC hour. */
+export function currentMetronomeHourBoundary(from = new Date()): Date {
+  const boundary = new Date(from);
+  boundary.setUTCMinutes(0, 0, 0);
+  return boundary;
+}
+
+export function isMetronomeHourBoundaryError(error: unknown): boolean {
+  const message = String((error as { message?: string })?.message ?? error);
+  return /(starting at|ending before) is required to be on an hour boundary/i.test(
+    message,
+  );
+}
+
 interface CreateMetronomeCustomerParams {
   name: string;
   stripeCustomerId?: string;
@@ -214,6 +241,7 @@ interface CreateContractParams {
   metronomeCustomerId: string;
   packageId: string;
   startingAt: string;
+  uniquenessKey?: string;
   /** Prefer this Metronome delivery-method UUID when multiple Stripe billing configs exist. */
   preferredDeliveryMethodId?: string;
 }
@@ -271,6 +299,9 @@ export async function createContract(
     customer_id: params.metronomeCustomerId,
     package_id: params.packageId,
     starting_at: params.startingAt,
+    ...(params.uniquenessKey
+      ? { uniqueness_key: params.uniquenessKey }
+      : {}),
   };
   console.log(`[createContract] calling contracts.create with:`, JSON.stringify(createParams));
 

@@ -4,9 +4,11 @@
 import { useState, useCallback } from 'react';
 import fetchClient from '@/utils/fetchClient';
 import { useUsageChartRefresh } from '@/contexts/UsageChartRefreshContext';
+import { useConfigContext } from '@/contexts/ConfigContext';
 
 export default function SeedingTab() {
   const { bumpInvoicePacingChart } = useUsageChartRefresh();
+  const { demoMode } = useConfigContext();
 
   const [customerId, setCustomerId] = useState('');
   const [story, setStory] = useState<'healthy' | 'at-risk' | 'burst'>('healthy');
@@ -20,11 +22,16 @@ export default function SeedingTab() {
     setResult(null);
     const q = new URLSearchParams({
       customerId: cid,
-      story,
+      story:
+        demoMode === 'ai-builder' && story === 'burst' ? 'at-risk' : story,
     });
     try {
+      const endpoint =
+        demoMode === 'generation'
+          ? '/api/metronome/seed-usage-multi-project'
+          : '/api/metronome/seed-usage-multi-seat';
       const { data } = await fetchClient.get(
-        `/api/metronome/seed-usage-multi-project?${q.toString()}`,
+        `${endpoint}?${q.toString()}`,
       );
       setResult(
         data.message ??
@@ -47,14 +54,15 @@ export default function SeedingTab() {
     } finally {
       setLoading(false);
     }
-  }, [customerId, story, bumpInvoicePacingChart]);
+  }, [customerId, story, demoMode, bumpInvoicePacingChart]);
 
   return (
     <div className='space-y-4'>
       <p className='text-xs text-gray-600'>
-        Seed deterministic image, video, and 3D jobs across multiple users and
-        projects. Events use <code className='rounded bg-gray-100 px-0.5'>model</code>{' '}
-        and <code className='rounded bg-gray-100 px-0.5'>user_id</code>.
+        Seed deterministic {demoMode === 'generation' ? 'generation jobs' : 'token usage'}{' '}
+        across multiple users and projects. Events use{' '}
+        <code className='rounded bg-gray-100 px-0.5'>model</code> and{' '}
+        <code className='rounded bg-gray-100 px-0.5'>user_id</code>.
       </p>
 
       <div>
@@ -91,7 +99,9 @@ export default function SeedingTab() {
         >
           <option value='healthy'>Healthy growth</option>
           <option value='at-risk'>At risk of exceeding commitment</option>
-          <option value='burst'>Late-month burst</option>
+          {demoMode === 'generation' && (
+            <option value='burst'>Late-month burst</option>
+          )}
         </select>
       </div>
 

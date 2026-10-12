@@ -26,6 +26,7 @@ export default function DemoPrepPage() {
       const { data } = await fetchClient.post('/api/auth/quickstart', {
         email,
         name: 'Bufo Studios',
+        demoMode: 'generation',
       });
       setCustomerId(data.metronomeCustomerId);
       updateCustomer({
@@ -49,6 +50,7 @@ export default function DemoPrepPage() {
           language,
           contractStartDaysAgo: 30,
           contractPackage: 'enterprise',
+          demoMode: 'generation',
         },
       );
       if (checkout.url) window.location.href = checkout.url;

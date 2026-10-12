@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { initializeMetronome } from '@/utils/metronome';
 import { pickPrimaryMetronomeContract } from '@/utils/metronomeContractPool';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
@@ -87,8 +87,15 @@ export async function POST(
     if (stripeCustomerId) {
       try {
         const stripe = initializeStripe(request.headers);
-        finalizeAndPayMetronomeInvoice(stripe, stripeCustomerId, createdAfter, 'period-commit').catch(
-          (err) => console.error('[period-commit] Invoice payment failed:', err),
+        after(() =>
+          finalizeAndPayMetronomeInvoice(
+            stripe,
+            stripeCustomerId,
+            createdAfter,
+            'period-commit',
+          ).catch((err) =>
+            console.error('[period-commit] Invoice payment failed:', err),
+          ),
         );
       } catch {
         // Stripe not configured — skip

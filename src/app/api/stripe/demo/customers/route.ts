@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import initializeStripe from '@/utils/stripe';
 import { deleteStripeCustomers, listStripeCustomers } from '@/utils/demoCleanup';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
+import { DEMO_MODES, normalizeDemoMode } from '@/config/demoModes';
 
 // Step 2 of the /admin/cleanup-environment wizard: list and delete Stripe
 // customers. DELETE is irreversible — the client must gate this behind an
@@ -14,8 +15,17 @@ export async function GET(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 400 });
   }
+  const { searchParams } = new URL(request.url);
+  const rawMode = searchParams.get('demoMode');
   const customers = await listStripeCustomers(stripe);
-  return NextResponse.json({ customers });
+  const filteredCustomers = rawMode
+    ? customers.filter((customer) =>
+        customer.name?.startsWith(
+          `[${DEMO_MODES[normalizeDemoMode(rawMode)].label}]`,
+        ),
+      )
+    : customers;
+  return NextResponse.json({ customers: filteredCustomers });
 }
 
 export async function DELETE(request: NextRequest) {

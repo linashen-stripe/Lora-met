@@ -32,6 +32,7 @@ import { useConfigContext } from '@/contexts/ConfigContext';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import { TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 
 const PURPLE = '#7C3AED';
 const BLUE = '#3B82F6';
@@ -46,19 +47,6 @@ function productFromLineItemName(name: string): string | null {
   return productName
     ? productName.toLowerCase().replace(/[^a-z0-9]+/g, '_')
     : null;
-}
-
-function makeCurrencyFormatter(currency: string) {
-  return (cents: number) => {
-    const d = cents / 100;
-    const formatted = new Intl.NumberFormat('en', {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(d >= 1000 ? d / 1000 : d);
-    return d >= 1000 ? `${formatted}K` : formatted;
-  };
 }
 
 const CustomTooltip = ({ active, payload, label, formatAmount }: any) => {
@@ -90,10 +78,19 @@ export default function InvoicePacingChart({
 }: {
   refreshKey?: number;
 }) {
-  const { customer, metronomeContract, settings } = useConfigContext();
+  const { customer, metronomeContract, settings, demoMode } = useConfigContext();
   const { t } = useTranslation();
   const currency = settings?.currency || 'usd';
-  const formatAmount = useMemo(() => makeCurrencyFormatter(currency), [currency]);
+  const formatAmount = useMemo(
+    () => (amount: number) =>
+      formatMetronomeAmount(
+        amount,
+        metronomeContract?.creditTypeName,
+        settings?.language,
+        currency,
+      ),
+    [currency, metronomeContract?.creditTypeName, settings?.language],
+  );
   const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
 
   const [breakdowns, setBreakdowns] = useState<any[]>([]);
@@ -174,7 +171,7 @@ export default function InvoicePacingChart({
     const set = new Set<string>();
     for (const bd of breakdowns)
       for (const li of bd.line_items ?? [])
-        if (li.pricing_group_values?.model)
+        if (li.type === 'usage' && li.pricing_group_values?.model)
           set.add(li.pricing_group_values.model);
     return Array.from(set).sort();
   }, [breakdowns]);
@@ -183,6 +180,7 @@ export default function InvoicePacingChart({
     const set = new Set<string>();
     for (const bd of breakdowns)
       for (const li of bd.line_items ?? []) {
+        if (li.type !== 'usage') continue;
         const p = productFromLineItemName(li.name ?? '');
         if (p) set.add(p);
       }
@@ -191,12 +189,17 @@ export default function InvoicePacingChart({
 
   const qualities = useMemo(() => {
     const set = new Set<string>();
+    const dimension =
+      demoMode === 'generation' ? 'quality' : 'processing_tier';
     for (const bd of breakdowns)
       for (const li of bd.line_items ?? [])
-        if (li.pricing_group_values?.quality)
-          set.add(li.pricing_group_values.quality);
+        if (
+          li.type === 'usage' &&
+          li.pricing_group_values?.[dimension]
+        )
+          set.add(li.pricing_group_values[dimension]);
     return Array.from(set).sort();
-  }, [breakdowns]);
+  }, [breakdowns, demoMode]);
 
   const dailySpend = useMemo(() => {
     const map: Record<string, number> = {};
@@ -220,7 +223,9 @@ export default function InvoicePacingChart({
             return false;
           if (
             selectedQuality !== 'all' &&
-            li.pricing_group_values?.quality !== selectedQuality
+            li.pricing_group_values?.[
+              demoMode === 'generation' ? 'quality' : 'processing_tier'
+            ] !== selectedQuality
           )
             return false;
           return true;
@@ -229,7 +234,7 @@ export default function InvoicePacingChart({
       map[dateKey] = (map[dateKey] ?? 0) + dayTotal;
     }
     return map;
-  }, [breakdowns, selectedProduct, selectedModel, selectedQuality]);
+  }, [breakdowns, selectedProduct, selectedModel, selectedQuality, demoMode]);
 
   const chartData = useMemo(() => {
     if (!periodStart) return [];
@@ -368,7 +373,9 @@ export default function InvoicePacingChart({
               className='rounded-md border border-border bg-white px-2 py-1 text-xs text-gray-700'
             >
               <option value='all'>
-                {t('dashboard.usage_pacing.all_qualities', 'All qualities')}
+                {demoMode === 'generation'
+                  ? t('dashboard.usage_pacing.all_qualities', 'All qualities')
+                  : t('dashboard.usage_pacing.all_tiers', 'All tiers')}
               </option>
               {qualities.map((quality) => (
                 <option key={quality} value={quality}>

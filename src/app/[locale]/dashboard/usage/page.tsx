@@ -16,7 +16,7 @@ import useDashboardData, {
 import { useUsageChartRefresh } from '@/contexts/UsageChartRefreshContext';
 
 export default function UsagePage() {
-  const { customer, plan } = useConfigContext();
+  const { customer, plan, metronomeContract } = useConfigContext();
   const { t } = useTranslation();
   const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
   const [isDashboardLoading, dashboardData] = useDashboardData(false);
@@ -28,7 +28,9 @@ export default function UsagePage() {
     useState(false);
   const [isTopUpActionLoading, setIsTopUpActionLoading] = useState(false);
 
-  const autoTopUpEnabled = dashboardData?.autoTopUp ?? false;
+  const autoTopUpEnabled = metronomeCustomerId
+    ? Boolean(metronomeContract?.autoTopUp)
+    : (dashboardData?.autoTopUp ?? false);
   const showCreditActions =
     !isDashboardLoading &&
     (metronomeCustomerId || (plan && !plan?.lookupKey?.includes('free')));
@@ -46,12 +48,18 @@ export default function UsagePage() {
   }, [isAutoTopUpModalOpen, invalidateDashboard]);
 
   const handleCancelAutoTopUp = async () => {
-    if (!customer?.stripeCustomerId) return;
+    if (!metronomeCustomerId && !customer?.stripeCustomerId) return;
     setIsTopUpActionLoading(true);
     try {
-      await fetchClient.delete('/api/stripe/auto-top-up', {
-        data: { customerId: customer.stripeCustomerId },
-      });
+      if (metronomeCustomerId) {
+        await fetchClient.delete('/api/metronome/notifications', {
+          data: { metronomeCustomerId },
+        });
+      } else {
+        await fetchClient.delete('/api/stripe/auto-top-up', {
+          data: { customerId: customer?.stripeCustomerId },
+        });
+      }
       invalidateDashboard();
     } catch (error) {
       console.error('Failed to cancel auto top-up:', error);

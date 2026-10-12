@@ -8,10 +8,16 @@ import {
 } from '@/utils/metronome';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
 import { deriveCustomerNameFromEmail } from '@/utils/helpers';
+import {
+  DEMO_MODES,
+  normalizeDemoMode,
+  type DemoMode,
+} from '@/config/demoModes';
 
 type RequestBody = {
   email?: string;
   name?: string;
+  demoMode?: DemoMode;
 };
 
 /** Loads the prepared customer by email, or creates it during demo preparation. */
@@ -39,10 +45,14 @@ export async function POST(request: NextRequest) {
 
   const body: RequestBody = await request.json();
   const email = typeof body.email === 'string' ? body.email.trim() : '';
-  const name =
+  const demoMode = normalizeDemoMode(body.demoMode);
+  const modeDefinition = DEMO_MODES[demoMode];
+  const baseName =
     typeof body.name === 'string' && body.name.trim()
       ? body.name.trim()
       : deriveCustomerNameFromEmail(email);
+  const name = `[${modeDefinition.label}] ${baseName}`;
+  const ingestAlias = `${modeDefinition.customerPrefix}:${email}`;
 
   if (!email) {
     return NextResponse.json({ message: 'Email is required' }, { status: 400 });
@@ -54,7 +64,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const existingCustomers = await metronome.v1.customers.list({
-      ingest_alias: email,
+      ingest_alias: ingestAlias,
     });
     const existingCustomer = existingCustomers.data[0];
 
@@ -98,6 +108,7 @@ export async function POST(request: NextRequest) {
         name: existingCustomer.name ?? name,
         existing: true,
         hasActiveContract: (activeContracts.data ?? []).length > 0,
+        demoMode,
       });
     }
 
@@ -107,7 +118,7 @@ export async function POST(request: NextRequest) {
     try {
       const metronomeCustomerId = await createMetronomeCustomer(metronome, {
         name,
-        ingestAliases: [email],
+        ingestAliases: [ingestAlias],
         stripeCustomerId,
         deliveryMethodId: metronomeDeliveryMethodId,
       });
@@ -118,6 +129,7 @@ export async function POST(request: NextRequest) {
         name,
         existing: false,
         hasActiveContract: false,
+        demoMode,
       });
     } catch (createErr: any) {
       if (createErr?.status === 409 && stripeCustomerId) {

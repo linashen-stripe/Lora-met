@@ -28,6 +28,8 @@ import {
   extractBalanceFromGetNetBalanceResponse,
   metronomeNetBalanceToCents,
 } from '@/utils/metronomeNetBalance';
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
+import generationCatalog from '../../../../config/metronome/generation-catalog.json';
 
 interface PurchaseCreditsModalProps {
   open: boolean;
@@ -41,7 +43,28 @@ export default function PurchaseCreditsModal({
   onCreditsPurchased,
 }: PurchaseCreditsModalProps) {
   const { t } = useTranslation();
-  const { settings, customer, updateCustomer } = useConfigContext();
+  const {
+    settings,
+    customer,
+    updateCustomer,
+    metronomeContract,
+    demoMode,
+  } = useConfigContext();
+  const customCreditTypeName =
+    demoMode === 'generation' ? metronomeContract?.creditTypeName : undefined;
+  const formatAmount = (amount: number) =>
+    formatMetronomeAmount(
+      amount,
+      customCreditTypeName,
+      settings?.language || 'en',
+      settings?.currency || 'usd',
+    );
+  const formatGenerationCreditPrice = (credits: number) =>
+    formatPrice(
+      credits * generationCatalog.pricingUnit.fiatPerCustomCredit,
+      settings?.language || 'en',
+      settings?.currency || 'usd',
+    );
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedOption, setSelectedOption] = useState<
@@ -60,7 +83,12 @@ export default function PurchaseCreditsModal({
     try {
       const netBalanceRes = await fetchClient.post(
         `/api/metronome/customer/${encodeURIComponent(customer.id)}/net-balance`,
-        { invoice_inclusion_mode: 'FINALIZED_AND_DRAFT' },
+        {
+          invoice_inclusion_mode: 'FINALIZED_AND_DRAFT',
+          ...(metronomeContract?.creditTypeId
+            ? { credit_type_id: metronomeContract.creditTypeId }
+            : {}),
+        },
       );
       const raw = extractBalanceFromGetNetBalanceResponse(netBalanceRes.data);
       const balanceCents = metronomeNetBalanceToCents(raw) ?? 0;
@@ -74,7 +102,7 @@ export default function PurchaseCreditsModal({
     } finally {
       setIsLoading(false);
     }
-  }, [customer?.id]);
+  }, [customer?.id, metronomeContract?.creditTypeId]);
 
   useEffect(() => {
     if (open) {
@@ -88,12 +116,19 @@ export default function PurchaseCreditsModal({
     const debtInDollars = balanceInfo.debtAmount / 100;
     // Round up to the nearest dollar for outstanding balance
     const minPurchase = balanceInfo.hasDebt ? Math.ceil(debtInDollars) : 5;
+    if (customCreditTypeName) {
+      return {
+        minPurchase: 500,
+        standard: { amount: 1000 },
+        large: { amount: 2500 },
+      };
+    }
     return {
       minPurchase,
       standard: { amount: balanceInfo.hasDebt ? minPurchase + 10 : 10 },
       large: { amount: balanceInfo.hasDebt ? minPurchase + 25 : 25 },
     };
-  }, [balanceInfo]);
+  }, [balanceInfo, customCreditTypeName]);
 
   const finalPurchaseAmount = useMemo(() => {
     if (selectedOption === 'standard') return purchaseOptions.standard.amount;
@@ -118,6 +153,8 @@ export default function PurchaseCreditsModal({
           customerId: customer?.stripeCustomerId,
           metronomeCustomerId: customer?.id,
           amount: finalPurchaseAmount,
+          demoMode,
+          creditTypeId: metronomeContract?.creditTypeId,
         },
       );
       updateCustomer({ forceSubscriptionRepoll: new Date() });
@@ -163,12 +200,10 @@ export default function PurchaseCreditsModal({
               ? t('modals.purchase_credits.outstanding_balance_message')
               : t('modals.purchase_credits.current_balance_message')}{' '}
             <span className='font-extrabold'>
-              {formatPrice(
+              {formatAmount(
                 balanceInfo.hasDebt
                   ? balanceInfo.debtAmount
                   : balanceInfo.currentBalance,
-                settings?.language || 'en',
-                settings?.currency || 'usd',
               )}
             </span>
             .
@@ -209,11 +244,13 @@ export default function PurchaseCreditsModal({
           <div className='flex items-center space-x-2'>
             {amount && (
               <span className='font-bold text-lg text-gray-900'>
-                {formatPrice(
-                  amount * 100,
-                  settings?.language || 'en',
-                  settings?.currency || 'usd',
-                )}
+                {customCreditTypeName
+                  ? formatAmount(amount)
+                  : formatPrice(
+                      amount * 100,
+                      settings?.language || 'en',
+                      settings?.currency || 'usd',
+                    )}
               </span>
             )}
             <div className='h-6 w-6 flex items-center justify-center'>
@@ -226,14 +263,16 @@ export default function PurchaseCreditsModal({
         {id === 'custom' && isSelected && (
           <div className='mt-4'>
             <div className='relative'>
-              <span className='absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500'>
-                {new Intl.NumberFormat(settings?.language, {
-                  style: 'currency',
-                  currency: settings?.currency || 'usd',
-                })
-                  .format(0)
-                  .replace(/[\d,.]/g, '')}
-              </span>
+              {!customCreditTypeName && (
+                <span className='absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500'>
+                  {new Intl.NumberFormat(settings?.language, {
+                    style: 'currency',
+                    currency: settings?.currency || 'usd',
+                  })
+                    .format(0)
+                    .replace(/[\d,.]/g, '')}
+                </span>
+              )}
               <input
                 type='number'
                 min={purchaseOptions.minPurchase}
@@ -243,7 +282,9 @@ export default function PurchaseCreditsModal({
                 placeholder={t('modals.purchase_credits.min_amount', {
                   amount: purchaseOptions.minPurchase,
                 })}
-                className='w-full pl-10 py-2 border-gray-300 rounded-md focus:ring-purple focus:border-purple'
+                className={`w-full py-2 border-gray-300 rounded-md focus:ring-purple focus:border-purple ${
+                  customCreditTypeName ? 'px-3' : 'pl-10'
+                }`}
               />
             </div>
           </div>
@@ -294,13 +335,19 @@ export default function PurchaseCreditsModal({
                     subtitle={
                       balanceInfo.hasDebt
                         ? t('modals.purchase_credits.clears_outstanding_plus', {
-                            amount: formatPrice(
-                              1000,
-                              settings?.language || 'en',
-                              settings?.currency || 'usd',
-                            ),
+                            amount: customCreditTypeName
+                              ? formatAmount(10)
+                              : formatPrice(
+                                  1000,
+                                  settings?.language || 'en',
+                                  settings?.currency || 'usd',
+                                ),
                           })
-                        : ''
+                        : customCreditTypeName
+                          ? formatGenerationCreditPrice(
+                              purchaseOptions.standard.amount,
+                            )
+                          : ''
                     }
                     amount={purchaseOptions.standard.amount}
                   />
@@ -314,13 +361,19 @@ export default function PurchaseCreditsModal({
                     subtitle={
                       balanceInfo.hasDebt
                         ? t('modals.purchase_credits.clears_outstanding_plus', {
-                            amount: formatPrice(
-                              2500,
-                              settings?.language || 'en',
-                              settings?.currency || 'usd',
-                            ),
+                            amount: customCreditTypeName
+                              ? formatAmount(25)
+                              : formatPrice(
+                                  2500,
+                                  settings?.language || 'en',
+                                  settings?.currency || 'usd',
+                                ),
                           })
-                        : ''
+                        : customCreditTypeName
+                          ? formatGenerationCreditPrice(
+                              purchaseOptions.large.amount,
+                            )
+                          : ''
                     }
                     amount={purchaseOptions.large.amount}
                   />
@@ -337,11 +390,15 @@ export default function PurchaseCreditsModal({
                       ? t('modals.purchase_credits.processing')
                       : finalPurchaseAmount
                         ? t('modals.purchase_credits.purchase_for', {
-                            amount: formatPrice(
-                              finalPurchaseAmount * 100,
-                              settings?.language || 'en',
-                              settings?.currency || 'usd',
-                            ),
+                            amount: customCreditTypeName
+                              ? `${formatGenerationCreditPrice(
+                                  finalPurchaseAmount,
+                                )} (${formatAmount(finalPurchaseAmount)})`
+                              : formatPrice(
+                                  finalPurchaseAmount * 100,
+                                  settings?.language || 'en',
+                                  settings?.currency || 'usd',
+                                ),
                           })
                         : t('modals.purchase_credits.select_amount')}
                   </button>

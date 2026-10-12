@@ -17,7 +17,7 @@ interface SignUpFormProps {
 
 const SignUpForm = ({ defaultCountry = 'US' }: SignUpFormProps) => {
   const { t } = useTranslation();
-  const { settings, updateCustomer, customer } = useConfigContext();
+  const { settings, updateCustomer, customer, demoMode } = useConfigContext();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -39,13 +39,6 @@ const SignUpForm = ({ defaultCountry = 'US' }: SignUpFormProps) => {
     e.preventDefault();
     setError(null);
 
-    if (!(settings as any)?.metronomeDeliveryMethodId?.trim()) {
-      setError(
-        'Stripe and Metronome are not connected. Please link your accounts in Metronome (Settings → Integrations → Stripe) and ensure the delivery method ID is configured.',
-      );
-      return;
-    }
-
     setIsLoading(true);
 
     const plan = searchParams.get('plan')?.toLowerCase();
@@ -57,6 +50,7 @@ const SignUpForm = ({ defaultCountry = 'US' }: SignUpFormProps) => {
         email,
         planType: plan,
         packageId: requiresPayment ? undefined : packageId,
+        demoMode,
       });
       updateCustomer({
         id: data.metronomeCustomerId,
@@ -74,29 +68,35 @@ const SignUpForm = ({ defaultCountry = 'US' }: SignUpFormProps) => {
       const { language } = settings;
 
       if (packageId && requiresPayment) {
-        router.push(`/${language}/subscribe/metronome-package?packageId=${packageId}`);
+        router.push(
+          `/${language}/subscribe/metronome-package?packageId=${packageId}&demoMode=${demoMode}`,
+        );
         return;
       }
 
       if (packageId) {
-        router.push(`/${language}/chat`);
+        router.push(`/${language}/demos/${demoMode}`);
         return;
       }
 
       switch (plan) {
         case 'free':
-          router.push(`/${language}/chat`);
+          router.push(`/${language}/demos/${demoMode}`);
           break;
         case 'pricing-plan-pro':
-          router.push(`/${language}/subscribe/metronome-package`);
+          router.push(
+            `/${language}/subscribe/metronome-package?demoMode=${demoMode}`,
+          );
           break;
         default:
-          router.push(`/${language}/chat`);
+          router.push(`/${language}/demos/${demoMode}`);
       }
     } catch (err) {
       if (err instanceof AxiosError) {
         setError(
-          err.response?.data?.message || 'An error occurred. Please try again.',
+          err.response?.data?.error ||
+            err.response?.data?.message ||
+            'An error occurred. Please try again.',
         );
       } else if (err instanceof Error) {
         setError(err.message);
@@ -154,7 +154,7 @@ const SignUpForm = ({ defaultCountry = 'US' }: SignUpFormProps) => {
           <p className='text-sm text-text-color'>
             {t('signup.already_member')}{' '}
             <Link
-              href='sign-in'
+              href={`sign-in?demoMode=${demoMode}`}
               className='font-medium text-purple hover:text-purple-hover'
             >
               {t('signup.sign_in_link')}

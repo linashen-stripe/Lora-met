@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeMetronome } from '@/utils/metronome';
 import { archiveMetronomeCustomers, listActiveMetronomeCustomers } from '@/utils/demoCleanup';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
+import { DEMO_MODES, normalizeDemoMode } from '@/config/demoModes';
 
 // Step 1 of the /admin/cleanup-environment wizard: list and archive Metronome
 // customers. This route only ever calls the archive endpoint — never delete,
@@ -12,8 +13,17 @@ export async function GET(request: NextRequest) {
   if (!metronome) {
     return NextResponse.json({ error: 'Metronome not configured' }, { status: 400 });
   }
+  const { searchParams } = new URL(request.url);
+  const rawMode = searchParams.get('demoMode');
   const customers = await listActiveMetronomeCustomers(metronome);
-  return NextResponse.json({ customers });
+  const filteredCustomers = rawMode
+    ? customers.filter((customer) =>
+        customer.name?.startsWith(
+          `[${DEMO_MODES[normalizeDemoMode(rawMode)].label}]`,
+        ),
+      )
+    : customers;
+  return NextResponse.json({ customers: filteredCustomers });
 }
 
 export async function POST(request: NextRequest) {

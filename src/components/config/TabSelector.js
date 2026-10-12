@@ -6,6 +6,7 @@ import {
 
 const TabSelector = ({ activeTab, setActiveTab }) => {
   const tabs = [
+    { name: 'Demo', href: '#', icon: SparklesIcon },
     { name: 'Appearance', href: '#', icon: Cog6ToothIcon },
     { name: 'Account', href: '#', icon: KeyIcon },
   ];

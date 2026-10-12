@@ -1,7 +1,7 @@
 /* eslint-disable i18next/no-literal-string */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -33,6 +33,9 @@ type CompletedJob = {
 type WalletState = {
   balance: number;
   jobs: CompletedJob[];
+  pendingUsageCredits?: number;
+  pendingUsageAt?: string;
+  lastReconciledAt?: string;
 };
 
 const FREE_CREDITS = 100;
@@ -141,11 +144,13 @@ export default function GenerationPlayground() {
   const [modality, setModality] = useState<GenerationModality>('3d');
   const [selectedSkuId, setSelectedSkuId] = useState('3d-ultra-bundle');
   const [prompt, setPrompt] = useState(modalityMeta['3d'].prompt);
+  const [batchSize, setBatchSize] = useState(1);
   const [wallet, setWallet] = useState<WalletState>(initialWallet);
   const [hydrated, setHydrated] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [ingestStatus, setIngestStatus] = useState<'idle' | 'sent' | 'offline'>('idle');
+  const lastLocalDebitAt = useRef(0);
 
   const walletKey = `lora-generation-wallet:${customer?.id ?? 'guest'}`;
   const selectedSku =
@@ -154,8 +159,12 @@ export default function GenerationPlayground() {
     () => GENERATION_SKUS.filter((sku) => sku.modality === modality),
     [modality],
   );
-  const outOfCredits = wallet.balance < selectedSku.credits;
-  const shouldUpgrade = wallet.balance === 0 && wallet.jobs.length >= 2;
+  const batchCredits = selectedSku.credits * batchSize;
+  const outOfCredits = wallet.balance < batchCredits;
+  const contractName = metronomeContract?.name?.trim().toLowerCase() ?? '';
+  const isFreePlan = !contractName || contractName.includes('free');
+  const shouldUpgrade =
+    isFreePlan && wallet.balance === 0 && wallet.jobs.length >= 1;
 
   useEffect(() => {
     try {
@@ -174,14 +183,35 @@ export default function GenerationPlayground() {
   }, [hydrated, wallet, walletKey]);
 
   useEffect(() => {
+    const metronomeBalance = metronomeContract?.creditBalance?.totalAvailable;
     if (
-      hydrated &&
-      metronomeContract?.name?.trim().toLowerCase() === 'premium' &&
-      wallet.balance === 0
+      !hydrated ||
+      metronomeBalance == null ||
+      Date.now() - lastLocalDebitAt.current < 15_000
     ) {
-      setWallet((current) => ({ ...current, balance: 8_000 }));
+      return;
     }
-  }, [hydrated, metronomeContract?.name, wallet.balance]);
+    setWallet((current) => {
+      const hasUnreconciledUsage = (current.pendingUsageCredits ?? 0) > 0;
+      const pendingAgeMs = current.pendingUsageAt
+        ? Date.now() - new Date(current.pendingUsageAt).getTime()
+        : 0;
+      if (
+        hasUnreconciledUsage &&
+        pendingAgeMs < 120_000 &&
+        metronomeBalance > current.balance
+      ) {
+        return current;
+      }
+      return {
+        ...current,
+        balance: metronomeBalance,
+        pendingUsageCredits: 0,
+        pendingUsageAt: undefined,
+        lastReconciledAt: new Date().toISOString(),
+      };
+    });
+  }, [hydrated, metronomeContract]);
 
   const selectModality = (next: GenerationModality) => {
     setModality(next);
@@ -194,6 +224,11 @@ export default function GenerationPlayground() {
   const runGeneration = async () => {
     if (generating || outOfCredits) return;
 
+    lastLocalDebitAt.current = Date.now();
+    setWallet((current) => ({
+      ...current,
+      balance: Math.max(0, current.balance - batchCredits),
+    }));
     setGenerating(true);
     setCompleted(false);
     setIngestStatus('idle');
@@ -203,12 +238,12 @@ export default function GenerationPlayground() {
     const job: CompletedJob = {
       taskId,
       skuId: selectedSku.id,
-      label: selectedSku.label,
-      credits: selectedSku.credits,
+      label: batchSize === 1 ? selectedSku.label : `${batchSize}× ${selectedSku.label}`,
+      credits: batchCredits,
       completedAt: new Date().toISOString(),
     };
     setWallet((current) => ({
-      balance: Math.max(0, current.balance - selectedSku.credits),
+      ...current,
       jobs: [job, ...current.jobs].slice(0, 8),
     }));
     setGenerating(false);
@@ -220,21 +255,35 @@ export default function GenerationPlayground() {
       return;
     }
 
-    const event = buildGenerationUsageEvent({
-      taskId,
-      customerId: metronomeCustomerId,
-      sku: selectedSku,
-      userId: customer?.email ?? 'creator@example.com',
-      workspaceId: metronomeCustomerId,
-      projectId: 'project-lora-launch',
-    });
+    const events = Array.from({ length: batchSize }, (_, index) =>
+      buildGenerationUsageEvent({
+        taskId: `${taskId}_${index + 1}`,
+        customerId: metronomeCustomerId,
+        sku: selectedSku,
+        userId: customer?.email ?? 'creator@example.com',
+        workspaceId: metronomeCustomerId,
+        projectId: 'project-lora-launch',
+      }),
+    );
 
     try {
-      await fetchClient.post('/api/metronome/ingest', { events: [event] });
+      await fetchClient.post('/api/metronome/ingest', { events });
+      setWallet((current) => ({
+        ...current,
+        pendingUsageCredits:
+          (current.pendingUsageCredits ?? 0) + batchCredits,
+        pendingUsageAt: new Date().toISOString(),
+      }));
       setIngestStatus('sent');
-      setTimeout(() => triggerMetronomeContractRefresh(), 1500);
+      setTimeout(() => {
+        void triggerMetronomeContractRefresh();
+      }, 15_000);
     } catch (error) {
       console.warn('Generation completed locally; Metronome ingest is unavailable.', error);
+      setWallet((current) => ({
+        ...current,
+        balance: current.balance + batchCredits,
+      }));
       setIngestStatus('offline');
     }
   };
@@ -340,6 +389,25 @@ export default function GenerationPlayground() {
                 ))}
               </div>
 
+              <div className='mt-5'>
+                <p className='text-sm font-semibold text-gray-800'>Demo batch</p>
+                <div className='mt-2 grid grid-cols-3 gap-2'>
+                  {[1, 5, 10].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setBatchSize(size)}
+                      className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                        batchSize === size
+                          ? 'border-purple bg-purple/5 text-purple'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      {size}×
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 onClick={runGeneration}
                 disabled={generating || outOfCredits}
@@ -355,7 +423,7 @@ export default function GenerationPlayground() {
                 ) : (
                   <>
                     <Sparkles className='h-5 w-5' />
-                    Generate for {selectedSku.credits} credits
+                    Generate {batchSize === 1 ? '' : `${batchSize}× `}for {batchCredits} credits
                   </>
                 )}
               </button>
@@ -400,8 +468,8 @@ export default function GenerationPlayground() {
           <div>
             <ResultPreview modality={modality} generating={generating} completed={completed} />
             <div className='mt-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900'>
-              <span className='font-semibold'>Pricing preview:</span> {selectedSku.credits} credits
-              equals ${(selectedSku.credits * 0.01).toFixed(2)} at list value. Enterprise
+              <span className='font-semibold'>Pricing preview:</span> {batchCredits} credits equals $
+              {(batchCredits * 0.01).toFixed(2)} at list value. Enterprise
               discounts and included credits are applied by Metronome.
             </div>
           </div>
@@ -416,16 +484,18 @@ export default function GenerationPlayground() {
             </div>
             <h2 className='mt-4 text-2xl font-bold text-gray-900'>Your free credits are used</h2>
             <p className='mt-2 text-gray-600'>
-              You created two production bundles with complete usage transparency. Upgrade to
-              Premium for 8,000 credits every month.
+              You created two production bundles with complete usage transparency. Upgrade to Pro
+              for 1,000 credits every month.
             </p>
             <button
               onClick={() =>
-                router.push(`/${settings?.language || 'en'}/pricing?upgrade=true`)
+                router.push(
+                  `/${settings?.language || 'en'}/pricing?upgrade=true&demoMode=generation`,
+                )
               }
               className='mt-6 w-full rounded-xl bg-purple px-5 py-3 font-semibold text-white hover:bg-purple-hover'
             >
-              Upgrade to Premium
+              Upgrade to Pro
             </button>
             <p className='mt-3 text-xs text-gray-400'>
               {metronomeContract?.name

@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 
 const Sidebar = () => {
   const { t } = useTranslation();
-  const { settings } = useConfigContext();
+  const { settings, demoMode } = useConfigContext();
   const pathname = usePathname();
 
   const lang = settings?.language || 'en';
@@ -24,7 +24,7 @@ const Sidebar = () => {
         <ul className='space-y-1'>
           <li>
             <Link
-              href={dashboardBase}
+              href={`${dashboardBase}?demoMode=${demoMode}`}
               className={`block px-4 py-2 rounded-md ${
                 isBillingActive
                   ? 'bg-white text-gray-900 font-medium'
@@ -36,7 +36,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href={`${dashboardBase}/usage`}
+              href={`${dashboardBase}/usage?demoMode=${demoMode}`}
               className={`block px-4 py-2 rounded-md ${
                 isUsageActive
                   ? 'bg-white text-gray-900 font-medium'
@@ -48,7 +48,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href={`${dashboardBase}/settings`}
+              href={`${dashboardBase}/settings?demoMode=${demoMode}`}
               className={`block px-4 py-2 rounded-md ${
                 isSettingsActive
                   ? 'bg-white text-gray-900 font-medium'

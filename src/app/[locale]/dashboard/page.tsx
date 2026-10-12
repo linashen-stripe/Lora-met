@@ -28,7 +28,8 @@ function DashboardPageContent() {
 
   const getDisplayName = () => {
     if (customer?.name) {
-      return customer.name.split(' ')[0];
+      const unprefixed = customer.name.replace(/^\[[^\]]+\]\s*/, '');
+      return unprefixed.split(' ')[0];
     }
     if (customer?.email) {
       return customer.email.split('@')[0];

@@ -9,18 +9,21 @@ import { defaultDemoSignInPassword } from '@/config/config';
 import { generateRandomCustomerEmail } from '@/utils/helpers';
 import { loadFromStorage } from '@/utils/clientStorage';
 import ErrorBanner from '../ui/ErrorBanner';
+import { customerStorageKey } from '@/config/demoModes';
 
 const QUICKSTART_DAYS_AGO = 30;
 
 const SignInForm = () => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { updateCustomer, settings } = useConfigContext();
+  const { updateCustomer, settings, demoMode } = useConfigContext();
   const [error, setError] = useState<string | null>(null);
   const [quickstartLoading, setQuickstartLoading] = useState(false);
   // Match anonymous demo sessions: use stored customer email if any, else same generator as ConfigContext.
   const [email, setEmail] = useState(() => {
-    const stored = loadFromStorage('customer', {}) as { email?: string };
+    const stored = loadFromStorage(customerStorageKey(demoMode), {}) as {
+      email?: string;
+    };
     if (stored?.email?.trim()) return stored.email.trim();
     return generateRandomCustomerEmail();
   });
@@ -32,7 +35,10 @@ const SignInForm = () => {
     setError(null);
 
     try {
-      const { data } = await fetchClient.post('/api/auth/sign-in', { email });
+      const { data } = await fetchClient.post('/api/auth/sign-in', {
+        email,
+        demoMode,
+      });
       updateCustomer({
         id: data.metronomeCustomerId,
         email,
@@ -40,7 +46,7 @@ const SignInForm = () => {
         metronomeCustomerId: data.metronomeCustomerId,
         ...(data.stripeCustomerId ? { stripeCustomerId: data.stripeCustomerId } : {}),
       });
-      router.push('../dashboard');
+      router.push(`../dashboard?demoMode=${demoMode}`);
     } catch (err) {
       if (err instanceof AxiosError) {
         setError(
@@ -57,7 +63,10 @@ const SignInForm = () => {
     setError(null);
     setQuickstartLoading(true);
     try {
-      const { data } = await fetchClient.post('/api/auth/quickstart', { email });
+      const { data } = await fetchClient.post('/api/auth/quickstart', {
+        email,
+        demoMode,
+      });
 
       updateCustomer({
         id: data.metronomeCustomerId,
@@ -69,18 +78,22 @@ const SignInForm = () => {
 
       const lang = settings?.language || 'en';
       if (data.existing && data.hasActiveContract) {
-        await fetchClient
-          .get('/api/metronome/seed-usage-multi-project', {
-            params: {
-              customerId: data.metronomeCustomerId,
-              story: 'healthy',
-              trailingDays: 1,
-            },
-          })
-          .catch((seedError) => {
-            console.warn('Quickstart usage seeding was skipped:', seedError);
-          });
-        router.push(`/${lang}/dashboard/usage`);
+        if (demoMode === 'generation') {
+          await fetchClient
+            .get('/api/metronome/seed-usage-multi-project', {
+              params: {
+                customerId: data.metronomeCustomerId,
+                story: 'healthy',
+                trailingDays: 1,
+              },
+            })
+            .catch((seedError) => {
+              console.warn('Quickstart usage seeding was skipped:', seedError);
+            });
+          router.push(`/${lang}/dashboard/usage?demoMode=${demoMode}`);
+        } else {
+          router.push(`/${lang}/demos/ai-builder`);
+        }
         return;
       }
 
@@ -92,6 +105,7 @@ const SignInForm = () => {
           language: lang,
           contractStartDaysAgo: QUICKSTART_DAYS_AGO,
           contractPackage: 'enterprise' as const,
+          demoMode,
         },
       );
       if (checkout.url) {

@@ -19,6 +19,22 @@ export function resolveCreditTypeIdFromContract(contractLike: {
   return undefined;
 }
 
+export function resolveCreditTypeNameFromContract(contractLike: {
+  commits?: unknown[] | null;
+  credits?: unknown[] | null;
+}): string | undefined {
+  for (const item of [
+    ...((contractLike.commits ?? []) as any[]),
+    ...((contractLike.credits ?? []) as any[]),
+  ]) {
+    const name =
+      item?.access_schedule?.credit_type?.name ??
+      item?.credit_type?.name;
+    if (typeof name === 'string' && name.length > 0) return name;
+  }
+  return undefined;
+}
+
 /** Raw sum of `balance` on commits + credits (Metronome v2 `include_balance`). */
 export function metronomeContractScheduleAndBalanceSums(contractLike: {
   commits?: unknown[] | null;

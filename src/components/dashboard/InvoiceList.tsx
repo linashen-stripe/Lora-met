@@ -17,13 +17,7 @@ import {
 import Stripe from 'stripe';
 import Skeleton from '@/components/ui/Skeleton';
 import { MetronomeInvoice } from '@/utils/types';
-
-
-// Extract a usable currency string from Metronome credit type name, e.g. "USD (cents)" → "usd"
-function creditTypeNameToCurrency(name: string): string {
-  const match = name.match(/^([A-Z]+)/);
-  return match ? match[1].toLowerCase() : 'usd';
-}
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 
 const InvoiceList = ({
   invoices,
@@ -91,7 +85,12 @@ const InvoiceList = ({
     }
 
     const visibleInvoices = metronomeInvoices.filter(
-      (inv) => inv.status === 'FINALIZED' || inv.status === 'DRAFT',
+      (inv) =>
+        inv.status === 'FINALIZED' &&
+        !(
+          inv.external_invoice?.billing_provider_type === 'stripe' &&
+          inv.stripeStatus === 'draft'
+        ),
     );
 
     return (
@@ -114,7 +113,6 @@ const InvoiceList = ({
               <tbody>
                 {visibleInvoices.map((invoice) => {
                   const dateStr = invoice.start_timestamp || invoice.issued_at;
-                  const currency = creditTypeNameToCurrency(invoice.credit_type.name);
                   const invoiceUrl =
                     invoice.hosted_invoice_url ||
                     invoice.external_invoice?.pdf_url ||
@@ -130,7 +128,12 @@ const InvoiceList = ({
                           : '—'}
                       </td>
                       <td className='py-2'>
-                        {formatPrice(invoice.total, settings?.language, currency, t('loading'))}
+                        {formatMetronomeAmount(
+                          invoice.total,
+                          invoice.credit_type.name,
+                          settings?.language,
+                          settings?.currency,
+                        )}
                       </td>
                       <td className='py-2'>
                         {invoice.stripeStatus === 'paid'

@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
   PropsWithChildren,
 } from 'react';
 import i18n from '@/i18n';
@@ -23,7 +24,7 @@ import {
 import { loadFromStorage, saveToStorage } from '@/utils/clientStorage';
 import { LoadingOverlay } from '@/components';
 import { getEnv } from '@/config/customizationConfig';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { debounceTrack } from '@/utils/tracking';
 import fetchClient from '@/utils/fetchClient';
 import {
@@ -32,8 +33,14 @@ import {
   normalizeMetronomeSpendableSumCents,
   pickPrimaryMetronomeContract,
   resolveCreditTypeIdFromContract,
+  resolveCreditTypeNameFromContract,
 } from '@/utils/metronomeContractPool';
 import { MetronomeContract, MetronomeCreditItem } from '@/utils/types';
+import {
+  customerStorageKey,
+  normalizeDemoMode,
+  type DemoMode,
+} from '@/config/demoModes';
 
 interface Settings {
   language: string;
@@ -75,6 +82,8 @@ interface State {
 }
 
 interface ConfigContextType extends State {
+  demoMode: DemoMode;
+  updateDemoMode: (mode: DemoMode) => void;
   updateSetting: (key: string, value: any) => void;
   updateCustomer: (newCustomer: Partial<Customer>) => void;
   updatePlan: (newPlan: Partial<Plan>) => void;
@@ -105,6 +114,19 @@ const resetSettings = (): void => {
 };
 
 export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const routeDemoMode: DemoMode | null = pathname.includes('/demos/ai-builder')
+    ? 'ai-builder'
+    : pathname.includes('/demos/generation')
+      ? 'generation'
+      : searchParams.has('demoMode')
+        ? normalizeDemoMode(searchParams.get('demoMode'))
+        : null;
+  const [preferredDemoMode, setPreferredDemoMode] =
+    useState<DemoMode>('generation');
+  const demoMode = routeDemoMode ?? preferredDemoMode;
+  const previousDemoMode = useRef<DemoMode>(demoMode);
   const [state, setState] = useState<State>({
     settings: null,
     customer: null,
@@ -116,8 +138,6 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     isToolsPanelOpen: false,
     refreshElements: 0,
   });
-  const searchParams = useSearchParams();
-
   const updateState = useCallback((newState: Partial<State>) => {
     setState((prevState) => {
       const updatedState = { ...prevState, ...newState };
@@ -149,7 +169,10 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
                 dataToSave = customerToPersist;
               }
 
-              saveToStorage(key, dataToSave);
+              saveToStorage(
+                key === 'customer' ? customerStorageKey(demoMode) : key,
+                dataToSave,
+              );
             }
           } catch (error) {
             console.error(`Failed to save ${key} to storage:`, error);
@@ -159,7 +182,22 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
 
       return updatedState;
     });
+  }, [demoMode, searchParams]);
+
+  const updateDemoMode = useCallback((mode: DemoMode) => {
+    setPreferredDemoMode(mode);
+    saveToStorage('demoMode', mode);
   }, []);
+
+  useEffect(() => {
+    if (routeDemoMode) {
+      updateDemoMode(routeDemoMode);
+      return;
+    }
+    setPreferredDemoMode(
+      normalizeDemoMode(loadFromStorage('demoMode', 'generation')),
+    );
+  }, [routeDemoMode, updateDemoMode]);
 
   useEffect(() => {
     const loadInitialState = () => {
@@ -209,6 +247,10 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
             ...(locale ? { language: locale } : {}),
             // Currency fallback: localStorage > env > default (must come before params)
             currency: localStorageSettings.currency || env.currency || 'usd',
+            stripePublishableKey:
+              localStorageSettings.stripePublishableKey ||
+              env.stripePublishableKey ||
+              defaultDemoSettings.stripePublishableKey,
             // Metronome: env fallback when not set via Tools panel
             metronomeApiKey: localStorageSettings.metronomeApiKey || env.metronomeApiKey,
             metronomeDeliveryMethodId: localStorageSettings.metronomeDeliveryMethodId || env.metronomeDeliveryMethodId,
@@ -221,9 +263,15 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
             document.title = 'Stripe Demo';
           }
 
-          let customer = loadFromStorage('customer', {
+          const legacyGenerationCustomer = loadFromStorage('customer', {
             email: generateRandomCustomerEmail(),
           });
+          let customer = loadFromStorage(
+            customerStorageKey(demoMode),
+            demoMode === 'generation'
+              ? legacyGenerationCustomer
+              : { email: generateRandomCustomerEmail() },
+          );
           if (customer?.id) {
             customer = {
               ...customer,
@@ -246,7 +294,23 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     };
 
     loadInitialState();
-  }, [searchParams, updateState]);
+  }, [demoMode, searchParams, updateState]);
+
+  useEffect(() => {
+    if (previousDemoMode.current === demoMode || state.isLoading) return;
+    previousDemoMode.current = demoMode;
+    const customer = loadFromStorage(customerStorageKey(demoMode), {
+      email: generateRandomCustomerEmail(),
+    });
+    setState((current) => ({
+      ...current,
+      customer,
+      plan: null,
+      subscription: null,
+      metronomeContract: null,
+      metronomeContractLoaded: false,
+    }));
+  }, [demoMode, state.isLoading]);
 
   const fetchPlanAndSubscription = useCallback(async () => {
     const customerId = state.customer?.id;
@@ -477,6 +541,7 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
           name: contract.name ?? null,
           startingAt: contract.starting_at ?? null,
           creditTypeId: resolveCreditTypeIdFromContract(contract),
+          creditTypeName: resolveCreditTypeNameFromContract(contract),
           creditBalance: {
             totalAvailable,
             totalAmount: poolCap + topUpTotalCents,
@@ -502,9 +567,51 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     }
 
     fetchMetronomeContracts();
-    const interval = setInterval(fetchMetronomeContracts, 10_000);
+    // Metronome is the reconciliation source, not the per-request entitlement path.
+    // Keep background reads infrequent; generation explicitly refreshes after an
+    // accepted ingest batch and billing actions refresh at their own boundaries.
+    const interval = setInterval(fetchMetronomeContracts, 60_000);
     return () => clearInterval(interval);
   }, [state.customer?.id, state.customer?.metronomeCustomerId]);
+
+  const reconciliationVersions = useRef<Record<string, number>>({});
+  const reconciliationCustomerId = getEffectiveMetronomeCustomerId(
+    state.customer,
+  );
+  useEffect(() => {
+    const metronomeCustomerId = reconciliationCustomerId;
+    if (!metronomeCustomerId) return;
+
+    const checkReconciliationSignal = async () => {
+      try {
+        const { data } = await fetchClient.get('/api/metronome/reconciliation', {
+          params: { customer_id: metronomeCustomerId },
+        });
+        const version = Number(data?.signal?.version ?? 0);
+        const previous = reconciliationVersions.current[metronomeCustomerId];
+        reconciliationVersions.current[metronomeCustomerId] = version;
+        if (previous != null && version > previous) {
+          await fetchMetronomeContracts();
+        }
+      } catch (error) {
+        console.warn('Failed to check Metronome reconciliation signal:', error);
+      }
+    };
+
+    void checkReconciliationSignal();
+    const handleFocus = () => void checkReconciliationSignal();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        void checkReconciliationSignal();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [reconciliationCustomerId, fetchMetronomeContracts]);
 
   // Auto-populate metronomeDeliveryMethodId from the Metronome account when the API
   // key is present but the delivery method hasn't been configured yet.
@@ -637,6 +744,8 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
   const contextValue = useMemo(
     () => ({
       ...state,
+      demoMode,
+      updateDemoMode,
       updateSetting,
       updateCustomer,
       updatePlan,
@@ -658,6 +767,8 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     }),
     [
       state,
+      demoMode,
+      updateDemoMode,
       updateSetting,
       updateCustomer,
       updatePlan,

@@ -1,3 +1,9 @@
+import {
+  DEMO_MODES,
+  normalizeDemoMode,
+  type DemoMode,
+} from '@/config/demoModes';
+
 /**
  * Pick a Metronome package id from a list for subscribe / upgrade flows.
  * Enterprise is matched **strictly** on the package display name so substring
@@ -16,7 +22,17 @@ const ENTERPRISE_PACKAGE_NAMES = new Set(['enterprise', 'enterpise']);
 export function pickMetronomePackageForTier(
   packages: { id: string; name?: string }[],
   tier: MetronomeSubscribeTier,
+  demoMode: DemoMode = 'generation',
 ): { id: string; name?: string } | undefined {
+  const mode = normalizeDemoMode(demoMode);
+  const configuredNames = new Set(
+    DEMO_MODES[mode].packageNames[tier].map(normName),
+  );
+  const namespaced = packages.find((pkg) =>
+    configuredNames.has(normName(pkg.name)),
+  );
+  if (namespaced) return namespaced;
+
   if (tier === 'enterprise') {
     return packages.find((p) => ENTERPRISE_PACKAGE_NAMES.has(normName(p.name)));
   }

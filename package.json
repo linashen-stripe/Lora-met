@@ -11,7 +11,10 @@
     "dev:turbo": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "metronome:generation:plan": "tsx --env-file=.env scripts/metronome-generation-catalog.ts",
+    "metronome:generation:seed": "tsx --env-file=.env scripts/metronome-generation-catalog.ts --apply",
+    "metronome:generation:cleanup": "tsx --env-file=.env scripts/metronome-generation-catalog.ts --cleanup"
   },
   "dependencies": {
     "@demoeng/utils": "github:stripe-demos/demoeng-utils#main",

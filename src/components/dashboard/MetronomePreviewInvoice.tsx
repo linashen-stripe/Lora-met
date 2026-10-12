@@ -1,5 +1,4 @@
 import { Fragment } from 'react';
-import { formatPrice } from '@/utils/helpers';
 import {
   Card,
   CardContent,
@@ -22,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { MetronomeInvoice, MetronomeInvoiceLineItem } from '@/utils/types';
 import { isAppliedCommitOrCreditLineItem } from '@/utils/metronomeInvoice';
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 
 function dimensionEntries(
   values: Record<string, string> | undefined,
@@ -83,11 +83,6 @@ function translateLineItemName(name: string | undefined | null, t: TFunction): s
   return t(`dashboard.invoice.line_item_names.${slug}`, { defaultValue: name });
 }
 
-function creditTypeNameToCurrency(name: string): string {
-  const match = name.match(/^([A-Z]+)/);
-  return match ? match[1].toLowerCase() : 'usd';
-}
-
 function formatBillingPeriod(invoice: MetronomeInvoice, language: string): string {
   if (!invoice.end_timestamp) return '';
   return new Date(invoice.end_timestamp).toLocaleDateString(language, {
@@ -104,7 +99,7 @@ export default function MetronomePreviewInvoice({
   invoice: MetronomeInvoice | null;
   isLoading?: boolean;
 }) {
-  const { settings } = useConfigContext();
+  const { settings, metronomeContract } = useConfigContext();
   const { t } = useTranslation();
   const language = settings?.language || 'en';
 
@@ -159,7 +154,12 @@ export default function MetronomePreviewInvoice({
           <CardDescription>{t('dashboard.invoice.no_upcoming_charges')}</CardDescription>
           <div className='pt-4'>
             <p className='text-4xl font-bold tabular-nums tracking-tight text-gray-900'>
-              {formatPrice(0, language, settings?.currency || 'usd')}
+              {formatMetronomeAmount(
+                0,
+                metronomeContract?.creditTypeName,
+                language,
+                settings?.currency || 'usd',
+              )}
             </p>
             <p className='mt-2 text-sm text-gray-600'>
               {t('dashboard.invoice.period_net_subtitle_empty')}
@@ -187,7 +187,12 @@ export default function MetronomePreviewInvoice({
               <TableRow>
                 <TableCell className='text-right font-bold' colSpan={3}>{t('dashboard.invoice.total')}</TableCell>
                 <TableCell className='text-right font-bold'>
-                  {formatPrice(0, language, settings?.currency || 'usd')}
+                  {formatMetronomeAmount(
+                    0,
+                    metronomeContract?.creditTypeName,
+                    language,
+                    settings?.currency || 'usd',
+                  )}
                 </TableCell>
               </TableRow>
             </TableFooter>
@@ -197,7 +202,14 @@ export default function MetronomePreviewInvoice({
     );
   }
 
-  const currency = creditTypeNameToCurrency(invoice.credit_type?.name ?? 'USD');
+  const creditTypeName = invoice.credit_type?.name ?? 'USD (cents)';
+  const fmt = (amount: number) =>
+    formatMetronomeAmount(
+      amount,
+      creditTypeName,
+      language,
+      settings?.currency || 'usd',
+    );
   const lineItems = (invoice as any).line_items ?? [];
 
   // Separate credits-applied line items (negative totals) from charge line items
@@ -207,10 +219,35 @@ export default function MetronomePreviewInvoice({
   const creditItems = lineItems.filter((l: any) =>
     isAppliedCommitOrCreditLineItem(l.type),
   );
-  const creditsApplied = creditItems.reduce((sum: number, l: any) => sum + (l.total ?? 0), 0);
-
-  // Subtotal is sum of charge line items
-  const subtotal = chargeItems.reduce((sum: number, l: any) => sum + (l.total ?? 0), 0);
+  const amountGroups = new Map<
+    string,
+    { creditTypeName: string; subtotal: number; creditsApplied: number }
+  >();
+  const addToAmountGroup = (line: any, field: 'subtotal' | 'creditsApplied') => {
+    const lineCreditTypeName = line.credit_type?.name ?? creditTypeName;
+    const key = line.credit_type?.id ?? lineCreditTypeName;
+    const group = amountGroups.get(key) ?? {
+      creditTypeName: lineCreditTypeName,
+      subtotal: 0,
+      creditsApplied: 0,
+    };
+    group[field] += line.total ?? 0;
+    amountGroups.set(key, group);
+  };
+  chargeItems.forEach((line: any) => addToAmountGroup(line, 'subtotal'));
+  creditItems.forEach((line: any) =>
+    addToAmountGroup(line, 'creditsApplied'),
+  );
+  const fmtLineAmount = (
+    amount: number,
+    lineCreditTypeName?: string,
+  ) =>
+    formatMetronomeAmount(
+      amount,
+      lineCreditTypeName ?? creditTypeName,
+      language,
+      settings?.currency || 'usd',
+    );
 
   const chargeLines = chargeItems as ChargeLine[];
   const presentationGroups = buildPresentationGroups(chargeLines);
@@ -226,7 +263,7 @@ export default function MetronomePreviewInvoice({
         </CardDescription>
         <div className='pt-4'>
           <p className='text-4xl font-bold tabular-nums tracking-tight text-gray-900'>
-            {formatPrice(invoice.total, language, currency)}
+            {fmt(invoice.total)}
           </p>
           <p className='mt-2 text-sm text-gray-600'>
             {t('dashboard.invoice.period_net_subtitle')}
@@ -299,11 +336,17 @@ export default function MetronomePreviewInvoice({
                         </TableCell>
                         <TableCell>
                           {l.unit_price != null
-                            ? formatPrice(l.unit_price, language, currency)
+                            ? fmtLineAmount(
+                                l.unit_price,
+                                l.credit_type?.name,
+                              )
                             : '—'}
                         </TableCell>
                         <TableCell className='text-right'>
-                          {formatPrice(l.total ?? 0, language, currency)}
+                          {fmtLineAmount(
+                            l.total ?? 0,
+                            l.credit_type?.name,
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -319,22 +362,43 @@ export default function MetronomePreviewInvoice({
             )}
           </TableBody>
           <TableFooter>
-            {chargeItems.length > 0 && (
-              <TableRow>
-                <TableCell className='text-right' colSpan={3}>{t('dashboard.invoice.subtotal')}</TableCell>
-                <TableCell className='text-right'>
-                  {formatPrice(subtotal, language, currency)}
-                </TableCell>
-              </TableRow>
-            )}
-            {creditsApplied < 0 && (
-              <TableRow>
-                <TableCell className='text-right' colSpan={3}>{t('dashboard.invoice.credits_applied')}</TableCell>
-                <TableCell className='text-right'>
-                  -{formatPrice(Math.abs(creditsApplied), language, currency)}
-                </TableCell>
-              </TableRow>
-            )}
+            {Array.from(amountGroups.entries()).map(([key, group]) => (
+              <Fragment key={key}>
+                <TableRow>
+                  <TableCell className='text-right' colSpan={3}>
+                    {t('dashboard.invoice.subtotal')}
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    {fmtLineAmount(group.subtotal, group.creditTypeName)}
+                  </TableCell>
+                </TableRow>
+                {group.creditsApplied < 0 && (
+                  <TableRow>
+                    <TableCell className='text-right' colSpan={3}>
+                      {t('dashboard.invoice.credits_applied')}
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      -
+                      {fmtLineAmount(
+                        Math.abs(group.creditsApplied),
+                        group.creditTypeName,
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )}
+                <TableRow>
+                  <TableCell className='text-right font-semibold' colSpan={3}>
+                    {t('dashboard.invoice.total')}
+                  </TableCell>
+                  <TableCell className='text-right font-semibold'>
+                    {fmtLineAmount(
+                      group.subtotal + group.creditsApplied,
+                      group.creditTypeName,
+                    )}
+                  </TableCell>
+                </TableRow>
+              </Fragment>
+            ))}
           </TableFooter>
         </Table>
       </CardContent>

@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import TabSelector from './TabSelector';
 import AppearanceTab from './AppearanceTab';
 import AccountTab from './AccountTab';
+import DemoModeSwitcher from '../DemoModeSwitcher';
 
 export default function ToolsPanel() {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export default function ToolsPanel() {
     resetSettings,
   } = useConfigContext();
   const { clearCart } = useCart();
-  const [activeTab, setActiveTab] = useState('Appearance');
+  const [activeTab, setActiveTab] = useState('Demo');
   const [isResetConfirming, setIsResetConfirming] = useState(false);
   if (!settings) return null;
 
@@ -56,6 +57,9 @@ export default function ToolsPanel() {
 
           {/* Panel tabs */}
           <TabSelector activeTab={activeTab} setActiveTab={setActiveTab} />
+          {activeTab === 'Demo' && (
+            <DemoModeSwitcher locale={settings.language || 'en'} />
+          )}
           {activeTab === 'Appearance' && <AppearanceTab />}
           {activeTab === 'Account' && (
             <AccountTab />

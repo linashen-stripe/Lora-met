@@ -1,14 +1,17 @@
-# Lora Generation Demo Runbook
+# Unified Lora Demo Runbook
 
 ## Before the presentation
 
-1. Configure Metronome sandbox and Stripe test credentials in `.env.local` or
+1. Configure Metronome sandbox and Stripe test credentials in `.env` or
    the Tools panel.
 2. Confirm the Metronome Stripe integration and delivery method.
-3. Provision Free, Premium, and Enterprise packages from the generation catalog.
+3. Preview and, when needed, provision the namespaced Generation catalog:
+   `npm run metronome:generation:plan` then
+   `npm run metronome:generation:seed`.
 4. Open these tabs:
-   - `/en/pricing`
-   - `/en/chat`
+   - `/en/demos/ai-builder`
+   - `/en/demos/generation`
+   - `/en/pricing?demoMode=generation`
    - `/en/admin/demo-prep`
    - `/en/dashboard/usage`
    - The matching Stripe test customer
@@ -16,12 +19,26 @@
 5. In `/en/admin/demo-prep`, load `bufo-studios@example.com` and seed the
    **Healthy growth** story.
 
+## Demo switcher — two monetization models
+
+Use the Demo tab in the left Tools panel to switch between:
+
+- **AI Builder:** conversational app creation billed by input/output tokens.
+- **Lora Generate:** image, video, and 3D jobs billed in generation credits.
+
+Both modes use one Metronome and Stripe account pair, while package names,
+customer aliases, stored sessions, seeders, and dashboard dimensions remain
+isolated by mode.
+
+Run two AI Builder prompts to exhaust the $5 trial credit and show its
+mode-specific Premium upgrade before switching to Lora Generate.
+
 ## Chapter 1 — Launch
 
 Explain that Lora launched Free, Pro, and Premium packages quickly using one
 generation-credit unit across image, video, and 3D products.
 
-Start the live product story on `/en/pricing`.
+Start the live product story on `/en/pricing?demoMode=generation`.
 
 ## Chapter 2 — Hybrid self-serve
 
@@ -65,6 +82,9 @@ Quickstart never creates or transitions from a Free contract.
 - Reseed usage safely; deterministic transaction IDs prevent duplicate jobs.
 - Use `/en/admin/cleanup-environment` to archive selected Metronome demo
   customers before deleting matching Stripe test customers.
+- Preview catalog cleanup with `npm run metronome:generation:cleanup`. Apply it
+  only after review with
+  `npm run metronome:generation:cleanup -- --apply --confirm=lora-generate`.
 - If account APIs are unavailable, the pricing page and generation playground
   remain usable with static local data.
 
@@ -75,5 +95,5 @@ npm run lint
 npm run build
 ```
 
-Live verification remains incomplete until credentials and provisioned package
-IDs are available.
+Free signup and two-job credit exhaustion have been verified against live
+Metronome and Stripe test credentials. Recheck Premium Checkout before presenting.

@@ -1,11 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import {
   initializeMetronome,
   getCustomerContractsWithBalance,
   createContract,
   assignContractSeats,
-  archiveAllCustomerContracts,
+  endActiveCustomerContractsAt,
+  restoreOpenEndedContracts,
   resolveMetronomeDeliveryMethodId,
+  currentMetronomeHourBoundary,
+  isMetronomeHourBoundaryError,
+  getStripeCustomerIdFromMetronomeCustomer,
 } from '@/utils/metronome';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
 import initializeStripe from '@/utils/stripe';
@@ -77,22 +81,77 @@ export async function POST(
       return NextResponse.json({ error: 'Metronome not configured' }, { status: 503 });
     }
 
-    // Floor to the hour boundary — Metronome requires package contracts to start
-    // on an exact hour (e.g. 1:00, not 1:30).
-    const startingAt = new Date();
-    startingAt.setMinutes(0, 0, 0);
+    const now = new Date();
+    const existingContracts = await metronome.v2.contracts.list({
+      customer_id: metronomeCustomerId,
+    });
+    const matchingContracts = (existingContracts.data ?? []).filter(
+      (contract: any) =>
+        contract.package_id === packageId && !contract.archived_at,
+    );
+    const existingActiveContract = matchingContracts.find((contract: any) => {
+      const startsAt = contract.starting_at
+        ? new Date(contract.starting_at)
+        : new Date(0);
+      const endsAt = contract.ending_before
+        ? new Date(contract.ending_before)
+        : null;
+      return startsAt <= now && (!endsAt || endsAt > now);
+    });
+    if (existingActiveContract) {
+      return NextResponse.json({ contractId: existingActiveContract.id });
+    }
 
-    if (upgrade === true) {
-      try {
-        await archiveAllCustomerContracts(metronome, metronomeCustomerId);
-      } catch (archiveError) {
-        console.warn('Could not archive existing contracts before upgrade:', archiveError);
+    // Recover from an earlier legacy fallback that scheduled this package at the
+    // next hour. It has no usage or invoice yet, so replace it with an immediate
+    // current-hour contract.
+    for (const contract of matchingContracts) {
+      if (contract.starting_at && new Date(contract.starting_at) > now) {
+        await metronome.v1.contracts.archive({
+          contract_id: contract.id,
+          customer_id: metronomeCustomerId,
+          void_invoices: false,
+        });
+        console.warn(
+          `[contracts] Archived future scheduled contract ${contract.id} before immediate retry`,
+        );
       }
     }
 
-    console.log(`Creating contract for customer ${metronomeCustomerId} with package ${packageId} starting ${startingAt.toISOString()}`);
+    let startingAt = new Date();
 
-    const { metronomeDeliveryMethodId, stripeCustomerId } = withFallbackHeaders(request.headers);
+    let endedContractIds: string[] = [];
+    if (upgrade === true) {
+      try {
+        endedContractIds = await endActiveCustomerContractsAt(
+          metronome,
+          metronomeCustomerId,
+          startingAt.toISOString(),
+        );
+      } catch (endError) {
+        if (!isMetronomeHourBoundaryError(endError)) throw endError;
+        startingAt = currentMetronomeHourBoundary();
+        console.warn(
+          `[contracts] Exact-time contract endings are unavailable; retrying at ${startingAt.toISOString()}`,
+        );
+        endedContractIds = await endActiveCustomerContractsAt(
+          metronome,
+          metronomeCustomerId,
+          startingAt.toISOString(),
+        );
+      }
+    }
+
+    const {
+      metronomeDeliveryMethodId,
+      stripeCustomerId: headerStripeCustomerId,
+    } = withFallbackHeaders(request.headers);
+    const stripeCustomerId =
+      headerStripeCustomerId ??
+      (await getStripeCustomerIdFromMetronomeCustomer(
+        metronome,
+        metronomeCustomerId,
+      ));
 
     // Ensure the customer has a Stripe billing config before creating the contract.
     const deliveryMethodId = resolveMetronomeDeliveryMethodId(metronomeDeliveryMethodId);
@@ -131,12 +190,75 @@ export async function POST(
     }
 
     const createdAfter = Math.floor(Date.now() / 1000) - 15;
-    const contractId = await createContract(metronome, {
-      metronomeCustomerId,
-      packageId,
-      startingAt: startingAt.toISOString(),
-      preferredDeliveryMethodId: metronomeDeliveryMethodId,
-    });
+    let contractId: string;
+    try {
+      console.log(`Creating contract for customer ${metronomeCustomerId} with package ${packageId} starting ${startingAt.toISOString()}`);
+      contractId = await createContract(metronome, {
+        metronomeCustomerId,
+        packageId,
+        startingAt: startingAt.toISOString(),
+        preferredDeliveryMethodId: metronomeDeliveryMethodId,
+      });
+    } catch (contractError) {
+      if (isMetronomeHourBoundaryError(contractError)) {
+        if (endedContractIds.length > 0) {
+          await restoreOpenEndedContracts(
+            metronome,
+            metronomeCustomerId,
+            endedContractIds,
+          );
+        }
+
+        startingAt = currentMetronomeHourBoundary();
+        endedContractIds =
+          upgrade === true
+            ? await endActiveCustomerContractsAt(
+                metronome,
+                metronomeCustomerId,
+                startingAt.toISOString(),
+              )
+            : [];
+        console.warn(
+          `[contracts] Exact-time package transitions are unavailable; retrying at ${startingAt.toISOString()}`,
+        );
+        try {
+          contractId = await createContract(metronome, {
+            metronomeCustomerId,
+            packageId,
+            startingAt: startingAt.toISOString(),
+            preferredDeliveryMethodId: metronomeDeliveryMethodId,
+          });
+        } catch (fallbackError) {
+          if (endedContractIds.length > 0) {
+            await restoreOpenEndedContracts(
+              metronome,
+              metronomeCustomerId,
+              endedContractIds,
+            ).catch((restoreError) => {
+              console.error(
+                '[contracts] Failed to restore contracts after fallback failure:',
+                restoreError,
+              );
+            });
+          }
+          throw fallbackError;
+        }
+      } else {
+      if (endedContractIds.length > 0) {
+        await restoreOpenEndedContracts(
+          metronome,
+          metronomeCustomerId,
+          endedContractIds,
+        ).catch((restoreError) => {
+          console.error(
+            '[contracts] Failed to restore contracts after upgrade failure:',
+            restoreError,
+          );
+        });
+      }
+      throw contractError;
+      }
+    }
 
     console.log(`Created contract ${contractId}`);
 
@@ -144,8 +266,15 @@ export async function POST(
     if (stripeCustomerId) {
       try {
         const stripe = initializeStripe(request.headers);
-        finalizeAndPayMetronomeInvoice(stripe, stripeCustomerId, createdAfter, 'contracts').catch(
-          (err) => console.error('[contracts] Background invoice payment failed:', err),
+        after(() =>
+          finalizeAndPayMetronomeInvoice(
+            stripe,
+            stripeCustomerId,
+            createdAfter,
+            'contracts',
+          ).catch((err) =>
+            console.error('[contracts] Background invoice payment failed:', err),
+          ),
         );
       } catch {
         // Stripe not configured — skip

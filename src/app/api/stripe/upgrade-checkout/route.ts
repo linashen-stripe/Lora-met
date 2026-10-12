@@ -3,6 +3,7 @@ import initializeStripe from '@/utils/stripe';
 import { initializeMetronome, listPackages } from '@/utils/metronome';
 import { pickMetronomePackageForTier } from '@/utils/metronomePackageResolve';
 import { getPublicOriginFromRequest } from '@/utils/getPublicOriginFromRequest';
+import { normalizeDemoMode, type DemoMode } from '@/config/demoModes';
 
 /** Metronome usage ingest allows roughly 33 days of history; cap backdating here. */
 const MAX_CONTRACT_START_DAYS_AGO = 33;
@@ -21,6 +22,7 @@ interface RequestBody {
    */
   /** Metronome package to attach after setup (name matched case-insensitively). Default `premium`. */
   contractPackage?: 'premium' | 'enterprise';
+  demoMode?: DemoMode;
 }
 
 export async function POST(request: NextRequest) {
@@ -41,7 +43,9 @@ export async function POST(request: NextRequest) {
       language = 'en',
       contractStartDaysAgo: rawDaysAgo,
       contractPackage = 'premium',
+      demoMode: rawDemoMode,
     }: RequestBody = await request.json();
+    const demoMode = normalizeDemoMode(rawDemoMode);
 
     const contractStartDaysAgo =
       typeof rawDaysAgo === 'number' && rawDaysAgo > 0
@@ -60,6 +64,7 @@ export async function POST(request: NextRequest) {
     const metronomePackage = pickMetronomePackageForTier(
       packages as { id: string; name?: string }[],
       contractPackage === 'enterprise' ? 'enterprise' : 'premium',
+      demoMode,
     );
 
     if (!metronomePackage) {
@@ -89,6 +94,7 @@ export async function POST(request: NextRequest) {
         packageId: metronomePackage.id,
         packageName: metronomePackage.name ?? '',
         language,
+        demoMode,
         ...(contractStartDaysAgo
           ? {
               contractStartDaysAgo: String(contractStartDaysAgo),
@@ -97,7 +103,7 @@ export async function POST(request: NextRequest) {
           : {}),
       },
       success_url: `${baseUrl}/api/stripe/upgrade-checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/${language}/chat`,
+      cancel_url: `${baseUrl}/${language}/demos/${demoMode}`,
     });
 
     return NextResponse.json({ url: session.url });

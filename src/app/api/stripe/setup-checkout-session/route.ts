@@ -13,13 +13,19 @@ export async function POST(request: NextRequest) {
   try {
     const stripe = initializeStripe(request.headers);
     const { language, currency: currencyFromHeaders } = withFallbackHeaders(request.headers);
-    const { settings } = await request.json();
+    const { settings, stripeCustomerId: stripeCustomerIdFromBody } =
+      await request.json();
 
-    const stripeCustomerId = getStripeCustomerId(request.headers);
+    const stripeCustomerId =
+      (typeof stripeCustomerIdFromBody === 'string' &&
+      stripeCustomerIdFromBody.startsWith('cus_')
+        ? stripeCustomerIdFromBody
+        : undefined) || getStripeCustomerId(request.headers);
     if (!stripeCustomerId) {
-      const allHeaders: Record<string, string> = {};
-      request.headers.forEach((v, k) => { allHeaders[k] = k.startsWith('demo-') ? v : '[redacted]'; });
-      console.error('[setup-checkout-session] Missing stripeCustomerId. Demo headers:', allHeaders);
+      console.error(
+        '[setup-checkout-session] Missing stripeCustomerId. Header present:',
+        Boolean(getStripeCustomerId(request.headers)),
+      );
       return NextResponse.json(
         { error: 'Stripe customer ID is required (link account or set demo-stripe-customer)' },
         { status: 400 },

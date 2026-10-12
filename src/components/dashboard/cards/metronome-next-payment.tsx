@@ -1,17 +1,12 @@
 'use client';
 
-import { formatPrice } from '@/utils/helpers';
 import { Card } from '@/components/ui/card';
 import { Calendar } from 'lucide-react';
 import Skeleton from '@/components/ui/Skeleton';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import { useTranslation } from 'react-i18next';
 import type { MetronomeInvoice } from '@/utils/types';
-
-function creditTypeNameToCurrency(name: string): string {
-  const match = name.match(/^([A-Z]+)/);
-  return match ? match[1].toLowerCase() : 'usd';
-}
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 
 export default function MetronomeNextPaymentCard({
   invoice,
@@ -23,7 +18,6 @@ export default function MetronomeNextPaymentCard({
   const { settings } = useConfigContext();
   const { t } = useTranslation();
   const language = settings?.language || 'en';
-  const currency = creditTypeNameToCurrency(invoice?.credit_type?.name ?? 'USD');
 
   const dueLabel =
     invoice?.end_timestamp &&
@@ -62,7 +56,12 @@ export default function MetronomeNextPaymentCard({
           <>
             <div className='text-3xl font-bold tabular-nums mb-2'>
               {invoice ? (
-                formatPrice(invoice.total, language, currency)
+                formatMetronomeAmount(
+                  invoice.total,
+                  invoice.credit_type?.name,
+                  language,
+                  settings?.currency || 'usd',
+                )
               ) : (
                 <span className='text-muted-foreground'>—</span>
               )}

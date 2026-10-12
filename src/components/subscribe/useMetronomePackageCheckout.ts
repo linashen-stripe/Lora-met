@@ -51,6 +51,7 @@ const useMetronomePackageCheckout = ({
     settings,
     customer,
     metronomeContract,
+    demoMode,
     updateCustomer,
     triggerMetronomeContractRefresh,
   } = useConfigContext();
@@ -75,14 +76,18 @@ const useMetronomePackageCheckout = ({
     setError(null);
 
     const createSession = async () => {
+      let stripeCustomerId = customer?.stripeCustomerId;
+
       // If no Stripe customer yet, re-run sign-in to create and link one.
-      if (!customer?.stripeCustomerId && customer?.email) {
+      if (!stripeCustomerId && customer?.email) {
         try {
           const { data: signInData } = await fetchClient.post('/api/auth/sign-in', {
             email: customer.email,
+            demoMode,
           });
           if (signInData.stripeCustomerId) {
-            updateCustomer({ stripeCustomerId: signInData.stripeCustomerId });
+            stripeCustomerId = signInData.stripeCustomerId;
+            updateCustomer({ stripeCustomerId });
           }
         } catch {
           // non-fatal — setup-checkout-session will surface the error
@@ -94,14 +99,25 @@ const useMetronomePackageCheckout = ({
           language: settings.language,
           currency: settings.currency,
         },
+        stripeCustomerId,
       });
       setCheckoutData(data);
     };
 
-    createSession().catch(() => {
-      setError('Could not create checkout session, please try again.');
+    createSession().catch((error: any) => {
+      setError(
+        error?.response?.data?.error ||
+          'Could not create checkout session, please try again.',
+      );
     });
-  }, [settings, packageId]);
+  }, [
+    settings,
+    packageId,
+    demoMode,
+    customer?.email,
+    customer?.stripeCustomerId,
+    updateCustomer,
+  ]);
 
   useEffect(() => {
     if (!packageId || !settings) {
@@ -181,7 +197,9 @@ const useMetronomePackageCheckout = ({
       keepProcessingUntilNavigation = true;
       router.push(
         `/${lang}/dashboard${
-          typeof creditsFrom === 'number' ? `?creditsFrom=${creditsFrom}` : ''
+          typeof creditsFrom === 'number'
+            ? `?creditsFrom=${creditsFrom}&demoMode=${demoMode}`
+            : `?demoMode=${demoMode}`
         }`,
       );
     } catch (err: any) {
@@ -200,6 +218,7 @@ const useMetronomePackageCheckout = ({
     customer,
     packageId,
     settings,
+    demoMode,
     router,
     isUpgrade,
     metronomeContract?.creditBalance.totalAvailable,

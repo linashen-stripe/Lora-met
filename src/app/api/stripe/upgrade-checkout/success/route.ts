@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { after, NextRequest, NextResponse } from 'next/server';
 import { subDays } from 'date-fns';
 import initializeStripe from '@/utils/stripe';
 import { getPublicOriginFromRequest } from '@/utils/getPublicOriginFromRequest';
@@ -10,6 +10,8 @@ import {
   endActiveCustomerContractsAt,
   restoreOpenEndedContracts,
   resolveMetronomeDeliveryMethodIdAsync,
+  currentMetronomeHourBoundary,
+  isMetronomeHourBoundaryError,
 } from '@/utils/metronome';
 import { finalizeAndPayMetronomeInvoice } from '@/utils/stripeInvoiceFinalize';
 
@@ -50,6 +52,7 @@ export async function GET(request: NextRequest) {
       packageId,
       packageName,
       language = 'en',
+      demoMode = 'generation',
       contractStartDaysAgo: contractStartDaysAgoRaw,
       seedUsageAfter,
     } = session.metadata ?? {};
@@ -113,13 +116,28 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      let endedContractIds: string[] = [];
-      try {
+      const currentContracts = await metronome.v2.contracts.list({
+        customer_id: metronomeCustomerId,
+      });
+      const alreadyProvisioned = (currentContracts.data ?? []).find(
+        (contract: any) =>
+          contract.package_id === packageId &&
+          !contract.archived_at &&
+          (!contract.ending_before ||
+            new Date(contract.ending_before) > new Date()),
+      );
+
+      if (alreadyProvisioned) {
+        console.log(
+          `[upgrade-checkout/success] Checkout ${sessionId} already provisioned contract ${alreadyProvisioned.id}; skipping duplicate creation`,
+        );
+      } else {
+        let endedContractIds: string[] = [];
+        try {
         const isQuickstart =
           seedUsageAfter === 'true' && contractStartDaysAgo > 0;
-        const transitionAt = new Date();
-        transitionAt.setMilliseconds(0);
-        const startingAt = isQuickstart
+        let transitionAt = new Date();
+        let startingAt = isQuickstart
           ? subDays(transitionAt, contractStartDaysAgo)
           : transitionAt;
 
@@ -127,19 +145,84 @@ export async function GET(request: NextRequest) {
         // Self-serve upgrades preserve the Free contract and end it exactly where
         // Premium begins, so earlier usage cannot be re-rated against Premium.
         if (!isQuickstart) {
-          endedContractIds = await endActiveCustomerContractsAt(
-            metronome,
-            metronomeCustomerId,
-            transitionAt.toISOString(),
-          );
+          try {
+            endedContractIds = await endActiveCustomerContractsAt(
+              metronome,
+              metronomeCustomerId,
+              transitionAt.toISOString(),
+            );
+          } catch (endError) {
+            if (!isMetronomeHourBoundaryError(endError)) throw endError;
+            transitionAt = currentMetronomeHourBoundary();
+            startingAt = transitionAt;
+            console.warn(
+              `[upgrade-checkout/success] Exact-time contract endings are unavailable; retrying at ${startingAt.toISOString()}`,
+            );
+            endedContractIds = await endActiveCustomerContractsAt(
+              metronome,
+              metronomeCustomerId,
+              transitionAt.toISOString(),
+            );
+          }
         }
 
         const createdAfter = Math.floor(Date.now() / 1000) - 15;
-        const contractId = await createContract(metronome, {
-          metronomeCustomerId,
-          packageId,
-          startingAt: startingAt.toISOString(),
-        });
+        let contractId: string;
+        try {
+          contractId = await createContract(metronome, {
+            metronomeCustomerId,
+            packageId,
+            startingAt: startingAt.toISOString(),
+            uniquenessKey: `checkout-${sessionId}`,
+          });
+        } catch (exactTimeError) {
+          if ((exactTimeError as { status?: number })?.status === 409) {
+            const contracts = await metronome.v2.contracts.list({
+              customer_id: metronomeCustomerId,
+            });
+            const duplicate = (contracts.data ?? []).find(
+              (contract: any) =>
+                contract.package_id === packageId && !contract.archived_at,
+            );
+            if (!duplicate) throw exactTimeError;
+            contractId = duplicate.id;
+            console.log(
+              `[upgrade-checkout/success] Reused idempotent contract ${contractId}`,
+            );
+          } else {
+          if (!isMetronomeHourBoundaryError(exactTimeError)) {
+            throw exactTimeError;
+          }
+
+          if (endedContractIds.length > 0) {
+            await restoreOpenEndedContracts(
+              metronome,
+              metronomeCustomerId,
+              endedContractIds,
+            );
+          }
+          transitionAt = currentMetronomeHourBoundary();
+          startingAt = isQuickstart
+            ? subDays(transitionAt, contractStartDaysAgo)
+            : transitionAt;
+          endedContractIds = !isQuickstart
+            ? await endActiveCustomerContractsAt(
+                metronome,
+                metronomeCustomerId,
+                transitionAt.toISOString(),
+              )
+            : [];
+          console.warn(
+            `[upgrade-checkout/success] Exact-time package transitions are unavailable; retrying at ${startingAt.toISOString()}`,
+          );
+          contractId = await createContract(metronome, {
+            metronomeCustomerId,
+            packageId,
+            startingAt: startingAt.toISOString(),
+            uniquenessKey: `checkout-${sessionId}`,
+          });
+          }
+        }
         console.log(
           `✅ Created Metronome ${packageName} contract: ${contractId} (starting_at ${startingAt.toISOString()})`,
         );
@@ -147,12 +230,16 @@ export async function GET(request: NextRequest) {
         // Finalize and pay the subscription invoice Metronome creates in Stripe.
         // Runs in background — don't block the redirect.
         if (session.customer) {
-          finalizeAndPayMetronomeInvoice(
-            stripe,
-            session.customer as string,
-            createdAfter,
-            'upgrade',
-          ).catch((err) => console.error('[upgrade] Background invoice payment failed:', err));
+          after(() =>
+            finalizeAndPayMetronomeInvoice(
+              stripe,
+              session.customer as string,
+              createdAfter,
+              'upgrade',
+            ).catch((err) =>
+              console.error('[upgrade] Background invoice payment failed:', err),
+            ),
+          );
         }
 
         try {
@@ -167,30 +254,35 @@ export async function GET(request: NextRequest) {
           // seats optional
         }
 
-      } catch (contractError) {
-        console.error(
-          'Failed to create Metronome contract after checkout:',
-          contractError,
-        );
-        if (endedContractIds.length > 0) {
-          try {
-            await restoreOpenEndedContracts(
-              metronome,
-              metronomeCustomerId,
-              endedContractIds,
-            );
-          } catch (restoreError) {
-            console.error(
-              'Failed to restore previous contracts after upgrade failure:',
-              restoreError,
-            );
+        } catch (contractError) {
+          console.error(
+            'Failed to create Metronome contract after checkout:',
+            contractError,
+          );
+          if (endedContractIds.length > 0) {
+            try {
+              await restoreOpenEndedContracts(
+                metronome,
+                metronomeCustomerId,
+                endedContractIds,
+              );
+            } catch (restoreError) {
+              console.error(
+                'Failed to restore previous contracts after upgrade failure:',
+                restoreError,
+              );
+            }
           }
         }
       }
     }
 
     // Quickstart sets seedUsageAfter=true in session metadata — seed history in the background.
-    if (seedUsageAfter === 'true' && metronomeCustomerId) {
+    if (
+      seedUsageAfter === 'true' &&
+      demoMode === 'generation' &&
+      metronomeCustomerId
+    ) {
       const seedUrl = new URL('/api/metronome/seed-usage-multi-project', publicOrigin);
       seedUrl.searchParams.set('customerId', metronomeCustomerId);
       seedUrl.searchParams.set('story', 'healthy');
@@ -203,7 +295,11 @@ export async function GET(request: NextRequest) {
         .catch((err) => console.warn('[upgrade-checkout/success] seed-usage error:', err));
     }
 
-    const redirectUrl = new URL(`/${language}/dashboard`, publicOrigin);
+    const redirectPath =
+      seedUsageAfter === 'true' && demoMode === 'generation'
+        ? `/${language}/dashboard?demoMode=${demoMode}`
+        : `/${language}/demos/${demoMode}`;
+    const redirectUrl = new URL(redirectPath, publicOrigin);
     console.log('[upgrade-checkout/success] redirect:', redirectUrl.href);
     return NextResponse.redirect(redirectUrl);
   } catch (error) {

@@ -1,0 +1,110 @@
+{
+  "version": 5,
+  "namespace": "lora-generate",
+  "eventType": "generation.completed",
+  "pricingUnit": {
+    "name": "Generation Credits",
+    "fiatPerCustomCredit": 1
+  },
+  "groupKeys": [
+    ["operation", "quality", "model"],
+    ["operation", "quality", "model", "project_id", "user_id"],
+    ["workspace_id"],
+    ["project_id"],
+    ["user_id"]
+  ],
+  "pricingGroupKey": ["operation", "quality", "model"],
+  "presentationGroupKey": ["project_id", "user_id"],
+  "metrics": [
+    {
+      "key": "image",
+      "name": "Lora Generate - Image Generation",
+      "modality": "image",
+      "unit": "jobs"
+    },
+    {
+      "key": "video",
+      "name": "Lora Generate - Video Generation",
+      "modality": "video",
+      "unit": "seconds"
+    },
+    {
+      "key": "3d",
+      "name": "Lora Generate - 3D Generation",
+      "modality": "3d",
+      "unit": "jobs"
+    }
+  ],
+  "rates": [
+    {
+      "metric": "image",
+      "operation": "text_to_image",
+      "quality": "standard",
+      "model": "lora-vision-2",
+      "creditsPerUnit": 10
+    },
+    {
+      "metric": "image",
+      "operation": "text_to_image",
+      "quality": "ultra",
+      "model": "lora-vision-2",
+      "creditsPerUnit": 50
+    },
+    {
+      "metric": "video",
+      "operation": "text_to_video",
+      "quality": "standard",
+      "model": "lora-motion-1",
+      "creditsPerUnit": 5
+    },
+    {
+      "metric": "video",
+      "operation": "image_to_video",
+      "quality": "ultra",
+      "model": "lora-motion-1",
+      "creditsPerUnit": 10
+    },
+    {
+      "metric": "3d",
+      "operation": "image_to_3d",
+      "quality": "standard",
+      "model": "lora-mesh-3",
+      "creditsPerUnit": 20
+    },
+    {
+      "metric": "3d",
+      "operation": "image_to_3d_with_texture",
+      "quality": "ultra",
+      "model": "lora-mesh-3",
+      "creditsPerUnit": 50
+    }
+  ],
+  "products": {
+    "creditGrant": "Lora Generate - Credit Grant",
+    "premiumSubscription": "Lora Generate - Pro Subscription"
+  },
+  "rateCard": {
+    "name": "Lora Generate - Standard Rate Card v2",
+    "alias": "lora-generate-standard"
+  },
+  "packages": [
+    {
+      "key": "free",
+      "name": "Lora Generate Free",
+      "includedCredits": 100,
+      "monthlyPriceCents": 0
+    },
+    {
+      "key": "premium",
+      "name": "Lora Generate Pro",
+      "includedCredits": 1000,
+      "monthlyPriceCents": 2000
+    },
+    {
+      "key": "enterprise",
+      "name": "Lora Generate Enterprise",
+      "includedCredits": null,
+      "monthlyPriceCents": null
+    }
+  ]
+}

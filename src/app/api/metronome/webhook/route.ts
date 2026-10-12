@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { recordMetronomeReconciliationSignal } from '@/utils/metronomeReconciliationSignal';
 
 /**
  * POST /api/metronome/webhook
@@ -15,7 +16,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  console.log(`[metronome/webhook] Received event type: ${event?.type}, customer: ${event?.properties?.customer_id ?? event?.customer_id}`);
+  const customerId =
+    event?.properties?.customer_id ??
+    event?.customer_id ??
+    event?.data?.customer_id ??
+    event?.data?.customer?.id;
+  const eventType = event?.type ?? null;
+
+  if (typeof customerId === 'string' && customerId.trim()) {
+    recordMetronomeReconciliationSignal(customerId, eventType);
+  }
+
+  console.log(
+    `[metronome/webhook] Received event type: ${eventType}, customer: ${customerId}`,
+  );
 
   return NextResponse.json({ received: true });
 }

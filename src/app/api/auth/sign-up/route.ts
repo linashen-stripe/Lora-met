@@ -10,6 +10,11 @@ import {
   resolveMetronomeDeliveryMethodIdAsync,
 } from '@/utils/metronome';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
+import {
+  DEMO_MODES,
+  normalizeDemoMode,
+  type DemoMode,
+} from '@/config/demoModes';
 
 interface RequestBody {
   email: string;
@@ -18,6 +23,7 @@ interface RequestBody {
   message?: string;
   packageId?: string;
   planType?: string;
+  demoMode?: DemoMode;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,14 +41,23 @@ export async function POST(request: NextRequest) {
 
     const body: RequestBody = await request.json();
     const { email, name, companyName, planType } = body;
+    const demoMode = normalizeDemoMode(body.demoMode);
+    const modeDefinition = DEMO_MODES[demoMode];
     let { packageId } = body;
 
     // For free plan sign-ups without an explicit packageId, find the free trial package dynamically
     if (!packageId && planType === 'free') {
       const packages = await listPackages(metronome);
-      const trialPackage = packages.find((p: any) =>
-        /free|trial/i.test(p.name ?? ''),
+      const modeNames = new Set(
+        modeDefinition.packageNames.free.map((packageName) =>
+          packageName.toLowerCase(),
+        ),
       );
+      const trialPackage =
+        packages.find((pkg: any) =>
+          modeNames.has(String(pkg.name ?? '').trim().toLowerCase()),
+        ) ??
+        packages.find((pkg: any) => /free|trial/i.test(pkg.name ?? ''));
       if (trialPackage) {
         packageId = trialPackage.id;
         console.log(
@@ -55,14 +70,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Missing email' }, { status: 400 });
     }
 
-    const customerName =
+    const baseCustomerName =
       companyName || name || deriveCustomerNameFromEmail(email);
+    const customerName = `[${modeDefinition.label}] ${baseCustomerName}`;
+    const ingestAlias = `${modeDefinition.customerPrefix}:${email}`;
 
     // Resolve rate card currency from the package so the Stripe customer is created
     // in the correct currency (e.g. GBP for UK-market accounts).
     // Create Stripe customer first so Metronome can use it for invoicing
     let stripeCustomerId: string | undefined;
-    const stripe = initializeStripe(request.headers);
+    let stripe: ReturnType<typeof initializeStripe> | null = null;
+    try {
+      stripe = initializeStripe(request.headers);
+    } catch (stripeConfigError) {
+      console.warn(
+        '⚠️ Stripe is not configured; creating a Metronome-only customer:',
+        stripeConfigError,
+      );
+    }
     if (stripe) {
       try {
         const stripeCustomer = await stripe.customers.create({
@@ -88,7 +113,7 @@ export async function POST(request: NextRequest) {
     try {
       metronomeCustomerId = await createMetronomeCustomer(metronome, {
         name: customerName,
-        ingestAliases: [email],
+        ingestAliases: [ingestAlias],
         stripeCustomerId,
         deliveryMethodId,
       });
@@ -137,6 +162,7 @@ export async function POST(request: NextRequest) {
       customerId: metronomeCustomerId,
       metronomeCustomerId,
       name: customerName,
+      demoMode,
       ...(stripeCustomerId ? { stripeCustomerId } : {}),
       ...(metronomeContractId ? { metronomeContractId } : {}),
     });

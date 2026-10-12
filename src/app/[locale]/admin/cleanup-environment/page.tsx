@@ -6,6 +6,7 @@ import { buildDemoRequestHeaders } from '@/utils/demoRequestHeaders';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 import TerminalPanel from '@/components/admin/TerminalPanel';
+import { useConfigContext } from '@/contexts/ConfigContext';
 
 // 3-step admin wizard, in one page, run in order:
 //   1. Archive Metronome customers (archive ONLY — never deletes anything)
@@ -62,6 +63,9 @@ function Stepper({ step }: { step: number }) {
 }
 
 export default function CleanupEnvironmentPage() {
+  const { demoMode } = useConfigContext();
+  const metronomeCustomersUrl = `/api/metronome/demo/customers?demoMode=${demoMode}`;
+  const stripeCustomersUrl = `/api/stripe/demo/customers?demoMode=${demoMode}`;
   const [step, setStep] = useState(1);
   const { lines, outputRef, appendLine, appendLines } = useTerminalLines();
 
@@ -86,7 +90,7 @@ export default function CleanupEnvironmentPage() {
   const loadMetronomeCustomers = useCallback(async () => {
     setLoadingMetronome(true);
     try {
-      const res = await fetch('/api/metronome/demo/customers', {
+      const res = await fetch(metronomeCustomersUrl, {
         headers: buildDemoRequestHeaders(),
       });
       const data = await res.json();
@@ -99,12 +103,12 @@ export default function CleanupEnvironmentPage() {
     } finally {
       setLoadingMetronome(false);
     }
-  }, [appendLine]);
+  }, [appendLine, metronomeCustomersUrl]);
 
   const loadStripeCustomers = useCallback(async () => {
     setLoadingStripe(true);
     try {
-      const res = await fetch('/api/stripe/demo/customers', {
+      const res = await fetch(stripeCustomersUrl, {
         headers: buildDemoRequestHeaders(),
       });
       const data = await res.json();
@@ -117,7 +121,7 @@ export default function CleanupEnvironmentPage() {
     } finally {
       setLoadingStripe(false);
     }
-  }, [appendLine]);
+  }, [appendLine, stripeCustomersUrl]);
 
   useEffect(() => {
     if (step === 1 && metronomeCustomers === null) loadMetronomeCustomers();
@@ -168,7 +172,7 @@ export default function CleanupEnvironmentPage() {
   // Refresh the list after archiving, without re-triggering the initial-load effect noise.
   const loadMetronomeCustomersSilently = async () => {
     try {
-      const res = await fetch('/api/metronome/demo/customers', { headers: buildDemoRequestHeaders() });
+      const res = await fetch(metronomeCustomersUrl, { headers: buildDemoRequestHeaders() });
       const data = await res.json();
       if (res.ok) setMetronomeCustomers(data.customers);
     } catch {
@@ -212,7 +216,7 @@ export default function CleanupEnvironmentPage() {
 
   const loadStripeCustomersSilently = async () => {
     try {
-      const res = await fetch('/api/stripe/demo/customers', { headers: buildDemoRequestHeaders() });
+      const res = await fetch(stripeCustomersUrl, { headers: buildDemoRequestHeaders() });
       const data = await res.json();
       if (res.ok) setStripeCustomers(data.customers);
     } catch {

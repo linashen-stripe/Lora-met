@@ -5,7 +5,7 @@ import { addDays, endOfMonth, format, startOfMonth } from 'date-fns';
 import fetchClient from '@/utils/fetchClient';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
-import { formatPrice } from '@/utils/helpers';
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 import {
   Card,
   CardContent,
@@ -97,6 +97,13 @@ export default function ProjectUsageStorageBar({
   const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
   const language = settings?.language || 'en';
   const currency = settings?.currency || 'usd';
+  const formatAmount = (amount: number) =>
+    formatMetronomeAmount(
+      amount,
+      metronomeContract?.creditTypeName,
+      language,
+      currency,
+    );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -398,14 +405,14 @@ export default function ProjectUsageStorageBar({
               <span className='font-semibold text-foreground tabular-nums'>
                 {tokenOnlyMode
                   ? '—'
-                  : formatPrice(displayedUsedCents, language, currency)}
+                  : formatAmount(displayedUsedCents)}
               </span>
             </span>
             {capCents > 0 && (
               <span>
                 {t('dashboard.usage.project_storage.capacity')}{' '}
                 <span className='font-semibold text-foreground tabular-nums'>
-                  {formatPrice(displayedCapCents, language, currency)}
+                  {formatAmount(displayedCapCents)}
                 </span>
               </span>
             )}
@@ -437,10 +444,10 @@ export default function ProjectUsageStorageBar({
                         : s.id;
                   const title =
                     s.id === AGGREGATE_SEGMENT_ID
-                      ? `${label}: ${formatPrice(s.cents, language, currency)}`
+                      ? `${label}: ${formatAmount(s.cents)}`
                       : tokenOnlyMode
                         ? `${label}: ${s.tokens.toLocaleString(language)} tokens (${(s.frac * 100).toFixed(0)}%)`
-                        : `${label}: ${formatPrice(s.cents, language, currency)}`;
+                        : `${label}: ${formatAmount(s.cents)}`;
                   return (
                     <div
                       key={s.id}
@@ -481,7 +488,7 @@ export default function ProjectUsageStorageBar({
                 <span className='tabular-nums'>
                   {tokenOnlyMode
                     ? `${s.tokens.toLocaleString(language)} tok (${(s.frac * 100).toFixed(0)}%)`
-                    : formatPrice(s.cents, language, currency)}
+                    : formatAmount(s.cents)}
                 </span>
               </li>
             ))}
@@ -490,10 +497,8 @@ export default function ProjectUsageStorageBar({
                 <span className='inline-block h-2.5 w-2.5 rounded-sm bg-gray-300' />
                 <span>{t('dashboard.usage.project_storage.available')}</span>
                 <span className='tabular-nums'>
-                  {formatPrice(
+                  {formatAmount(
                     Math.max(0, displayedCapCents - displayedUsedCents),
-                    language,
-                    currency,
                   )}
                 </span>
               </li>

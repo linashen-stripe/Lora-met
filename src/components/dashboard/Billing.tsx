@@ -72,7 +72,7 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
 
     setNetBalanceLoaded(false);
     fetchNetBalance();
-    const interval = setInterval(fetchNetBalance, 10_000);
+    const interval = setInterval(fetchNetBalance, 60_000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -121,7 +121,7 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
 
     const interval = setInterval(
       () => fetchInvoices().catch((err) => console.error('Failed to fetch Metronome invoices:', err)),
-      10_000,
+      60_000,
     );
     return () => clearInterval(interval);
   }, [customer?.id, customer?.metronomeCustomerId]);
@@ -216,10 +216,11 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
 
   const mAvail = metronomeContract?.creditBalance.totalAvailable ?? 0;
   const mTotal = metronomeContract?.creditBalance.totalAmount ?? 0;
-  // ConfigContext already computes totalAvailable = poolCap − current-period usage from
-  // invoice-breakdowns (the reliable source). Use it directly; fall back to net balance only
-  // when ConfigContext's breakdowns fetch failed (mAvail would be the raw balance ~$3 in that case).
-  const ubbAvailable = mAvail > 0 ? mAvail : (metronomeNetBalanceCents ?? 0);
+  // A zero contract balance is valid after Free credit is exhausted. Do not treat it as
+  // missing and fall back to getNetBalance, which may include overage.
+  const ubbAvailable = metronomeContract
+    ? Math.max(0, mAvail)
+    : Math.max(0, metronomeNetBalanceCents ?? 0);
   /** Total pool: if Metronome never populated schedule totals but we know remaining, treat as full bar. */
   const ubbTotal = mTotal > 0 ? mTotal : mAvail > 0 ? mAvail : 0;
   const ubbBalanceCurrency = settings?.currency ?? 'usd';
@@ -234,6 +235,7 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
             totalAmount={ubbTotal}
             creditBarVariant='remaining'
             balanceCurrency={ubbBalanceCurrency}
+            creditTypeName={metronomeContract?.creditTypeName}
             autoTopUp={metronomeContract?.autoTopUp}
             animationFrom={creditsAnimationFrom}
           />

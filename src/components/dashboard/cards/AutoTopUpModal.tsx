@@ -14,6 +14,7 @@ import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import { formatPrice } from '@/utils/helpers';
+import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 
 interface AutoTopUpModalProps {
   open: boolean;
@@ -22,7 +23,10 @@ interface AutoTopUpModalProps {
 
 export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
   const { t } = useTranslation();
-  const { customer, settings } = useConfigContext();
+  const { customer, settings, metronomeContract, demoMode } =
+    useConfigContext();
+  const customCreditTypeName =
+    demoMode === 'generation' ? metronomeContract?.creditTypeName : undefined;
   const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
   const [threshold, setThreshold] = useState('');
   const [topUpAmount, setTopUpAmount] = useState('');
@@ -34,14 +38,18 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
     setError(null);
 
     try {
-      const thresholdCents = Math.round(Number(threshold) * 100);
-      const topUpAmountCents = Math.round(Number(topUpAmount) * 100);
+      const thresholdAmount = Math.round(
+        Number(threshold) * (customCreditTypeName ? 1 : 100),
+      );
+      const rechargeAmount = Math.round(
+        Number(topUpAmount) * (customCreditTypeName ? 1 : 100),
+      );
 
       if (metronomeCustomerId) {
         await fetchClient.post('/api/metronome/notifications', {
           metronomeCustomerId,
-          thresholdCents,
-          rechargeAmountCents: topUpAmountCents,
+          thresholdAmount,
+          rechargeAmount,
         });
       }
 
@@ -128,16 +136,30 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
               <div className='mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md'>
                 <p className='text-sm text-gray-600'>
                   {t('modals.auto_top_up.disclaimer', {
-                    topUpAmount: formatPrice(
-                      Number(topUpAmount) * 100,
-                      settings?.language,
-                      settings?.currency,
-                    ),
-                    threshold: formatPrice(
-                      Number(threshold) * 100,
-                      settings?.language,
-                      settings?.currency,
-                    ),
+                    topUpAmount: customCreditTypeName
+                      ? formatMetronomeAmount(
+                          Number(topUpAmount),
+                          customCreditTypeName,
+                          settings?.language,
+                          settings?.currency,
+                        )
+                      : formatPrice(
+                          Number(topUpAmount) * 100,
+                          settings?.language,
+                          settings?.currency,
+                        ),
+                    threshold: customCreditTypeName
+                      ? formatMetronomeAmount(
+                          Number(threshold),
+                          customCreditTypeName,
+                          settings?.language,
+                          settings?.currency,
+                        )
+                      : formatPrice(
+                          Number(threshold) * 100,
+                          settings?.language,
+                          settings?.currency,
+                        ),
                   })}
                 </p>
               </div>

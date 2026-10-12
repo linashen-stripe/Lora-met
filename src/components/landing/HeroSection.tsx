@@ -77,7 +77,7 @@ const Section = ({
 );
 
 function HeroSection() {
-  const { settings, customer } = useConfigContext();
+  const { settings, customer, demoMode } = useConfigContext();
   const router = useRouter();
   const { t } = useTranslation();
   const typedText = useTypewriter({
@@ -94,11 +94,11 @@ function HeroSection() {
 
   const handleGetStarted = () => {
     if (isLoggedIn) {
-      router.push(`/${language}/chat`);
+      router.push(`/${language}/demos/${demoMode}`);
       return;
     }
 
-    router.push(`/${language}/pricing`);
+    router.push(`/${language}/auth/sign-up?plan=free&demoMode=${demoMode}`);
   };
 
   return (

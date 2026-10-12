@@ -15,7 +15,11 @@ import SubscribePricingPlanEmbeddedDialog from '@/components/subscribe/Subscribe
 import SubscribeMetronomePackageDialog from '@/components/subscribe/SubscribeMetronomePackageDialog';
 import { PricingPlan } from '@/utils/types';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
-import { GENERATION_PLANS } from '@/config/generationCatalog';
+import {
+  GENERATION_PLANS,
+  GENERATION_SKUS,
+} from '@/config/generationCatalog';
+import { DEMO_MODES } from '@/config/demoModes';
 
 /** Metronome package `name` must match one of these (case-insensitive, trimmed) to appear on /pricing. */
 const METRONOME_PRICING_PACKAGE_NAMES = new Set(['free', 'premium', 'enterprise']);
@@ -34,6 +38,7 @@ function PricingPageContent() {
     settings,
     plan: currentPlan,
     metronomeContract,
+    demoMode,
   } = useConfigContext();
   const { t } = useTranslation();
   const router = useRouter();
@@ -56,10 +61,12 @@ function PricingPageContent() {
   );
   const hasFreePlan =
     currentPlan?.lookupKey?.includes('free') ||
-    normPackageName(metronomeContract?.name) === 'free';
+    normPackageName(metronomeContract?.name).includes('free');
   const hasPremiumPlan =
     currentPlan?.lookupKey?.includes('premium') ||
-    normPackageName(metronomeContract?.name) === 'premium';
+    ['premium', 'pro'].some((tier) =>
+      normPackageName(metronomeContract?.name).includes(tier),
+    );
   const hasMetronomeContract = Boolean(metronomeContract);
   const checkoutModalEnabled = settings?.checkoutMethod === 'embedded-checkout';
   const currency = settings?.currency || 'usd';
@@ -75,7 +82,7 @@ function PricingPageContent() {
         `/api/metronome/customer/${metronomeCustomerId}/contracts`,
         { packageId, email: customer?.email },
       );
-      router.push(`/${settings?.language || 'en'}/chat`);
+      router.push(`/${settings?.language || 'en'}/demos/${demoMode}`);
     } catch (err: any) {
       const msg =
         err?.response?.data?.error ||
@@ -155,12 +162,16 @@ function PricingPageContent() {
     const freePlanLookupKey = `llama_ai_free_plan_${currency}`;
 
     Promise.all([
-      fetchClient
-        .get(`/api/stripe/pricing-plan?lookup_keys=${premiumPlanLookupKey}`)
-        .catch(() => ({ data: { plans: [] } })),
-      fetchClient
-        .get(`/api/stripe/pricing-plan?lookup_keys=${freePlanLookupKey}`)
-        .catch(() => ({ data: { plans: [] } })),
+      demoMode === 'ai-builder'
+        ? fetchClient
+            .get(`/api/stripe/pricing-plan?lookup_keys=${premiumPlanLookupKey}`)
+            .catch(() => ({ data: { plans: [] } }))
+        : Promise.resolve({ data: { plans: [] } }),
+      demoMode === 'ai-builder'
+        ? fetchClient
+            .get(`/api/stripe/pricing-plan?lookup_keys=${freePlanLookupKey}`)
+            .catch(() => ({ data: { plans: [] } }))
+        : Promise.resolve({ data: { plans: [] } }),
       fetchClient
         .get('/api/metronome/packages')
         .catch(() => ({ data: { packages: [] } })),
@@ -169,7 +180,20 @@ function PricingPageContent() {
         const proPlan = premiumResponse.data.plans[0];
         const freePlanData = freeResponse.data.plans[0];
         const rawPackages = packagesResponse.data.packages ?? [];
-        const packages = rawPackages.filter(isAllowedMetronomePricingPackage);
+        const modePackageNames = new Set(
+          Object.values(DEMO_MODES[demoMode].packageNames)
+            .flat()
+            .map(normPackageName),
+        );
+        const namespacedPackages = rawPackages.filter((pkg: any) =>
+          modePackageNames.has(normPackageName(pkg.name)),
+        );
+        const packages =
+          namespacedPackages.length > 0
+            ? namespacedPackages
+            : demoMode === 'ai-builder'
+              ? rawPackages.filter(isAllowedMetronomePricingPackage)
+              : [];
 
         if (freePlanData) setFreePlan(freePlanData);
         setMetronomePackages(packages);
@@ -201,25 +225,33 @@ function PricingPageContent() {
         console.error('Unable to fetch pricing plans:', err);
         setIsLoading(false);
       });
-  }, [currency]);
+  }, [currency, demoMode]);
 
   // Auto-open upgrade modal if upgrade=true in URL
   useEffect(() => {
     const shouldUpgrade = searchParams.get('upgrade') === 'true';
     if (shouldUpgrade && hasFreePlan && !isLoading) {
-      const premiumPackage = metronomePackages.find(
-        (pkg) => normPackageName(pkg.name) === 'premium',
+      const paidPackageNames = new Set(
+        DEMO_MODES[demoMode].packageNames.premium.map(normPackageName),
+      );
+      const premiumPackage = metronomePackages.find((pkg) =>
+        paidPackageNames.has(normPackageName(pkg.name)),
       );
       if (premiumPackage?.id) {
         setSelectedPackageId(premiumPackage.id);
-      } else if (checkoutModalEnabled) {
+      } else if (demoMode === 'ai-builder' && checkoutModalEnabled) {
         setShowUpgradePaymentModal(true);
+      } else {
+        setPackageError(
+          `Could not find the ${DEMO_MODES[demoMode].label} paid package.`,
+        );
       }
     }
   }, [
     searchParams,
     hasFreePlan,
     checkoutModalEnabled,
+    demoMode,
     isLoading,
     metronomePackages,
   ]);
@@ -239,22 +271,24 @@ function PricingPageContent() {
 
     if (hasFreePlan && !checkoutModalEnabled) {
       return {
-        link: `/${settings?.language}/subscribe/metronome-package?upgrade=true`,
+        link: `/${settings?.language}/subscribe/metronome-package?upgrade=true&demoMode=${demoMode}`,
       };
     }
 
     if (!isLoggedIn) {
       return {
-        link: `/${settings?.language}/auth/sign-up?plan=pricing-plan-pro`,
+        link: `/${settings?.language}/auth/sign-up?plan=pricing-plan-pro&demoMode=${demoMode}`,
       };
     }
 
     return {
-      link: `/${settings?.language}/subscribe/metronome-package`,
+      link: `/${settings?.language}/subscribe/metronome-package?demoMode=${demoMode}`,
     };
   };
 
-  const freePackage = metronomePackages.find((p: any) => normPackageName(p.name) === 'free');
+  const freePackage = metronomePackages.find((p: any) =>
+    normPackageName(p.name).includes('free'),
+  );
 
   const freeCard: Plan = {
     name: t(
@@ -288,8 +322,8 @@ function PricingPageContent() {
         ? t('plans.free.button.current', 'Current Plan')
         : t('plans.free.button.get_started', 'Get Started for Free'),
       link: freePackage
-        ? `/${settings?.language}/auth/sign-up?packageId=${freePackage.id}`
-        : `/${settings?.language}/auth/sign-up?plan=free`,
+        ? `/${settings?.language}/auth/sign-up?packageId=${freePackage.id}&demoMode=${demoMode}`
+        : `/${settings?.language}/auth/sign-up?plan=free&demoMode=${demoMode}`,
       className:
         'w-full mt-8 text-base py-3 bg-accent text-accent-foreground hover:bg-purple-hover transition-colors duration-200',
       icon: undefined,
@@ -338,33 +372,63 @@ function PricingPageContent() {
 
   // Sort packages: free first, enterprise last, premium in the middle
   const sortedPackages = [...metronomePackages].sort((a, b) => {
-    if (normPackageName(a.name) === 'free') return -1;
-    if (normPackageName(b.name) === 'free') return 1;
-    if (normPackageName(a.name) === 'enterprise') return 1;
-    if (normPackageName(b.name) === 'enterprise') return -1;
+    if (normPackageName(a.name).includes('free')) return -1;
+    if (normPackageName(b.name).includes('free')) return 1;
+    if (normPackageName(a.name).includes('enterprise')) return 1;
+    if (normPackageName(b.name).includes('enterprise')) return -1;
     return 0;
   });
 
   // Build package cards from Metronome packages
   const packageCards: Plan[] = sortedPackages.map((pkg, idx) => {
-    const catalogPlan = GENERATION_PLANS.find(
-      (plan) => plan.name.toLowerCase() === normPackageName(pkg.name),
+    const packageName = normPackageName(pkg.name);
+    const catalogPlan = GENERATION_PLANS.find((plan) =>
+      packageName.endsWith(plan.name.toLowerCase()),
     );
+    const aiBuilderIncludedCents =
+      demoMode === 'ai-builder'
+        ? normPackageName(pkg.name).includes('free')
+          ? 500
+          : normPackageName(pkg.name).includes('premium')
+            ? 2_000
+            : null
+        : null;
     const isCurrentPlan =
       Boolean(metronomeContract) && metronomeContract!.name === pkg.name;
 
     const isFreePlan = pkg.price_cents === 0;
     const isPricedPlan = pkg.price_cents != null && pkg.price_cents !== 0;
-    const features: string[] = isFreePlan
-      ? [
+    const features: string[] =
+      demoMode === 'generation'
+        ? isFreePlan
+          ? [
+              'Image, video, and 3D generation',
+              '100 one-time generation credits',
+              'Transparent per-job credit costs',
+            ]
+          : isPricedPlan
+            ? [
+                'All Free plan features',
+                'Monthly generation credit allowance',
+                'Usage and billing analytics',
+                'Priority support',
+              ]
+            : [
+                'Custom prepaid commitment',
+                'Per-seat monthly credit allocations',
+                'Negotiated generation rates',
+                'Auto top-up and spend alerts',
+              ]
+        : isFreePlan
+          ? [
           t('plans.free.features.1', 'Free for individual usage'),
           t('plans.free.features.2', 'Unlimited image and video generation'),
           t('plans.free.features.3', 'Standard embedding creation'),
           t('plans.free.features.4', 'Community support'),
           t('plans.free.features.5', 'Basic analytics dashboard'),
-        ]
-      : isPricedPlan
-        ? [
+          ]
+        : isPricedPlan
+          ? [
             t('plans.premium.features.1', 'All Free Plan features'),
             t('plans.premium.features.2', 'Priority support via email'),
             t('plans.premium.features.3', 'Comprehensive analytics dashboard'),
@@ -380,8 +444,8 @@ function PricingPageContent() {
               'plans.premium.features.6',
               'Automated zero data retention feature',
             ),
-          ]
-        : [
+            ]
+          : [
             t('plans.team.features.1', 'All Premium Plan features'),
             t(
               'plans.team.features.2',
@@ -391,7 +455,7 @@ function PricingPageContent() {
             t('plans.team.features.4', 'Centralized billing management'),
             t('plans.team.features.5', 'Enhanced security features'),
             t('plans.team.features.6', 'Exclusive access to beta features'),
-          ];
+            ];
 
     const isCustomPricing = pkg.price_cents === null;
     const price = isCustomPricing
@@ -423,6 +487,12 @@ function PricingPageContent() {
         amount:
           catalogPlan?.includedCredits != null
             ? `${catalogPlan.includedCredits.toLocaleString()} credits`
+            : aiBuilderIncludedCents != null
+              ? formatPrice(
+                  aiBuilderIncludedCents,
+                  settings?.language,
+                  settings?.currency,
+                )
             : t('plans.team.custom_amount', 'Custom'),
         description: isFreePlan
           ? t('plans.free.credit_description', 'one-time generation allowance')
@@ -452,8 +522,8 @@ function PricingPageContent() {
               link: isCurrentPlan
                 ? undefined
                 : isPricedPlan
-                  ? `/${settings?.language}/auth/sign-up?packageId=${pkg.id}&requiresPayment=true`
-                  : `/${settings?.language}/auth/sign-up?packageId=${pkg.id}`,
+                  ? `/${settings?.language}/auth/sign-up?packageId=${pkg.id}&requiresPayment=true&demoMode=${demoMode}`
+                  : `/${settings?.language}/auth/sign-up?packageId=${pkg.id}&demoMode=${demoMode}`,
             }),
         className:
           'w-full mt-8 text-base py-3 bg-accent text-accent-foreground hover:bg-purple-hover transition-colors duration-200',
@@ -463,9 +533,36 @@ function PricingPageContent() {
     };
   });
 
-  const staticGenerationCards: Plan[] = GENERATION_PLANS.filter((plan) =>
-    ['free', 'pro', 'premium', 'enterprise'].includes(plan.id),
-  ).map((plan) => ({
+  const staticPlanCatalog =
+    demoMode === 'generation'
+      ? GENERATION_PLANS.filter((plan) =>
+          ['free', 'pro', 'premium', 'enterprise'].includes(plan.id),
+        )
+      : [
+          {
+            id: 'free' as const,
+            name: 'AI Builder Free',
+            monthlyPrice: 0,
+            includedCredits: 500,
+            description: 'Try conversational app building with $5 in usage credit.',
+          },
+          {
+            id: 'premium' as const,
+            name: 'AI Builder Premium',
+            monthlyPrice: 20,
+            includedCredits: 2_000,
+            description: 'Token-priced app building with monthly included credit.',
+          },
+          {
+            id: 'enterprise' as const,
+            name: 'AI Builder Enterprise',
+            monthlyPrice: null,
+            includedCredits: null,
+            description: 'Custom commitments and negotiated token rates for teams.',
+          },
+        ];
+
+  const staticModeCards: Plan[] = staticPlanCatalog.map((plan) => ({
     name: plan.name,
     price:
       plan.monthlyPrice === null
@@ -484,10 +581,21 @@ function PricingPageContent() {
       amount:
         plan.includedCredits === null
           ? t('plans.team.custom_amount', 'Custom')
-          : `${plan.includedCredits.toLocaleString()} credits`,
+          : demoMode === 'generation'
+            ? `${plan.includedCredits.toLocaleString()} credits`
+            : formatPrice(
+                plan.includedCredits,
+                settings?.language,
+                settings?.currency,
+              ),
       description:
         plan.id === 'free'
-          ? t('plans.free.credit_description', 'one-time generation allowance')
+          ? t(
+              'plans.free.credit_description',
+              demoMode === 'generation'
+                ? 'one-time generation allowance'
+                : 'one-time usage credit',
+            )
           : t('plans.premium.credit_description', 'included each month'),
       amountClass: 'text-foreground',
       descriptionClass: 'text-muted-foreground',
@@ -500,31 +608,39 @@ function PricingPageContent() {
             'Negotiated generation rates',
             'Auto top-up and spend alerts',
           ]
-        : [
-            'Image, video, and 3D generation',
-            'Transparent per-job credit costs',
-            'Usage and billing analytics',
-          ],
+        : demoMode === 'generation'
+          ? [
+              'Image, video, and 3D generation',
+              'Transparent per-job credit costs',
+              'Usage and billing analytics',
+            ]
+          : [
+              'Conversational application building',
+              'Input and output token pricing',
+              'Usage and billing analytics',
+            ],
     button: {
       text:
         plan.id === 'enterprise'
           ? t('plans.team.button.contact_sales', 'Contact Sales')
-          : t('common.get_started', 'Get started'),
+          : plan.id === 'free'
+            ? t('plans.free.button.get_started', 'Start for free')
+            : t('common.get_started', 'Get started'),
       link:
         plan.id === 'enterprise'
           ? `/${settings?.language}/contact-us`
-          : `/${settings?.language}/auth/sign-up?plan=${plan.id}`,
+          : `/${settings?.language}/auth/sign-up?plan=${plan.id}&demoMode=${demoMode}`,
       className:
         'w-full mt-8 text-base py-3 bg-accent text-accent-foreground hover:bg-purple-hover transition-colors duration-200',
     },
     isPopular: plan.id === 'premium',
   }));
 
-  // Prefer live Metronome packages; show the generation catalog without credentials.
+  // Prefer live Metronome packages; show the selected mode catalog without credentials.
   const middleCards: Plan[] =
     sortedPackages.length > 0
       ? packageCards
-      : staticGenerationCards;
+      : staticModeCards;
 
   const plansData: Plan[] = [...middleCards];
 
@@ -535,10 +651,20 @@ function PricingPageContent() {
         <section className='container mx-auto px-6 py-10 text-center'>
           <div className='flex flex-col items-center mb-8'>
             <h1 className='text-5xl font-semibold tracking-tight text-foreground mb-4'>
-              {t('pricing.page_title')}
+              {demoMode === 'generation'
+                ? t('pricing.generation_page_title', 'Lora Generate pricing')
+                : t('pricing.builder_page_title', 'AI Builder pricing')}
             </h1>
             <p className='text-md text-muted-foreground max-w-2xl mx-auto'>
-              {t('pricing.page_description')}
+              {demoMode === 'generation'
+                ? t(
+                    'pricing.generation_page_description',
+                    'Start with 100 free credits, then scale image, video, and 3D generation as you grow.',
+                  )
+                : t(
+                    'pricing.builder_page_description',
+                    'Start with token usage credit, then scale conversational app building as you grow.',
+                  )}
             </p>
           </div>
         </section>
@@ -565,12 +691,45 @@ function PricingPageContent() {
         <section className='container mx-auto bg-background px-6 pb-24'>
           <div className='mx-auto mb-12 max-w-6xl text-center'>
             <h2 className='text-4xl font-bold tracking-tighter text-foreground'>
-              {t('pricing.pay_as_you_go.title')}
+              {demoMode === 'generation'
+                ? t('pricing.generation_rates_title', 'Generation credit costs')
+                : t('pricing.pay_as_you_go.title')}
             </h2>
             <p className='mt-3 max-w-3xl mx-auto text-lg text-muted-foreground'>
-              {t('pricing.pay_as_you_go.description')}
+              {demoMode === 'generation'
+                ? t(
+                    'pricing.generation_rates_description',
+                    'Each completed job draws down a predictable number of credits.',
+                  )
+                : t('pricing.pay_as_you_go.description')}
             </p>
-            <PayAsYouGoPricingTable />
+            {demoMode === 'generation' ? (
+              <div className='mt-8 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-3'>
+                {GENERATION_SKUS.map((sku) => (
+                  <div
+                    key={sku.id}
+                    className='rounded-xl border border-border bg-card p-5'
+                  >
+                    <p className='text-sm font-medium capitalize text-purple'>
+                      {sku.modality}
+                    </p>
+                    <div className='mt-2 flex items-start justify-between gap-3'>
+                      <h3 className='font-semibold text-foreground'>
+                        {sku.label}
+                      </h3>
+                      <span className='whitespace-nowrap font-semibold text-foreground'>
+                        {sku.credits} {t('common.credits', 'credits')}
+                      </span>
+                    </div>
+                    <p className='mt-2 text-sm text-muted-foreground'>
+                      {sku.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <PayAsYouGoPricingTable />
+            )}
           </div>
         </section>
 

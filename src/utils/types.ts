@@ -17,6 +17,8 @@ export interface MetronomeContract {
   startingAt: string | null;
   /** Pass to `getNetBalance` so balance matches commits/credits on this contract. */
   creditTypeId?: string;
+  /** Fiat currency or custom pricing-unit display name (for example, Generation Credits). */
+  creditTypeName?: string;
   creditBalance: {
     totalAvailable: number;
     totalAmount: number;
@@ -35,6 +37,7 @@ export interface MetronomeInvoiceLineItem {
   quantity?: number;
   unit_price?: number;
   type?: string;
+  credit_type?: { id: string; name: string };
   /** Billable / rate dimensions (e.g. model, tier). */
   pricing_group_values?: Record<string, string>;
   /** Invoice presentation / grouping keys from Metronome (can duplicate line names across rows). */

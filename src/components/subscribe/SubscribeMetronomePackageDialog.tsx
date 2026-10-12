@@ -24,7 +24,7 @@ const SubscribeMetronomePackageDialog = ({
   onClose: () => void;
 }) => {
   const { t } = useTranslation();
-  const { settings } = useConfigContext();
+  const { settings, metronomeContract } = useConfigContext();
   const {
     isLoading,
     isProcessing,
@@ -33,7 +33,10 @@ const SubscribeMetronomePackageDialog = ({
     handleComplete,
     selectedPackage,
     packagesLoaded,
-  } = useMetronomePackageCheckout({ packageId });
+  } = useMetronomePackageCheckout({
+    packageId,
+    isUpgrade: Boolean(metronomeContract),
+  });
 
   return (
     <Dialog open={open} onClose={onClose} className='relative z-50'>
@@ -63,7 +66,7 @@ const SubscribeMetronomePackageDialog = ({
             <div className='w-full overflow-y-auto flex-1'>
               {error ? (
                 <div className='flex flex-col items-center justify-center min-h-[400px] py-8'>
-                  <div className='text-red-500'>{t('auth.errors.checkout_session')}</div>
+                  <div className='max-w-lg text-center text-red-500'>{error}</div>
                 </div>
               ) : isLoading || !checkoutData || isProcessing ? (
                 <div className='flex flex-col items-center justify-center min-h-[400px] py-8'>

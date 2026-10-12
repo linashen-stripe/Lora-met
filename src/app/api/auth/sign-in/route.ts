@@ -4,12 +4,17 @@ import {
   getStripeCustomerIdFromMetronomeCustomer,
   resolveMetronomeDeliveryMethodId,
 } from '@/utils/metronome';
-import { DEFAULT_METRONOME_CUSTOMER_ID } from '@/config/metronomeDefaults';
 import initializeStripe from '@/utils/stripe';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
+import {
+  DEMO_MODES,
+  normalizeDemoMode,
+  type DemoMode,
+} from '@/config/demoModes';
 
 type RequestBody = {
   email: string;
+  demoMode?: DemoMode;
 };
 
 /**
@@ -32,11 +37,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Missing email' }, { status: 400 });
     }
 
-    const result = await metronome.v1.customers.list({ ingest_alias: body.email });
+    const demoMode = normalizeDemoMode(body.demoMode);
+    const ingestAlias = `${DEMO_MODES[demoMode].customerPrefix}:${body.email}`;
+    const result = await metronome.v1.customers.list({
+      ingest_alias: ingestAlias,
+    });
     const customer = result.data[0];
 
-    const metronomeCustomerId = customer?.id ?? DEFAULT_METRONOME_CUSTOMER_ID;
-    const name = customer?.name ?? 'Acme Co';
+    if (!customer) {
+      return NextResponse.json(
+        { message: `No ${DEMO_MODES[demoMode].label} customer found for this email.` },
+        { status: 404 },
+      );
+    }
+
+    const metronomeCustomerId = customer.id;
+    const name = customer.name;
 
     let stripeCustomerId: string | undefined;
     try {

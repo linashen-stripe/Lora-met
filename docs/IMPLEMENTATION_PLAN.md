@@ -37,6 +37,12 @@ The Enterprise example is a 12-month, $100,000 prepaid commitment with five seat
 
 ## Pricing and catalog
 
+- Use one shared Metronome account and Stripe integration, but provision separate
+  namespaced catalog primitives for each demo mode. Do not reuse the AI Builder
+  token metrics, products, rate card, or packages for generation usage.
+- Keep account setup as an idempotent script in this repository rather than a
+  separately deployed setup application. The script must discover/reuse matching
+  primitives, output their IDs, and safely support reruns.
 - Use a custom pricing unit where one generation credit has a $0.01 list value.
 - Use separate metrics and products for image jobs, video seconds, and 3D jobs.
 - Stable dimensions: `operation`, `quality`, `model`, `workspace_id`, `project_id`, and `user_id`.
@@ -103,11 +109,11 @@ Never commit credentials. No model-provider credentials are required.
 - [x] Implement the exact-boundary Free-to-Premium transition
 - [x] Build the prepared Enterprise Quickstart and reset controls
 - [x] Adapt usage seeding and dashboard dimensions
-- [ ] Add the unified demo-mode configuration and switcher
-- [ ] Restore AI Builder under isolated routes
-- [ ] Namespace package resolution, customer state, seeding, dashboards, and cleanup by mode
+- [x] Add the unified demo-mode configuration and switcher
+- [x] Restore AI Builder under isolated routes
+- [x] Namespace package resolution, customer state, seeding, dashboards, and cleanup by mode
 - [ ] Re-run both presenter stories through the unified app
-- [ ] Add catalog provisioning
+- [x] Add and run idempotent Generation catalog provisioning
 - [x] Run lint and build
 - [ ] Verify live Metronome and Stripe behavior once credentials are supplied
 - [x] Add setup and presenter runbooks
