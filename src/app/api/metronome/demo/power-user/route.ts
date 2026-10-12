@@ -3,7 +3,13 @@ import { initializeMetronome } from '@/utils/metronome';
 import initializeStripe from '@/utils/stripe';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
 import { createPowerUserDemoCustomer } from '@/utils/demoPowerUser';
+import { createGenerationPowerUser } from '@/utils/generationPowerUser';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
+import {
+  DEMO_MODES,
+  normalizeDemoMode,
+  type DemoMode,
+} from '@/config/demoModes';
 
 // Creates a fully-wired power user: Stripe customer (with a tax address
 // matched to the rate card's currency), a linked Metronome customer, a
@@ -34,6 +40,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}));
   const customerName = (body.customerName ?? '').trim();
+  const demoMode = normalizeDemoMode(body.demoMode as DemoMode);
   const { metronomeDeliveryMethodId } = withFallbackHeaders(request.headers);
 
   return ndjsonStreamResponse(async (onLog) => {
@@ -41,15 +48,26 @@ export async function POST(request: NextRequest) {
     if (!stripe) throw new Error('Stripe not configured');
     if (!customerName) throw new Error('customerName is required');
 
-    return createPowerUserDemoCustomer({
+    if (demoMode === 'generation') {
+      return createGenerationPowerUser({
+        metronome,
+        stripe,
+        customerName,
+        deliveryMethodId: metronomeDeliveryMethodId,
+        onLog,
+      });
+    }
+
+    const result = await createPowerUserDemoCustomer({
       metronome,
       stripe,
-      customerName,
+      customerName: `[${DEMO_MODES['ai-builder'].label}] ${customerName}`,
       deliveryMethodId: metronomeDeliveryMethodId,
       rateCardName: body.rateCardName,
       commitDollars: body.commitDollars,
       seatMonthlyDollars: body.seatMonthlyDollars,
       onLog,
     });
+    return { ...result, demoMode };
   });
 }

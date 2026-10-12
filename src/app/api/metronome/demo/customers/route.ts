@@ -18,9 +18,13 @@ export async function GET(request: NextRequest) {
   const customers = await listActiveMetronomeCustomers(metronome);
   const filteredCustomers = rawMode
     ? customers.filter((customer) =>
-        customer.name?.startsWith(
-          `[${DEMO_MODES[normalizeDemoMode(rawMode)].label}]`,
-        ),
+        rawMode === 'all'
+          ? Object.values(DEMO_MODES).some((mode) =>
+              customer.name?.startsWith(`[${mode.label}]`),
+            )
+          : customer.name?.startsWith(
+              `[${DEMO_MODES[normalizeDemoMode(rawMode)].label}]`,
+            ),
       )
     : customers;
   return NextResponse.json({ customers: filteredCustomers });

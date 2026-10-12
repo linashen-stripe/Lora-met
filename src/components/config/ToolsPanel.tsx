@@ -3,6 +3,7 @@
 
 import { useConfigContext } from '@/contexts/ConfigContext';
 import Image from 'next/image';
+import Link from 'next/link';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
@@ -58,7 +59,16 @@ export default function ToolsPanel() {
           {/* Panel tabs */}
           <TabSelector activeTab={activeTab} setActiveTab={setActiveTab} />
           {activeTab === 'Demo' && (
-            <DemoModeSwitcher locale={settings.language || 'en'} />
+            <>
+              <DemoModeSwitcher locale={settings.language || 'en'} />
+              <Link
+                href={`/${settings.language || 'en'}/admin/cleanup-environment`}
+                className='mt-4 block w-full rounded-md border border-gray-300 px-4 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+                onClick={() => toggleToolsPanel('isToolsPanelOpen')}
+              >
+                Admin: clean &amp; seed data
+              </Link>
+            </>
           )}
           {activeTab === 'Appearance' && <AppearanceTab />}
           {activeTab === 'Account' && (

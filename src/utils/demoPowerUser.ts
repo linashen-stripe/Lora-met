@@ -251,7 +251,7 @@ export async function resolveProductsByName(
   return resolved;
 }
 
-async function createStripeCustomerForDemo(
+export async function createStripeCustomerForDemo(
   stripe: Stripe,
   customerName: string,
   currencyCode: string,

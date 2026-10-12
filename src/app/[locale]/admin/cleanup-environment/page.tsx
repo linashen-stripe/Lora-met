@@ -7,6 +7,7 @@ import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 import TerminalPanel from '@/components/admin/TerminalPanel';
 import { useConfigContext } from '@/contexts/ConfigContext';
+import type { DemoMode } from '@/config/demoModes';
 
 // 3-step admin wizard, in one page, run in order:
 //   1. Archive Metronome customers (archive ONLY — never deletes anything)
@@ -64,8 +65,8 @@ function Stepper({ step }: { step: number }) {
 
 export default function CleanupEnvironmentPage() {
   const { demoMode } = useConfigContext();
-  const metronomeCustomersUrl = `/api/metronome/demo/customers?demoMode=${demoMode}`;
-  const stripeCustomersUrl = `/api/stripe/demo/customers?demoMode=${demoMode}`;
+  const metronomeCustomersUrl = '/api/metronome/demo/customers?demoMode=all';
+  const stripeCustomersUrl = '/api/stripe/demo/customers?demoMode=all';
   const [step, setStep] = useState(1);
   const { lines, outputRef, appendLine, appendLines } = useTerminalLines();
 
@@ -85,6 +86,8 @@ export default function CleanupEnvironmentPage() {
 
   // Step 3 — add power user
   const [customerName, setCustomerName] = useState('Bufo');
+  const [powerUserDemoMode, setPowerUserDemoMode] =
+    useState<DemoMode>(demoMode);
   const [creatingPowerUser, setCreatingPowerUser] = useState(false);
 
   const loadMetronomeCustomers = useCallback(async () => {
@@ -228,12 +231,18 @@ export default function CleanupEnvironmentPage() {
     const name = customerName.trim();
     if (!name || creatingPowerUser) return;
     setCreatingPowerUser(true);
-    appendLines(['', `$ create power user "${name}"`]);
+    appendLines([
+      '',
+      `$ create ${powerUserDemoMode} power user "${name}"`,
+    ]);
     try {
       const res = await fetch('/api/metronome/demo/power-user', {
         method: 'POST',
         headers: buildDemoRequestHeaders(),
-        body: JSON.stringify({ customerName: name }),
+        body: JSON.stringify({
+          customerName: name,
+          demoMode: powerUserDemoMode,
+        }),
       });
       await consumeNdjsonStream(res, (msg) => {
         if (msg.type === 'log') msg.line.split('\n').forEach(appendLine);
@@ -438,10 +447,27 @@ export default function CleanupEnvironmentPage() {
       {step === 3 && (
         <div className='mb-6'>
           <p className='mb-3 text-sm text-gray-600'>
-            Creates a Stripe customer (tax address + default test card matched to this
-            account&apos;s currency), a linked Metronome customer, a large commitment + seat
-            contract, and ~30 days of seeded usage.
+            Creates linked Stripe and Metronome customers, the selected demo&apos;s
+            power-user contract, and representative historical usage.
           </p>
+          <label
+            htmlFor='power-user-demo'
+            className='mb-1 block text-sm font-medium text-gray-700'
+          >
+            Demo
+          </label>
+          <select
+            id='power-user-demo'
+            value={powerUserDemoMode}
+            onChange={(event) =>
+              setPowerUserDemoMode(event.target.value as DemoMode)
+            }
+            disabled={creatingPowerUser}
+            className='mb-3 w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100'
+          >
+            <option value='generation'>Lora Generate</option>
+            <option value='ai-builder'>AI Builder</option>
+          </select>
           <label htmlFor='power-user-name' className='mb-1 block text-sm font-medium text-gray-700'>
             Power user name
           </label>
