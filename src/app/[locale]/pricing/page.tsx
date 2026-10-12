@@ -399,8 +399,6 @@ function PricingPageContent() {
     const isFreePlan = pkg.price_cents === 0;
     const isPricedPlan = pkg.price_cents != null && pkg.price_cents !== 0;
     const prepaidCommit = pkg.commits?.[0];
-    const prepaidAccessItem =
-      prepaidCommit?.access_schedule?.schedule_items?.[0];
     const prepaidInvoiceItem =
       prepaidCommit?.invoice_schedule?.schedule_items?.[0];
     const prepaidInvoiceCents =
@@ -498,11 +496,6 @@ function PricingPageContent() {
         amount:
           catalogPlan?.includedCredits != null
             ? `${catalogPlan.includedCredits.toLocaleString()} credits`
-            : prepaidAccessItem?.amount != null
-              ? `${prepaidAccessItem.amount.toLocaleString()} ${
-                  prepaidCommit?.access_schedule?.credit_type?.name ??
-                  'credits'
-                }`
             : aiBuilderIncludedCents != null
               ? formatPrice(
                   aiBuilderIncludedCents,
