@@ -732,43 +732,57 @@ function PricingPageContent() {
                 : t('pricing.pay_as_you_go.description')}
             </p>
             {demoMode === 'generation' ? (
-              <div className='mt-8 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-3'>
-                {GENERATION_SKUS.map((sku) => (
-                  <div
-                    key={sku.id}
-                    className='rounded-xl border border-border bg-card p-5'
-                  >
-                    <p className='text-sm font-medium capitalize text-purple'>
-                      {sku.modality}
-                    </p>
-                    <div className='mt-2 flex items-start justify-between gap-3'>
-                      <h3 className='font-semibold text-foreground'>
-                        {sku.label}
-                      </h3>
-                      <span className='whitespace-nowrap font-semibold text-foreground'>
-                        {sku.credits} {t('common.credits', 'credits')}
-                      </span>
-                    </div>
-                    <p className='mt-2 text-sm text-muted-foreground'>
-                      {sku.description}
-                    </p>
-                    <div className='mt-4 flex flex-wrap gap-2 text-xs'>
-                      <span className='rounded-full bg-violet-100 px-2.5 py-1 font-medium text-violet-800'>
-                        {sku.model}
-                      </span>
-                      <span className='rounded-full bg-gray-100 px-2.5 py-1 text-gray-700'>
-                        {sku.quality}
-                      </span>
-                      <span className='rounded-full bg-gray-100 px-2.5 py-1 text-gray-700'>
-                        {sku.operation.replaceAll('_', ' ')}
-                      </span>
-                      <span className='rounded-full bg-gray-100 px-2.5 py-1 text-gray-700'>
-                        {sku.quantity} {sku.unit}
-                        {sku.quantity === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+              <div className='mt-8 overflow-x-auto rounded-xl border border-border bg-card text-left shadow-sm'>
+                <table className='w-full min-w-[860px] border-collapse'>
+                  <thead className='bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground'>
+                    <tr>
+                      <th className='px-5 py-3 font-semibold'>Product</th>
+                      <th className='px-5 py-3 font-semibold'>Model</th>
+                      <th className='px-5 py-3 font-semibold'>Operation</th>
+                      <th className='px-5 py-3 font-semibold'>Quality</th>
+                      <th className='px-5 py-3 font-semibold'>Billed as</th>
+                      <th className='px-5 py-3 text-right font-semibold'>
+                        Cost
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-border'>
+                    {GENERATION_SKUS.map((sku) => (
+                      <tr key={sku.id} className='align-top hover:bg-muted/30'>
+                        <td className='px-5 py-4'>
+                          <div className='flex items-center gap-2'>
+                            <span className='rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold capitalize text-violet-800'>
+                              {sku.modality}
+                            </span>
+                            <span className='font-semibold text-foreground'>
+                              {sku.label}
+                            </span>
+                          </div>
+                          <p className='mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground'>
+                            {sku.description}
+                          </p>
+                        </td>
+                        <td className='whitespace-nowrap px-5 py-4 font-mono text-sm text-foreground'>
+                          {sku.model}
+                        </td>
+                        <td className='px-5 py-4 text-sm capitalize text-foreground'>
+                          {sku.operation.replaceAll('_', ' ')}
+                        </td>
+                        <td className='px-5 py-4 text-sm capitalize text-foreground'>
+                          {sku.quality}
+                        </td>
+                        <td className='whitespace-nowrap px-5 py-4 text-sm text-foreground'>
+                          {sku.quantity} {sku.unit}
+                          {sku.quantity === 1 ? '' : 's'}
+                        </td>
+                        <td className='whitespace-nowrap px-5 py-4 text-right font-bold text-foreground'>
+                          {sku.credits}{' '}
+                          {t('common.credits', 'credits')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <PayAsYouGoPricingTable />
