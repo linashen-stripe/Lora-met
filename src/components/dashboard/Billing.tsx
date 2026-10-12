@@ -229,7 +229,7 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
     <div>
       {hasMetronomeCustomer ? (
         <div className='mb-8 grid grid-cols-1 gap-6 md:grid-cols-3'>
-          <PlanCard displayPackageName={t('dashboard.cards.premium_package')} />
+          <PlanCard displayPackageName={metronomeContract?.name} />
           <CreditsCard
             totalAvailable={ubbAvailable}
             totalAmount={ubbTotal}
