@@ -752,6 +752,21 @@ function PricingPageContent() {
                     <p className='mt-2 text-sm text-muted-foreground'>
                       {sku.description}
                     </p>
+                    <div className='mt-4 flex flex-wrap gap-2 text-xs'>
+                      <span className='rounded-full bg-violet-100 px-2.5 py-1 font-medium text-violet-800'>
+                        {sku.model}
+                      </span>
+                      <span className='rounded-full bg-gray-100 px-2.5 py-1 text-gray-700'>
+                        {sku.quality}
+                      </span>
+                      <span className='rounded-full bg-gray-100 px-2.5 py-1 text-gray-700'>
+                        {sku.operation.replaceAll('_', ' ')}
+                      </span>
+                      <span className='rounded-full bg-gray-100 px-2.5 py-1 text-gray-700'>
+                        {sku.quantity} {sku.unit}
+                        {sku.quantity === 1 ? '' : 's'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
