@@ -9,7 +9,7 @@
 - Generation account pages now consistently present custom `Generation Credits`, including balances, usage, invoice line items, purchases, and auto top-up.
 - Draft current-period Metronome invoices remain in Upcoming Invoice and are excluded from invoice history.
 - Upcoming Invoice groups subtotals, applied credits, and totals by credit type; USD and Generation Credits are never arithmetically combined.
-- Generation catalog v5 provides demo-sized plans: Free (`$0`, 100 credits), Pro (`$20/month`, 1,000 credits), and Enterprise (custom).
+- Generation catalog v8 provides demo-sized plans: Free (`$0`, 100 credits), Pro (`$20/month`, 1,000 credits), and Enterprise (`$1,000` prepaid for 100,000 credits).
 - The corrected Pro subscription uses a separate product so it cannot inherit the legacy `$99` rate.
 - Credit purchases use a 500-credit minimum and presets of 1,000 credits for `$10` or 2,500 for `$25`.
 - The Generation playground supports 1×, 5×, and 10× event batches so usage and auto top-up can be demonstrated quickly.
@@ -31,10 +31,10 @@
 
 ## Current catalog
 
-- Rate card: `48f29f63-febd-4509-8acd-0884599d8f4a`
-- Free package: `d0637cfc-f77d-4a1a-8aaf-be5d0393e9a9`
-- Pro package: `c4c92b78-7dc0-4bce-b9b8-f4a81af19a8b`
-- Enterprise package: `86354268-51ce-494e-ac9d-1a9c5482437a`
+- Rate card: `ace1038e-e6be-4130-a28f-b8ec6d88af70`
+- Free package: `22733ea2-e8bf-4147-98a2-52fd79d26387`
+- Pro package: `5957532b-016f-466e-9c16-2835dfe5a469`
+- Enterprise package: `5ce33189-876c-4251-bb36-011ed45e023a`
 - Generation credit type: `7178a268-9978-4714-b56c-fd239e4d978b`
 
 Do not automatically migrate the existing legacy customer or pay its old prorated Stripe draft invoice.

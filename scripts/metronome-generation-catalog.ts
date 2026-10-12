@@ -41,6 +41,9 @@ type Manifest = {
     name: string;
     includedCredits: number | null;
     monthlyPriceCents: number | null;
+    prepaidCommitCredits?: number;
+    prepaidInvoiceCents?: number;
+    commitDurationMonths?: number;
   }>;
 };
 
@@ -568,11 +571,77 @@ async function seed(
           },
         ],
       };
+    } else if (definition.key === 'enterprise') {
+      if (
+        !definition.prepaidCommitCredits ||
+        !definition.prepaidInvoiceCents ||
+        !definition.commitDurationMonths
+      ) {
+        throw new Error(
+          'Enterprise package requires prepaid commit credits, invoice amount, and duration',
+        );
+      }
+      body = {
+        ...common,
+        commits: [
+          {
+            type: 'PREPAID',
+            product_id: productIds.creditGrant,
+            name: 'Enterprise prepaid generation commitment',
+            priority: 1,
+            rate_type: 'LIST_RATE',
+            applicable_product_ids: usageProductIds,
+            access_schedule: {
+              credit_type_id: pricingUnitId,
+              schedule_items: [
+                {
+                  amount: definition.prepaidCommitCredits,
+                  starting_at_offset: { value: 0, unit: 'DAYS' },
+                  duration: {
+                    value: definition.commitDurationMonths,
+                    unit: 'MONTHS',
+                  },
+                },
+              ],
+            },
+            invoice_schedule: {
+              credit_type_id: USD_CREDIT_TYPE_ID,
+              schedule_items: [
+                {
+                  unit_price: definition.prepaidInvoiceCents,
+                  quantity: 1,
+                  date_offset: { value: 0, unit: 'DAYS' },
+                },
+              ],
+            },
+          },
+        ],
+      };
     }
 
     console.log(`Creating package: ${definition.name}`);
     const response = await client.v1.packages.create(body);
     packageIds[definition.key] = response.data.id;
+  }
+
+  const activeRateCards = await listAll(
+    client.v1.contracts.rateCards.list({ body: {} }),
+  );
+  for (const rateCard of activeRateCards) {
+    if (
+      rateCard.id !== rateCardId &&
+      /^Lora Generate - Standard Rate Card/i.test(rateCard.name)
+    ) {
+      try {
+        console.log(`Archiving superseded rate card: ${rateCard.name}`);
+        await client.v1.contracts.rateCards.archive({ id: rateCard.id });
+      } catch (error) {
+        console.warn(
+          `Could not archive superseded rate card ${rateCard.name}:`,
+          error,
+        );
+      }
+    }
   }
 
   const state: CatalogState = {

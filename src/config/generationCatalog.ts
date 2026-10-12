@@ -150,12 +150,9 @@ export const GENERATION_PLANS: GenerationPlan[] = [
 ];
 
 export const QUICKSTART_ENTERPRISE_TERMS = {
-  termMonths: 12,
-  prepaidCommitmentUsd: 100_000,
-  seats: 5,
-  monthlyCreditsPerSeat: 2_000,
-  usageDiscountPercent: 15,
-  usageMultiplier: 0.85,
+  termMonths: 1,
+  prepaidCommitmentUsd: 1_000,
+  prepaidCommitmentCredits: 100_000,
 } as const;
 
 export interface GenerationUsageEventInput {

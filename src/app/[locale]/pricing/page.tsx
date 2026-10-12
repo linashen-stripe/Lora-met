@@ -398,6 +398,17 @@ function PricingPageContent() {
 
     const isFreePlan = pkg.price_cents === 0;
     const isPricedPlan = pkg.price_cents != null && pkg.price_cents !== 0;
+    const prepaidCommit = pkg.commits?.[0];
+    const prepaidAccessItem =
+      prepaidCommit?.access_schedule?.schedule_items?.[0];
+    const prepaidInvoiceItem =
+      prepaidCommit?.invoice_schedule?.schedule_items?.[0];
+    const prepaidInvoiceCents =
+      prepaidInvoiceItem?.amount ??
+      ((prepaidInvoiceItem?.unit_price ?? 0) *
+        (prepaidInvoiceItem?.quantity ?? 1) ||
+        null);
+    const requiresPayment = isPricedPlan || prepaidInvoiceCents != null;
     const features: string[] =
       demoMode === 'generation'
         ? isFreePlan
@@ -458,12 +469,22 @@ function PricingPageContent() {
             ];
 
     const isCustomPricing = pkg.price_cents === null;
-    const price = isCustomPricing
-      ? t('plans.team.custom_pricing', 'Custom Pricing')
-      : formatPrice(pkg.price_cents ?? 0, settings?.language, currency);
-    const priceDetails = isCustomPricing
-      ? null
-      : t('plans.price_details.month', '/month');
+    const price =
+      prepaidInvoiceCents != null
+        ? formatPrice(
+            prepaidInvoiceCents,
+            settings?.language,
+            currency,
+          )
+        : isCustomPricing
+          ? t('plans.team.custom_pricing', 'Custom Pricing')
+          : formatPrice(pkg.price_cents ?? 0, settings?.language, currency);
+    const priceDetails =
+      prepaidInvoiceCents != null
+        ? 'prepaid at contract start'
+        : isCustomPricing
+          ? null
+          : t('plans.price_details.month', '/month');
 
     return {
       name: pkg.name || `Plan ${idx + 1}`,
@@ -487,6 +508,11 @@ function PricingPageContent() {
         amount:
           catalogPlan?.includedCredits != null
             ? `${catalogPlan.includedCredits.toLocaleString()} credits`
+            : prepaidAccessItem?.amount != null
+              ? `${prepaidAccessItem.amount.toLocaleString()} ${
+                  prepaidCommit?.access_schedule?.credit_type?.name ??
+                  'credits'
+                }`
             : aiBuilderIncludedCents != null
               ? formatPrice(
                   aiBuilderIncludedCents,
@@ -517,11 +543,13 @@ function PricingPageContent() {
         ...(hasMetronomeCustomer && !isCurrentPlan
           ? isPricedPlan
             ? { onClick: () => setSelectedPackageId(pkg.id) }
+            : requiresPayment
+              ? { onClick: () => setSelectedPackageId(pkg.id) }
             : { onClick: () => handleSelectPackage(pkg.id) }
           : {
               link: isCurrentPlan
                 ? undefined
-                : isPricedPlan
+                : requiresPayment
                   ? `/${settings?.language}/auth/sign-up?packageId=${pkg.id}&requiresPayment=true&demoMode=${demoMode}`
                   : `/${settings?.language}/auth/sign-up?packageId=${pkg.id}&demoMode=${demoMode}`,
             }),

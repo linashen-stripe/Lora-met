@@ -12,6 +12,23 @@ export type MetronomePackageSummary = {
     name?: string;
     subscription_rate?: { product?: { name?: string } };
   }>;
+  commits?: Array<{
+    name?: string;
+    access_schedule?: {
+      credit_type?: { name?: string };
+      schedule_items?: Array<{
+        amount?: number;
+        duration?: { value?: string | number; unit?: string };
+      }>;
+    };
+    invoice_schedule?: {
+      schedule_items?: Array<{
+        amount?: number;
+        unit_price?: number;
+        quantity?: number;
+      }>;
+    };
+  }>;
 };
 
 export default function MetronomePackageCheckoutSidebar({
@@ -72,6 +89,15 @@ export default function MetronomePackageCheckoutSidebar({
     typeof pkg.price_cents === 'number' && Number.isFinite(pkg.price_cents)
       ? pkg.price_cents
       : null;
+  const prepaidCommit = pkg.commits?.[0];
+  const accessItem = prepaidCommit?.access_schedule?.schedule_items?.[0];
+  const invoiceItem = prepaidCommit?.invoice_schedule?.schedule_items?.[0];
+  const commitCredits = accessItem?.amount;
+  const commitCreditType =
+    prepaidCommit?.access_schedule?.credit_type?.name ?? 'credits';
+  const prepaidInvoiceCents =
+    invoiceItem?.amount ??
+    ((invoiceItem?.unit_price ?? 0) * (invoiceItem?.quantity ?? 1) || null);
 
   return (
     <div className='w-full'>
@@ -113,6 +139,29 @@ export default function MetronomePackageCheckoutSidebar({
           </>
         )}
       </p>
+
+      {prepaidCommit && commitCredits != null && (
+        <div className='mt-5 rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-950'>
+          <p className='font-semibold'>
+            {prepaidCommit.name ?? 'Prepaid commitment'}
+          </p>
+          <p className='mt-1 tabular-nums'>
+            {commitCredits.toLocaleString(language)} {commitCreditType}
+          </p>
+          {prepaidInvoiceCents != null && (
+            <p className='mt-1 text-violet-800'>
+              {formatPrice(prepaidInvoiceCents, language, currency)} due at
+              contract start
+            </p>
+          )}
+          {accessItem?.duration?.value && accessItem.duration.unit && (
+            <p className='mt-1 text-xs text-violet-700'>
+              Access period: {accessItem.duration.value}{' '}
+              {accessItem.duration.unit.toLowerCase()}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

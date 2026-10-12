@@ -11,7 +11,8 @@ import { loadFromStorage } from '@/utils/clientStorage';
 import ErrorBanner from '../ui/ErrorBanner';
 import { customerStorageKey } from '@/config/demoModes';
 
-const QUICKSTART_DAYS_AGO = 30;
+// Keep the one-month Enterprise prepaid commit active when history is seeded.
+const QUICKSTART_DAYS_AGO = 29;
 
 const SignInForm = () => {
   const { t } = useTranslation();

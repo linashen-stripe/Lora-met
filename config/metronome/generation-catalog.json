@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 8,
   "namespace": "lora-generate",
   "eventType": "generation.completed",
   "pricingUnit": {
@@ -84,8 +84,8 @@
     "premiumSubscription": "Lora Generate - Pro Subscription"
   },
   "rateCard": {
-    "name": "Lora Generate - Standard Rate Card v2",
-    "alias": "lora-generate-standard"
+    "name": "Lora Generate - Standard Rate Card",
+    "alias": "lora-generate-standard-v3"
   },
   "packages": [
     {
@@ -104,7 +104,10 @@
       "key": "enterprise",
       "name": "Lora Generate Enterprise",
       "includedCredits": null,
-      "monthlyPriceCents": null
+      "monthlyPriceCents": null,
+      "prepaidCommitCredits": 100000,
+      "prepaidInvoiceCents": 100000,
+      "commitDurationMonths": 1
     }
   ]
 }
