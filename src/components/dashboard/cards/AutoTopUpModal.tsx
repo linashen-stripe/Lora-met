@@ -32,8 +32,26 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
   const [topUpAmount, setTopUpAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const thresholdValue = Number(threshold);
+  const rechargeValue = Number(topUpAmount);
+  const amountsAreValid =
+    threshold !== '' &&
+    topUpAmount !== '' &&
+    Number.isFinite(thresholdValue) &&
+    Number.isFinite(rechargeValue) &&
+    thresholdValue >= 0 &&
+    rechargeValue > thresholdValue;
 
   const handleSave = async () => {
+    if (!amountsAreValid) {
+      setError(
+        t('modals.auto_top_up.invalid_amounts', {
+          defaultValue:
+            'Recharge balance must be greater than the balance threshold.',
+        }),
+      );
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -101,15 +119,22 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
                   className='block text-sm font-medium text-gray-700'
                 >
                   {t('modals.auto_top_up.balance_threshold_label')}
+                  {customCreditTypeName && (
+                    <span className='ml-1 text-gray-500'>
+                      ({customCreditTypeName})
+                    </span>
+                  )}
                 </label>
                 <input
                   type='number'
+                  min='0'
+                  step={customCreditTypeName ? '1' : '0.01'}
                   name='threshold'
                   id='threshold'
                   value={threshold}
                   onChange={(e) => setThreshold(e.target.value)}
                   className='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-purple focus:ring-purple text-base py-3 px-4'
-                  placeholder='0.00'
+                  placeholder={customCreditTypeName ? '1,000' : '0.00'}
                 />
               </div>
               <div>
@@ -118,15 +143,22 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
                   className='block text-sm font-medium text-gray-700'
                 >
                   {t('modals.auto_top_up.top_up_amount_label')}
+                  {customCreditTypeName && (
+                    <span className='ml-1 text-gray-500'>
+                      ({customCreditTypeName})
+                    </span>
+                  )}
                 </label>
                 <input
                   type='number'
+                  min='0'
+                  step={customCreditTypeName ? '1' : '0.01'}
                   name='topUpAmount'
                   id='topUpAmount'
                   value={topUpAmount}
                   onChange={(e) => setTopUpAmount(e.target.value)}
                   className='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-purple focus:ring-purple text-base py-3 px-4'
-                  placeholder='0.00'
+                  placeholder={customCreditTypeName ? '5,000' : '0.00'}
                 />
               </div>
             </div>
@@ -170,7 +202,7 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
                 isLoading={isLoading}
                 onClick={handleSave}
                 text={t('config.save_settings')}
-                disabled={isLoading || !threshold || !topUpAmount}
+                disabled={isLoading || !amountsAreValid}
               />
             </div>
           </DialogPanel>
