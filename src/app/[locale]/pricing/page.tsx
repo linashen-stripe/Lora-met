@@ -469,22 +469,12 @@ function PricingPageContent() {
             ];
 
     const isCustomPricing = pkg.price_cents === null;
-    const price =
-      prepaidInvoiceCents != null
-        ? formatPrice(
-            prepaidInvoiceCents,
-            settings?.language,
-            currency,
-          )
-        : isCustomPricing
-          ? t('plans.team.custom_pricing', 'Custom Pricing')
-          : formatPrice(pkg.price_cents ?? 0, settings?.language, currency);
-    const priceDetails =
-      prepaidInvoiceCents != null
-        ? 'prepaid at contract start'
-        : isCustomPricing
-          ? null
-          : t('plans.price_details.month', '/month');
+    const price = isCustomPricing
+      ? t('plans.team.custom_pricing', 'Custom Pricing')
+      : formatPrice(pkg.price_cents ?? 0, settings?.language, currency);
+    const priceDetails = isCustomPricing
+      ? null
+      : t('plans.price_details.month', '/month');
 
     return {
       name: pkg.name || `Plan ${idx + 1}`,
