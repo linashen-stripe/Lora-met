@@ -1,0 +1,1127 @@
+{
+  "header": {
+    "main_nav": {
+      "account": "Account",
+      "chat": "Chat",
+      "pricing": "Pricing",
+      "sign-out": "Sign out",
+      "sign_in": "Log in"
+    },
+    "hero": {
+      "title": "AI innovation and solutions prioritising safety and ethics",
+      "new": "Latest",
+      "api": "API",
+      "new_title": "Introducing Lora 1.5",
+      "api_title": "Develop with Lora",
+      "new_description": "Our most sophisticated AI, now accessible.",
+      "api_description": "Begin utilising to enhance productivity and innovate business models.",
+      "new_button": "Interact with Lora",
+      "api_button": "Launch now",
+      "typewriter": {
+        "text1": "a dashboard to track user engagement with real-time charts",
+        "text2": "a mobile app for a local coffee shop with online ordering",
+        "text3": "a full-stack e-commerce site with a recommendation engine",
+        "text4": "a lightweight component library for a design system"
+      }
+    }
+  },
+  "chat": {
+    "you": "You",
+    "upgrade": "You're on a limited free plan. Upgrade!",
+    "submit": "Submit",
+    "response": "Response:",
+    "tokens": "{{tokens}} tokens - Latest model",
+    "how": "How can Lora help you today?",
+    "summarize": "Summarise text",
+    "brainstorm": "Brainstorm",
+    "analyze": "Analyse data",
+    "make": "Make a plan",
+    "help_me": "Help me write",
+    "blocked_modal": {
+      "free_exhausted_message": "Your free credits have been exhausted. Upgrade to Premium to keep building.",
+      "free_trial_title": "You've used your free trial credits",
+      "credits_depleted_title": "You've run out of credits",
+      "free_trial_message": "Upgrade your plan to continue chatting and unlock more features.",
+      "credits_depleted_message": "Please add more credits to continue using the service.",
+      "opening_checkout": "Opening checkout…",
+      "premium_reset_message": "You've used all your credits for this billing period. Your balance will reset at the start of your next billing cycle.",
+      "upgrade_plan_button": "Upgrade plan",
+      "add_credits_button": "Add more credits",
+      "upgrade_to_premium": "Upgrade to Premium"
+    },
+    "input": {
+      "placeholder": "Click the arrow to proceed...",
+      "disabled_placeholder": "Click the arrow to proceed..."
+    },
+    "welcome": {
+      "title": "Let's build a website"
+    },
+    "assistant": {
+      "name": "Lora AI",
+      "generating": "Generating code...",
+      "generating_app": "Generating your application...",
+      "building_website": "Building Savory Seasons website..."
+    },
+    "prompts": {
+      "step1": "Help me create a website for my new restaurant called Savory Seasons. It's a farm-to-table place and I need something clean and professional. Just get me started with the basic structure.",
+      "step2": "Okay, that's a good skeleton. Now can you apply our brand's look and feel? We use earthy tones and a classic serif font. Let's get the styling foundation and a better navigation bar in place.",
+      "step3": "This looks much better! Now can you make the hero section more visually appealing? Maybe add a nice restaurant photo and some smooth animations to make it feel more welcoming?",
+      "step4": "Perfect! Now I need to showcase our menu. We have appetisers, main courses, and desserts. Can you add a menu section with some appetising food photos? Our customers need to see what we offer.",
+      "step5": "The menu looks fantastic! Now I need a way for customers to make reservations. Can you add a reservation system where they can book tables? I'd like fields for date, time, party size, and any special requests.",
+      "step6": "We're almost there! Can you add a feedback section where customers can leave reviews with star ratings? Also, I need an About Us page that tells our farm-to-table story. Let's polish this up!"
+    },
+    "responses": {
+      "step1": "Perfect! I'll help you create a website for Savory Seasons. Let me start with a clean, simple foundation - just the basic HTML structure and minimal styling to get us going. I'm setting up the main sections you'll need: home, menu, reservations, and about.",
+      "step2": "Of course. I'll establish a design system using your brand's earthy colours and a classic serif font. I'm also updating the layout with a professional fixed navigation bar. This will set the visual tone for the rest of the site.",
+      "step3": "Great feedback! Now I'm making that hero section stand out. I'm generating a beautiful restaurant interior image and applying it as a full-screen background. I've also added some smooth 'fade-in' animations to make it feel welcoming and elegant.",
+      "step4": "Excellent! Now for the exciting part - your menu showcase. I'm building a complete menu section and generating 6 mouth-watering food images: 2 appetisers (bruschetta and burrata), 2 main courses (salmon and ribeye), and 2 desserts (cheesecake and chocolate lava cake). Each image is crafted to highlight the fresh, artisanal quality that defines farm-to-table dining.",
+      "step5": "Perfect! Your reservation system is now ready. I've created a comprehensive booking form with date/time selection, party size options, and a special requests field. Added proper validation and a confirmation system so customers get immediate feedback when they book. The styling matches your elegant restaurant aesthetic.",
+      "step6": "Almost done! I've added an interactive feedback system where customers can leave star ratings and written reviews. Also created a compelling About Us section that tells your farm-to-table story - focusing on your 2020 founding, local farm partnerships, and seasonal menu philosophy. Everything now works together seamlessly for a complete restaurant experience!"
+    },
+    "usage_details": {
+      "title": "Usage details",
+      "model": "Model",
+      "token_usage": "Token usage",
+      "input": "Input",
+      "output": "Output",
+      "total_tokens": "Total tokens",
+      "image_usage": "Image usage",
+      "total_images": "Total images",
+      "model_types": {
+        "mini": "Lora Prime Mini 5.4",
+        "standard": "Lora Mythic 4.6",
+        "large": "Lora Prime 5.4"
+      },
+      "image_types": {
+        "basic": "Basic",
+        "standard": "Standard",
+        "premium": "Premium"
+      },
+      "operations": {
+        "generated": "Generated",
+        "enhanced": "Enhanced",
+        "batch_generated": "Batch Generated"
+      }
+    },
+    "restaurant_name": "Savory Seasons",
+    "website": {
+      "nav": {
+        "about": "About",
+        "home": "Home",
+        "menu": "Menu",
+        "reservations": "Reservations"
+      },
+      "skeleton": {
+        "coming_soon": "Coming soon...",
+        "tagline": "Farm to Table Excellence",
+        "welcome": "Welcome to Savory Seasons"
+      },
+      "hero": {
+        "cta": "Book Your Table",
+        "tagline": "Discover the freshest farm-to-table experience"
+      },
+      "menu_section": {
+        "appetizers": "Starters",
+        "desserts": "Desserts",
+        "loading": "Generating custom food images and loading menu...",
+        "main_courses": "Main Courses",
+        "title": "Our Seasonal Menu"
+      },
+      "reservations_section": {
+        "email_placeholder": "Email Address",
+        "name_placeholder": "Full Name",
+        "party_1": "1 Person",
+        "party_2": "2 People",
+        "party_3": "3 People",
+        "party_4": "4 People",
+        "party_5": "5+ People",
+        "party_size": "Party Size",
+        "phone_placeholder": "Phone Number",
+        "special_requests": "Special requests or dietary requirements (optional)",
+        "submit": "Book Your Table",
+        "success_message": "Thank you! We've received your reservation request and will be in touch within 24 hours to confirm your booking.",
+        "success_title": "Reservation Confirmed!",
+        "title": "Make a Reservation"
+      },
+      "feedback_section": {
+        "email_placeholder": "Email (Optional)",
+        "name_placeholder": "Your Name (Optional)",
+        "rating_label": "Rate Your Experience:",
+        "review_placeholder": "Tell us about your visit...",
+        "submit": "Submit Feedback",
+        "success_message": "We appreciate your feedback and will use it to improve our service.",
+        "success_title": "Thank You!",
+        "title": "Share Your Experience"
+      },
+      "about_section": {
+        "para1": "Founded in 2020, Savory Seasons was born from a passion for connecting our community with the freshest local ingredients. We partner directly with nearby farms to bring you seasonal dishes that celebrate the natural flavours of our region.",
+        "para2": "Our chef-driven menu changes with the seasons, ensuring every visit offers something new and exciting. From our wood-fired grill to our house-made pastas, every dish is crafted with care and attention to detail.",
+        "para3": "Join us for an unforgettable dining experience where every meal tells the story of our local farmers, artisans, and the passionate team that brings it all together.",
+        "title": "Our Story"
+      }
+    }
+  },
+  "pricing": {
+    "page_title": "Pricing",
+    "page_description": "Simple, transparent pricing for everyone. Start free and scale as you grow.",
+    "title": "Discover plans",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "description": "Perfect for individuals getting started with AI content creation.",
+        "features": {
+          "basic_access": "Basic access",
+          "limited_usage": "Limited usage",
+          "community_support": "Community support"
+        },
+        "button": "Get started"
+      },
+      "premium": {
+        "description": "Ideal for professionals and growing businesses."
+      },
+      "plus": {
+        "name": "Plus",
+        "price": "{{price}} / month",
+        "features": {
+          "web_ios_android": "Access Lora via web, iOS, and Android",
+          "images_docs": "Analyse images and documents",
+          "access_version": "Use Lora 1.5"
+        },
+        "button": "Get started"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "{{price}} / month *",
+        "features": {
+          "everything_free": "All Plus tier features",
+          "higher_limits": "Expanded usage allowances",
+          "create_projects": "Organise files into projects",
+          "priority": "Preferred access",
+          "early_access": "Preview upcoming features",
+          "footnote": "* includes your first 100,000 tokens, then simple pay-as-you-go pricing"
+        },
+        "button": "Get started"
+      },
+      "team": {
+        "name": "Team",
+        "price": "{{price}} / month",
+        "features": {
+          "everything_pro": "All Pro tier features",
+          "higher_limits": "Further expanded usage allowances",
+          "teammates": "Collaborate with team",
+          "billing": "Unified billing",
+          "access": "Advanced features"
+        },
+        "footnote": "*price for annual billing; {{price}}/mo if billed monthly",
+        "button": "Get started"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Contact sales",
+        "features": {
+          "everything_team": "All Team tier features",
+          "higher_limits": "Customisable usage limits",
+          "context_windows": "Extended context capacity",
+          "sso_rbac": "SSO & RBAC",
+          "audit_logs": "Activity tracking",
+          "integrations": "Custom integrations"
+        },
+        "button": "Contact sales"
+      }
+    },
+    "models": {
+      "mini": "Mini model",
+      "standard": "Standard model",
+      "large": "Large model",
+      "custom_api": "Custom API (standard)",
+      "custom_api_large": "Custom API (large)"
+    },
+    "images": {
+      "basic": "Basic image generation (up to 512x512)",
+      "standard": "Standard image generation (up to 1024x1024)",
+      "high_resolution": "High-resolution image generation (up to 2048x2048)",
+      "enhancement": "Image enhancement/editing",
+      "batch": "Batch image generation (10 images)",
+      "per_image": "per image",
+      "per_batch": "per batch"
+    },
+    "pay_as_you_go": {
+      "title": "Pay only for what you use, let us handle the rest.",
+      "description": "We will draw down from your credit balance based on your usage in the following categories:"
+    },
+    "charts": {
+      "model_usage_title": "Model usage",
+      "image_generation_title": "Image generation",
+      "model_header": "Model",
+      "input_header": "Input (per 1M tokens)",
+      "output_header": "Output (per 1M tokens)",
+      "service_header": "Service",
+      "price_header": "Price"
+    }
+  },
+  "enterprise": {
+    "title": "Lora for Enterprise",
+    "description": "Integrate Lora with your company's data securely and enhance every team with trusted AI.",
+    "cta": "Contact sales"
+  },
+  "footer": {
+    "logo_alt": "Logo",
+    "sections": {
+      "solutions": "Solutions",
+      "support": "Support",
+      "company": "Company"
+    },
+    "solutions": {
+      "api": "API",
+      "team": "Team",
+      "pricing": "Pricing",
+      "research": "Research",
+      "company": "Company"
+    },
+    "support": {
+      "press": "Press",
+      "support": "Support",
+      "status": "Status",
+      "availability": "Availability"
+    },
+    "company": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Notice",
+      "usage": "Usage Policy",
+      "compliance": "Compliance",
+      "disclosure": "Responsible Disclosure Policy"
+    }
+  },
+  "checkout": {
+    "payment_status": {
+      "succeeded": "Transaction complete!",
+      "processing": "Processing your payment.",
+      "requires_payment_method": "Payment unsuccessful, please try again.",
+      "error": "An issue occurred."
+    },
+    "or": "or"
+  },
+  "return": {
+    "title": "Order Status",
+    "please_wait": "One moment..."
+  },
+  "signup": {
+    "title": "Create an account",
+    "email": "Email address",
+    "email_placeholder": "jenny@example.com",
+    "password": "Password",
+    "remember_me": "Keep me logged in",
+    "forgot_password": "Password reset",
+    "sign_up": "Register",
+    "already_member": "Existing user?",
+    "sign_in_link": "Log in here",
+    "password_disclaimer": "Demo only. Avoid using real passwords."
+  },
+  "signin": {
+    "title": "Access your account",
+    "email": "Email address",
+    "email_placeholder": "jenny@example.com",
+    "password": "Password",
+    "remember_me": "Keep me logged in",
+    "forgot_password": "Password reset",
+    "sign_in": "Log in",
+    "not_member": "New user?",
+    "sign_up_link": "Register here",
+    "password_disclaimer": "Demo only. No validation applied.",
+    "quickstart_multi": "Quickstart custom pricing",
+    "quickstart_sub": "Creates Stripe + Metronome customers, then payment, backdated premium contract, and seeded usage.",
+    "quickstart_conflict": "That email is already used in Metronome. Quickstart only works with a brand-new email — choose another.",
+    "quickstart_loading": "Starting checkout…"
+  },
+  "common": {
+    "error": {
+      "default_message": "An issue occurred. Please retry.",
+      "dismiss": "Close"
+    },
+    "close": "Close",
+    "get_started": "Get Started",
+    "loading": "Loading...",
+    "processing": "Processing..."
+  },
+  "subscription_team": {
+    "title": "Team Plan Subscription",
+    "team_members_question": "Team size?",
+    "pay_monthly": "Monthly billing",
+    "pay_annually": "Annual billing",
+    "monthly_price": "{{price}} / month / member + VAT",
+    "annual_price": "{{price}} / month / member + VAT",
+    "annual_savings": "17% discount, usage billed monthly",
+    "team_summary": "{{members}} members x {{price}}",
+    "subtotal": "Subtotal",
+    "tax": "VAT (if applicable)",
+    "total": "Total / {{frequency}}",
+    "subscribe": "Confirm",
+    "after_your_first": "Pay as you go pricing:",
+    "usage": "usage",
+    "pay_yearly": "Yearly billing"
+  },
+  "subscription_pro": {
+    "title": "Pro Plan Subscription",
+    "subtotal": "Subtotal",
+    "tax": "VAT (if applicable)",
+    "total": "Total / Month",
+    "subscribe": "Proceed",
+    "after_your_first": "Pay as you go after 100,000 tokens:",
+    "usage": "usage over 100k tokens",
+    "usage_total": "usage"
+  },
+  "subscription_plus": {
+    "title": "Plus Plan Subscription",
+    "subtotal": "Subtotal",
+    "tax": "VAT (if applicable)",
+    "total": "Total / Month",
+    "subscribe": "Proceed"
+  },
+  "subscription_free": {
+    "title": "Welcome!",
+    "please_wait": "Setting up your account..."
+  },
+  "subscription_api": {
+    "title": "Start developing with Lora API",
+    "check_out": "Explore our latest models",
+    "continue": "Proceed to checkout"
+  },
+  "settings": {
+    "sidebar": {
+      "billing": "Billing",
+      "profile": "Profile",
+      "account": "Account"
+    },
+    "subscription": {
+      "title": "Your {{plan}} Subscription",
+      "active": "Active",
+      "canceled": "Canceled",
+      "paused": "Paused",
+      "pending": "Pending",
+      "unpaid": "Unpaid",
+      "trial": "Trial",
+      "customer_id": "Customer ID",
+      "subscription_id": "Subscription ID",
+      "plan_type": "Plan Type",
+      "usage_based": "Usage-Based",
+      "fixed": "Fixed Price",
+      "billing_period": "Billing Period",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "months": "months",
+      "years": "years",
+      "every_x": "Every {{count}} {{interval}}",
+      "start_date": "Start Date",
+      "end_date": "End Date",
+      "next_billing": "Next Billing Date",
+      "current_usage": "Current Usage",
+      "estimated_cost": "Estimated Cost",
+      "usage_billing_note": "With usage-based billing, you'll only pay for what you use. The actual amount will be calculated at the end of your billing period.",
+      "upgrade": "Upgrade plan",
+      "downgrade": "Downgrade plan",
+      "change_plan": "Change plan",
+      "cancel": "Cancel subscription",
+      "canceling": "Canceling...",
+      "renew": "Renew Subscription",
+      "reactivate": "Reactivate",
+      "view_usage": "View usage details",
+      "payment_method": "Payment Method",
+      "update_payment": "Update Payment Method",
+      "billing_history": "Billing History",
+      "view_invoices": "View Invoices",
+      "manage_subscription": "Manage Subscription",
+      "cancel_confirmation": "Are you sure you want to cancel your subscription?",
+      "cancel_note": "Your subscription will remain active until the end of the current billing period.",
+      "cancel_success": "Your subscription has been successfully canceled.",
+      "cancel_error": "There was an error canceling your subscription. Please try again.",
+      "meter_usage": "Usage metres",
+      "meter_tokens": "Token usage",
+      "meter_api": "API Requests",
+      "meter_storage": "Storage",
+      "next_payment": "Next payment of {{amount}} on {{date}}",
+      "rate_card_name": "Rate Card",
+      "plan_details": "Plan Details",
+      "rate_details": "Rate Details",
+      "usage_limit": "Usage Limit",
+      "set_limit": "Set Limit",
+      "limit_note": "Setting a usage limit helps prevent unexpected charges.",
+      "subscription_expired": "Your subscription has expired.",
+      "subscription_canceled": "Your subscription has been canceled.",
+      "subscription_paused": "Your subscription is currently paused.",
+      "resume_subscription": "Resume Subscription",
+      "pause_subscription": "Pause Subscription",
+      "no_subscription": "No active subscription found. Please subscribe to a plan.",
+      "sign_in_required": "Please sign in to view your subscription settings."
+    },
+    "rate_card": {
+      "volume_pricing": "Volume pricing",
+      "graduated_pricing": "Graduated pricing",
+      "standard_pricing": "Standard pricing",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "every_x_months": "Every {{count}} months",
+      "billing_cycle": "Billing cycle",
+      "included_rates": "Included rates",
+      "starting_at": "Starting at",
+      "unit": "unit"
+    },
+    "common": {
+      "loading": "Loading...",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "view": "View",
+      "back": "Back",
+      "next": "Next",
+      "continue": "Continue",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "errors": {
+      "general": "An error occurred. Please try again.",
+      "not_found": "Not found",
+      "network_error": "Network error. Please check your connection.",
+      "server_error": "Server error. Please try again later.",
+      "authorization_error": "Authorisation error. Please log in again."
+    },
+    "notifications": {
+      "success": "Success!",
+      "error": "Error!",
+      "warning": "Warning!",
+      "info": "Information"
+    },
+    "teamMembers": {
+      "title": "Team members",
+      "current": "Active team members: {{count}}",
+      "update": "Modify",
+      "confirm_changes": "Confirm changes",
+      "immediately": "Your monthly price will update immediately. Prorated charges will be billed immediately. Credits will appear on your next monthly bill.",
+      "confirm": "Confirm"
+    },
+    "payment": {
+      "ending_with": " ending with {{last4}}",
+      "external_payment_method": "External Payment Method",
+      "title": "Payment method",
+      "update": "Replace",
+      "add": "Add",
+      "replace": "Replace",
+      "promo_code": "Apply a promo code",
+      "enter_promo_code": "Promo code",
+      "applying": "Applying",
+      "apply": "Apply",
+      "no_payment_method": "No payment method found"
+    },
+    "invoices": {
+      "finalized": "Finalised",
+      "title": "Invoices",
+      "description": "View and download your past invoices",
+      "date": "Date",
+      "total": "Total",
+      "status": "Status",
+      "actions": "Actions",
+      "draft": "Draft",
+      "paid": "Paid",
+      "open": "Open",
+      "void": "Void",
+      "uncollectible": "Uncollectible",
+      "none": "No invoices yet"
+    },
+    "cancellation": {
+      "logged_out_message": "You will be logged out after confirming.",
+      "reenrolled_message": "You will be automatically re-enrolled in the Free tier plan. You can continue to use your monthly credits until they expire.",
+      "title": "Cancellation",
+      "confirmTitle": "Are you sure?",
+      "cancelPlan": "Cancel plan",
+      "cancel": "Cancel",
+      "close": "Close",
+      "beforeYouGo": "Before you leave",
+      "stayWithOffer": "Stay and benefit from this offer:",
+      "offer": "20% discount for 3 months",
+      "claim": "Accept Offer",
+      "keep": "Retain subscription"
+    },
+    "credits": {
+      "custom": "Custom",
+      "close": "Close",
+      "new": "NEW",
+      "purchase": "Buy Credits",
+      "buy": "Purchase API Tokens",
+      "provide": "for more predictable organisational expenses.",
+      "buy_button": "Purchase"
+    },
+    "meter": {
+      "close": "Close",
+      "enter_amount": "Enter amount",
+      "simulate": "Simulate Usage",
+      "sim": "Test",
+      "current": "Current Usage"
+    },
+    "meters": {
+      "used": "tokens used"
+    }
+  },
+  "api_plans": {
+    "input": "Input",
+    "write": "Prompt caching write",
+    "read": "Prompt caching read",
+    "output": "Output",
+    "latest": "Latest Model",
+    "features": {
+      "latest_1": "Live data updates",
+      "latest_2": "Newest features",
+      "latest_3": "Fastest model",
+      "e_1": "Our flagship model",
+      "e_2": "Updated 03/14/2024",
+      "e_3": "High reliability",
+      "visual_1": "Optics based model",
+      "visual_2": "File upload available"
+    },
+    "visual": "Lora Visual"
+  },
+  "tools": {
+    "title": "Settings"
+  },
+  "loading": "Loading",
+  "redirect": "Please wait while you are redirected to Stripe for checkout...",
+  "contact_us": {
+    "contact": "Contact Lora",
+    "connect": "Connect with our sales team to get additional resources and support as you grow your usage via the API and Lora for teams.",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "email": "Email",
+    "company_name": "Company name",
+    "why": "Please share a bit more about why you're contacting us",
+    "submit": "Submit",
+    "loading": "Loading"
+  },
+  "auth": {
+    "errors": {
+      "general": "An error occurred. Please try again.",
+      "unexpected": "An unexpected error occurred. Please try again.",
+      "checkout_session": "Could not create embedded checkout session, you may not be signed in.",
+      "legacy_api": "Legacy subscription API is no longer available. Please use pricing plan subscriptions."
+    }
+  },
+  "simulations": {
+    "advance_time": "Advance time →",
+    "cancel": "Cancel",
+    "advance": "Advance",
+    "send_usage": "Send Usage to Meters",
+    "enter_usage": "Enter usage",
+    "send_usage_data": "Send Usage Data"
+  },
+  "config": {
+    "stripe_icon_alt": "Stripe icon",
+    "save_settings": "Save settings"
+  },
+  "random1": "Did you know that llamas can hum? They use humming as a way to communicate with each other!",
+  "random2": "Llamas are related to camels, but they don't have humps. They're part of the camelid family, which also includes alpacas and vicuñas.",
+  "random3": "A group of llamas is called a 'herd' or a 'pack', but wouldn't it be fun if it was called a 'llama drama'?",
+  "random4": "Llamas have been used as guard animals for sheep because they're naturally protective and will chase away coyotes and other predators.",
+  "random5": "The wool of a llama is naturally water-repellent and hypoallergenic. Llama wool sweaters, anyone?",
+  "random6": "In the Inca Empire, only royalty were allowed to wear clothing made from llama fiber.",
+  "random7": "Baby llamas are called 'crias', which means 'baby' in Spanish. They can weigh up to 30 pounds at birth!",
+  "random8": "Llamas can carry 25-30% of their body weight for 8-13 miles a day. They're the pack mules of South America!",
+  "random9": "Llamas are very social animals and prefer to live in herds. They're the party animals of the camelid world!",
+  "random10": "The lifespan of a llama is about 20 years. That's a lot of time for llama drama!",
+  "random11": "Llamas are used as therapy animals in some hospitals and care facilities. They're nature's fuzzy therapists!",
+  "random12": "Llamas have excellent eyesight and can spot potential predators from a mile away. They're like the eagles of the grasslands!",
+  "random13": "Llamas are environmentally friendly! Their padded feet are gentler on terrain than hooves, preventing erosion.",
+  "random14": "Llama fiber comes in over 20 natural colors, the most of any fiber-producing animal. They're walking rainbows!",
+  "random15": "Llamas are smart and can be trained to pull carts, carry packs, and even compete in obstacle courses. Llama Olympics, anyone?",
+  "random16": "Llamas don't have teeth on their upper front jaw. Instead, they have a hard palate that helps them grind their food.",
+  "random17": "Llamas communicate with each other using a variety of sounds including humming, neighing, and alarm calls.",
+  "random18": "A llama's normal body temperature is much higher than a human's, ranging from 100.4 to 102.2°F (38-39°C).",
+  "random19": "Switching from llamas: The fingerprints of a koala are so similar to humans that they have on occasion been confused at a crime scene.",
+  "random20": "Switching gears from llamas: Did you know that a group of flamingos is called a 'flamboyance'? That's pretty fabulous!",
+  "products": {
+    "prod_mock_premium": {
+      "name": "Premium",
+      "description": "Ideal for professionals and growing businesses."
+    },
+    "default_premium": {
+      "name": "Premium",
+      "description": "Ideal for professionals and growing businesses."
+    },
+    "default_free": {
+      "name": "Free",
+      "description": "Perfect for individuals getting started with AI content creation."
+    },
+    "default_team": {
+      "name": "Team",
+      "description": "Tailored solutions for enterprise and high-volume users."
+    }
+  },
+  "plans": {
+    "price_details": {
+      "month": "/month"
+    },
+    "free": {
+      "credit_description": "in lifetime credits (one-time)",
+      "description": "Perfect for individuals getting started with AI content creation.",
+      "features": {
+        "1": "Free for individual usage",
+        "2": "Unlimited image and video generation",
+        "3": "Standard embedding creation",
+        "4": "Community support",
+        "5": "Basic analytics dashboard"
+      },
+      "button": {
+        "current": "Current Plan",
+        "get_started": "Get Started for Free"
+      }
+    },
+    "premium": {
+      "description": "Ideal for professionals and growing businesses.",
+      "credit_description": "in monthly credits",
+      "features": {
+        "1": "All Free Plan features",
+        "2": "Priority support via email",
+        "3": "Comprehensive analytics dashboard",
+        "4": "API access for programmatic integration",
+        "5": "Single Sign-On (SSO) for enhanced security",
+        "6": "Automated zero data retention feature"
+      },
+      "button": {
+        "current": "Current Plan",
+        "get_started": "Get Started with Premium"
+      },
+      "name": "Premium"
+    },
+    "team": {
+      "credit_description": "Credit allocation based on business needs",
+      "features": {
+        "1": "All Premium Plan features",
+        "2": "Tailored solutions for high-volume users",
+        "3": "Dedicated account manager",
+        "4": "Centralized billing management",
+        "5": "Enhanced security features",
+        "6": "Exclusive access to beta features"
+      },
+      "button": {
+        "contact_sales": "Contact Sales"
+      },
+      "custom_pricing": "Custom Pricing",
+      "custom_amount": "Custom"
+    }
+  },
+  "rate_card": {
+    "checkout_title": "Subscribe to Usage-Based Plan",
+    "select_plan": "Select a Plan",
+    "billing_cycle": "Billing cycle",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "every_x_months": "Every {{count}} months",
+    "included_rates": "Included in this plan",
+    "id": "Rate Card ID",
+    "estimated_costs": "Estimated Costs",
+    "base_charges": "Base charges",
+    "estimated_tax": "Estimated tax",
+    "estimated_total": "Estimated total",
+    "cost_explanation": "Final charges will be based on your actual usage at the end of the billing period.",
+    "usage_estimator": "Usage Estimator",
+    "usage_estimator_description": "Adjust the sliders below to estimate your monthly costs based on expected usage.",
+    "how_it_works": "How Usage-Based Billing Works",
+    "step1_title": "Subscribe",
+    "step1_description": "Sign up for usage-based billing with no upfront cost",
+    "step2_title": "Use Service",
+    "step2_description": "Use the API or platform as much as you need",
+    "step3_title": "Pay for Usage",
+    "step3_description": "Only pay for what you use at the end of each billing period",
+    "footer_note": "You can view your current usage and set limits at any time from your account dashboard.",
+    "volume_pricing": "Volume pricing",
+    "graduated_pricing": "Graduated pricing",
+    "standard_pricing": "Standard pricing",
+    "starting_at": "Starting at",
+    "unit": "unit",
+    "subscription_details": "Subscription Details",
+    "usage_details": "Usage details",
+    "payment_details": "Payment Details",
+    "subscription_confirmation": "Subscription Confirmation",
+    "subscribe_button": "Subscribe Now",
+    "modify_button": "Modify Selection",
+    "cancel_button": "Cancel",
+    "low_usage": "Low Usage",
+    "medium_usage": "Medium Usage",
+    "high_usage": "High Usage",
+    "faq_title": "Frequently asked questions",
+    "faq_1_question": "How am I charged?",
+    "faq_1_answer": "You'll be charged at the end of each billing cycle based on your actual usage. Your payment method will be automatically charged.",
+    "faq_2_question": "Is there a minimum spend?",
+    "faq_2_answer": "No, there's no minimum spend requirement. You only pay for what you use.",
+    "faq_3_question": "What happens if I exceed my expected usage?",
+    "faq_3_answer": "You'll continue to be charged according to the tiered pricing structure. For high-volume usage, discounted tiers automatically apply.",
+    "faq_4_question": "Can I set usage limits?",
+    "faq_4_answer": "Yes, you can set usage limits in your account settings to prevent unexpected charges.",
+    "tokens": "Tokens",
+    "api_requests": "API Requests",
+    "processing_units": "Processing Units",
+    "storage": "Storage",
+    "per_unit": "per unit",
+    "per_token": "per token",
+    "per_request": "per request",
+    "per_gb": "per GB",
+    "up_to": "up to",
+    "and_up": "and up",
+    "current_usage": "Current Usage",
+    "usage_limit": "Usage Limit",
+    "set_limit": "Set Limit",
+    "processing": "Processing your subscription...",
+    "success_message": "Your subscription has been activated! You can now start using the service.",
+    "payment_method": "Payment Method",
+    "edit_payment_method": "Edit Payment Method",
+    "billing_address": "Billing Address",
+    "edit_billing_address": "Edit Billing Address",
+    "live": "Live Version",
+    "no_rates_warning": "This version doesn't have any rates defined",
+    "version": {
+      "id": "Version ID",
+      "created": "Created",
+      "status": "Status: {{status}}",
+      "live": "Live Version"
+    }
+  },
+  "units": {
+    "million_tokens": "MTok",
+    "unit": "unit"
+  },
+  "features": {
+    "section_pill": "Built for Speed",
+    "title": "A new way to build software",
+    "description": "Ship faster with complete transparency. Our platform provides enterprise-grade tools that scale with your team.",
+    "ai_code_generation": {
+      "title": "AI Code Generation",
+      "description": "Generate components, services, and entire applications from a single prompt."
+    },
+    "usage_based_billing": {
+      "title": "Usage-Based Billing",
+      "description": "Only pay for what you use. Track your credit consumption in real-time."
+    },
+    "instant_deployment": {
+      "title": "Instant Deployment",
+      "description": "Go from idea to live application in minutes. We handle the infrastructure."
+    },
+    "transparent_fair": {
+      "title": "Transparent & Fair",
+      "description": "No hidden fees. Our credit system is clear, predictable, and fair."
+    }
+  },
+  "dashboard": {
+    "auto_top_up_status": "Auto top-up on · recharges to {{to}} below {{threshold}}",
+    "chat_token_usage_by_model": "Chat token usage by model",
+    "credits_of_total": "{{available}} of {{total}} remaining",
+    "greeting": "Welcome {{name}}",
+    "ai_credits": "Credits",
+    "no_usage_data": "No usage data for this period",
+    "spend": "Spend",
+    "spend_meter_caption": "{{available}} available of {{credits}} credits in this billing cycle",
+    "current_spend": {
+      "title": "Current spend",
+      "after_credits": "After credits: {{amount}}",
+      "subtitle_draft": "From your open Metronome draft invoice. Totals update as usage accrues.",
+      "period_through": "Billing period through {{date}}",
+      "no_period": "Billing period dates will appear when Metronome opens a draft for this cycle.",
+      "no_charges_yet": "No usage line items yet this period.",
+      "breakdown": "Usage breakdown",
+      "more_line_items": "+{{count}} more"
+    },
+    "credits_remaining": "credits remaining",
+    "credits_meter_caption": "{{available}} of {{total}} credits remain",
+    "page": {
+      "title": "Plans & Billing",
+      "description": "Manage your subscription, credits, and payment details.",
+      "sign_in_required": "Please sign in to view your dashboard."
+    },
+    "sidebar": {
+      "billing": "Plans & Billing",
+      "usage": "Usage",
+      "simulations": "User Simulations",
+      "settings": "Settings"
+    },
+    "settings": {
+      "page_title": "Settings"
+    },
+    "token_usage_by_model": "Token usage by model",
+    "usage": {
+      "page_title": "Usage & Analytics",
+      "page_description": "Detailed breakdown of your AI service usage.",
+      "model_input_tokens": "Model Input Tokens",
+      "model_output_tokens": "Model Output Tokens",
+      "images_generated": "Images Generated",
+      "images_enhanced": "Images Enhanced",
+      "batch_images_processed": "Batch images processed",
+      "across_all_models": "Across all model types",
+      "generated_responses": "Generated responses",
+      "all_resolutions": "All resolutions",
+      "enhancement_operations": "Enhancement operations",
+      "images_in_batches": "Images in batches",
+      "aggregated": {
+        "title": "Aggregated Usage",
+        "description": "Track your AI content generation usage",
+        "unknown": "Unknown",
+        "total": "Total",
+        "daily_burn": "Daily Burn"
+      },
+      "tabs": {
+        "model_usage": "Model usage",
+        "image_generation": "Image generation",
+        "image_enhancement": "Image enhancement",
+        "image_batch_processing": "Image batch processing"
+      },
+      "charts": {
+        "model_usage_title": "Model usage",
+        "model_usage_desc": "Token usage organised by model type (Mini, Standard, Large, Custom API)",
+        "image_generation_title": "Image generation",
+        "image_generation_desc": "Number of images generated by resolution",
+        "image_enhancement_title": "Image enhancement",
+        "image_enhancement_desc": "Number of images enhanced",
+        "batch_processing_title": "Image batch processing",
+        "batch_processing_desc": "Number of images processed in batches"
+      },
+      "project_storage": {
+        "title": "Usage by project",
+        "used": "Used",
+        "capacity": "Commitment",
+        "available": "Available",
+        "no_metrics": "No billable metrics found.",
+        "no_project_dimension": "This meter has no project_id grouping — use multi-project seeding or configure group keys in Metronome.",
+        "no_commitment_hint": "No monthly commitment on the contract — bar shows relative share of usage only.",
+        "token_share_note": "Invoice subtotal not available yet — bar shows each project’s share of metered tokens this month.",
+        "empty_hint": "No project-level usage for this period yet. Seed demo data (Settings) or use chat; multi-project seed fills three project_id values.",
+        "no_usage_rows": "Metronome returned no usage rows for this window — try again after seeding or check the API key.",
+        "aggregated_usage_label": "All usage",
+        "unallocated_usage_label": "Unallocated (no project on line items)",
+        "aggregate_bar_note": "Metronome usage/groups did not return a per-project breakdown for this meter — the bar shows your open invoice usage total."
+      }
+    },
+    "simulations": {
+      "page_title": "User Simulations",
+      "page_description": "Run various simulation scenarios for testing and demonstration.",
+      "scenario_1": "Scenario 1",
+      "scenario_2": "Scenario 2",
+      "scenario_3": "Scenario 3",
+      "cycle_title": "Cycle Simulation",
+      "cycle_card_title": "Simulate Full Billing Cycle",
+      "cycle_status_running": "Running",
+      "cycle_status_stopped": "Stopped",
+      "cycle_description_line1": "Move forward one cycle whilst sending realistic usage data to metres.",
+      "cycle_description_line2": "Generates moderate token usage (~300K tokens/month) and light image generation (~2/month).",
+      "cycle_description_line3": "Expected cost based on actual pricing to demonstrate credit consumption. Bills on day {{day}} of each month.",
+      "cycle_current_date": "Current Date:",
+      "cycle_button_start": "Start Simulation",
+      "advance_time_button": "Advance time →",
+      "clock_title": "Test Clock: Move Forward in Time",
+      "clock_current_time": "Current simulation time:",
+      "clock_status": "Status:",
+      "clock_status_loading": "Loading",
+      "clock_status_advancing": "Advancing",
+      "clock_status_ready": "Ready",
+      "clock_advance_title": "Advance the clock",
+      "clock_advance_description": "Advance the clock to see the events and changes that occur.",
+      "clock_warning": "All customers in the simulation will be impacted.",
+      "clock_buttons": {
+        "hour": "+ 1 hour",
+        "day": "+ 1 day",
+        "week": "+ 1 week",
+        "month": "+ 1 month",
+        "year": "+ 1 year"
+      },
+      "clock_note": "Note: You can advance this clock up to December 31, 2030 at 11:59 PM.",
+      "usage_title": "Send Usage to Meters",
+      "usage_description": "Send simulated usage data to connected meters for various services.",
+      "usage_status_sending": "Sending",
+      "usage_status_idle": "Idle",
+      "usage_modal_title": "Send Usage to Metres",
+      "usage_placeholder": "Enter usage",
+      "usage_send_button": "Send Usage Data"
+    },
+    "cards": {
+      "current_plan": "Current plan",
+      "next_billing": "Next payment",
+      "no_upcoming_charges": "No upcoming charges",
+      "next_billing_charge": "Next billing cycle charge",
+      "upgrade": "Upgrade",
+      "pay_as_you_use": "Pay as you use",
+      "pay_as_you_use_description": "Usage is metered on tokens you consume. You are billed for actual use at the rates below.",
+      "premium_package": "Premium",
+      "next_invoice_due": "Due {{date}}",
+      "next_metronome_invoice": "Estimated total for the open billing period",
+      "no_upcoming_invoice": "No open invoice yet"
+    },
+    "usage_pacing": {
+      "title": "Usage Pacing",
+      "description": "Month-to-date billable usage vs. your monthly commitment.",
+      "all_products": "All products",
+      "all_models": "All models",
+      "all_qualities": "All qualities",
+      "all_tiers": "All tiers",
+      "month_to_date": "Month-to-date",
+      "pct_of_monthly": "{{pct}}% of monthly {{label}}",
+      "monthly_label": "Monthly {{label}}",
+      "prepaid_period": "prepaid for this period",
+      "projected_month_end": "Projected month-end",
+      "within_prepaid": "Within prepaid amount",
+      "above_prepaid": "Above prepaid — overage applies",
+      "commitment_cap": "Monthly {{label}} (cap): {{amount}}",
+      "series_spend": "Month-to-date (cumulative)",
+      "series_projected": "Projected month-end (trend)",
+      "commitment": "Commitment",
+      "credit_balance": "Credit balance",
+      "error_load": "Could not load invoice breakdowns:"
+    },
+    "billing_payg": {
+      "title": "Usage-based pricing",
+      "subtitle": "Per-million token rates (input vs output). Your invoice reflects aggregate usage by model.",
+      "effective": "Pricing effective March 1, 2026 (UTC)",
+      "col_model": "Model",
+      "col_input": "Input",
+      "col_output": "Output"
+    },
+    "buttons": {
+      "cancel_auto_topup": "Cancel auto top-up",
+      "setup_auto_topup": "Set up auto top-up",
+      "purchase_credits": "Purchase credits"
+    },
+    "date_picker": {
+      "last_7_days": "Last 7 Days",
+      "last_30_days": "Last 30 Days",
+      "current_billing_period": "Current Billing Period"
+    },
+    "invoice": {
+      "upcoming_title": "Upcoming Invoice",
+      "billing_period_ending": "For billing period ending on:",
+      "unknown_item": "Unknown Item",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unit_price": "Unit Price",
+      "amount": "Amount",
+      "subtotal": "Subtotal",
+      "tax": "VAT",
+      "total": "Total",
+      "no_upcoming_charges": "No upcoming charges for your current plan",
+      "no_charges": "No upcoming charges",
+      "credits_applied": "Credits applied",
+      "period_net_subtitle": "Net charges for this period after applied credits. The table breaks down usage and credits.",
+      "period_net_subtitle_empty": "No open invoice for this period yet — this will update when usage is invoiced.",
+      "million_tokens_suffix": " / million tokens",
+      "usage_per_heading": "Usage per:",
+      "ungrouped_line_items": "Other charges",
+      "line_item_names": {
+        "chat_input_tokens": "Chat - Input Tokens",
+        "chat_output_tokens": "Chat - Output Tokens",
+        "image_enhancement": "Image Enhancement",
+        "image_generation": "Image Generation",
+        "premium_subscription": "Premium Subscription"
+      }
+    }
+  },
+  "payments": {
+    "errors": {
+      "validation_error": "There was an error validating your payment method.",
+      "unexpected_error": "An unexpected error has occurred.",
+      "generic_error": "An unexpected error occurred.",
+      "promo_not_available": "Promo code feature is not available for this subscription type.",
+      "promo_failed": "Failed to apply promo code. Please try again."
+    },
+    "success": {
+      "payment_updated": "Your payment method has been updated successfully."
+    }
+  },
+  "most_popular": "Most popular",
+  "not_available": "N/A",
+  "faq": {
+    "title": "Frequently asked questions",
+    "questions": {
+      "credits": {
+        "question": "What are credits and how do they work?",
+        "answer": "Credits are used to pay for AI services. Premium plans come with {{premiumCredits}} in monthly credits, whilst free plans get {{freeCredits}} in lifetime credits."
+      },
+      "over_credits": {
+        "question": "What happens when I go over my credits?",
+        "intro": "When you exceed your credit allocation, you have flexible options to continue using our services:",
+        "auto_topup": {
+          "title": "Auto Top-Up",
+          "description": "Set up automatic credit purchases to ensure uninterrupted service when your balance runs low."
+        },
+        "credit_packs": {
+          "title": "Credit Packs",
+          "description": "Purchase additional credits at any time with these convenient options:",
+          "pack1": "Standard Pack: {{amount}}",
+          "pack2": "Large Pack: {{amount}}",
+          "pack3": "Custom Amount (minimum {{amount}})"
+        }
+      },
+      "rollover": {
+        "question": "Do unused credits roll over?",
+        "answer": "Monthly credits reset each billing cycle and do not roll over. However, credits purchased through credit packs never expire."
+      },
+      "change_plan": {
+        "question": "Can I change my plan at any time?",
+        "answer": "Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, with prorated billing adjustments."
+      }
+    }
+  },
+  "landing": {
+    "technologies": {
+      "robot_alt": "A friendly, futuristic robot assistant waving"
+    },
+    "enterprise": {
+      "title": "Lora for Enterprise",
+      "description": "Integrate Lora with your company's data securely and enhance every team with trusted AI.",
+      "cta": "Contact sales"
+    },
+    "hero": {
+      "main_title": "From Prompt to Image, Video, and 3D",
+      "description": "Create production-ready media with transparent credit pricing across every generation workflow.",
+      "button_logged_in": "Open Lora Generate",
+      "button_not_logged_in": "Start generating for free",
+      "no_credit_card": "No credit card required",
+      "build_command": "build"
+    },
+    "aggregated_usage": {
+      "title": "Aggregated Usage",
+      "description": "Track your AI content generation usage",
+      "unknown": "Unknown",
+      "total_daily_burn": "Total: {{value}}, Daily Burn: {{burn}}"
+    }
+  },
+  "subscribe_metronome_package": {
+    "order_summary": "Order summary",
+    "custom_pricing": "Custom pricing",
+    "per_month": "per month",
+    "applicable_taxes": "+ applicable taxes",
+    "loading": "Loading package details…",
+    "not_found": "We could not load details for this package.",
+    "unknown_name": "Selected package"
+  },
+  "modals": {
+    "auto_top_up": {
+      "title": "Set Up Auto Top-Up",
+      "balance_threshold_label": "When my balance falls below",
+      "top_up_amount_label": "Recharge my balance back up to",
+      "disclaimer": "By clicking \"Save Settings\", I agree that I will be automatically topped up to {{topUpAmount}} when my credit balance falls below {{threshold}}.",
+      "missing_stripe_customer": "A Stripe customer is required to enable auto top-up. Sign in again or check your demo customer in the Tools panel.",
+      "missing_metronome_customer": "Sign in first, or set a Metronome customer in the Tools panel so we know which account to configure."
+    },
+    "purchase_credits": {
+      "title": "Purchase Credits",
+      "loading": "Loading your balance...",
+      "outstanding_balance_title": "Action Required: Outstanding Balance",
+      "top_up_credits_title": "Top-Up Credits",
+      "outstanding_balance_message": "You will not be able to use Lora until you clear your outstanding balance:",
+      "current_balance_message": "Your current balance is",
+      "recommended": "Recommended",
+      "standard": "Standard",
+      "large": "Large",
+      "custom_amount": "Custom Amount",
+      "clears_outstanding_plus": "Clears outstanding balance + {{amount}}",
+      "processing": "Processing...",
+      "purchase_for": "Purchase for {{amount}}",
+      "select_amount": "Select an amount",
+      "min_amount": "Min {{amount}}"
+    }
+  }
+}

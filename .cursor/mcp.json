@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "toolshed": {
+      "command": ".cursor/toolshed_stdio_shim.sh",
+      "args": ["cursor"]
+    }
+  }
+}

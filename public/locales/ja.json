@@ -1,0 +1,1127 @@
+{
+  "header": {
+    "main_nav": {
+      "account": "アカウント",
+      "chat": "チャット",
+      "pricing": "料金",
+      "sign-out": "ログアウト",
+      "sign_in": "ログイン"
+    },
+    "hero": {
+      "title": "安全性と倫理を重視したAIイノベーションとソリューション",
+      "new": "新着",
+      "api": "API",
+      "new_title": "Lora 1.5の紹介",
+      "api_title": "Loraで開発",
+      "new_description": "最も洗練された私たちのAI、今アクセス可能に。",
+      "api_description": "生産性を向上させ、ビジネスモデルを革新するために利用を開始してください。",
+      "new_button": "Loraと対話する",
+      "api_button": "今すぐ起動",
+      "typewriter": {
+        "text1": "リアルタイムチャートでユーザーエンゲージメントを追跡するダッシュボード",
+        "text2": "オンライン注文が可能な地元のコーヒーショップのモバイルアプリ",
+        "text3": "推薦エンジンを備えたフルスタックのeコマースサイト",
+        "text4": "デザインシステム用の軽量コンポーネントライブラリ"
+      }
+    }
+  },
+  "chat": {
+    "you": "あなた",
+    "upgrade": "制限付き無料プランを使用中です。アップグレードしましょう！",
+    "submit": "送信",
+    "response": "応答：",
+    "tokens": "{{tokens}}トークン - 最新モデル",
+    "how": "Loraは今日、どのようにお手伝いできますか？",
+    "summarize": "テキストを要約する",
+    "brainstorm": "ブレインストーミング",
+    "analyze": "データを分析する",
+    "make": "計画を立てる",
+    "help_me": "文章作成を手伝う",
+    "blocked_modal": {
+      "free_exhausted_message": "無料クレジットが使い果たされました。Premiumにアップグレードして構築を続けましょう。",
+      "free_trial_title": "無料トライアルクレジットを使い切りました",
+      "credits_depleted_title": "クレジットが不足しています",
+      "free_trial_message": "チャットを続行し、より多くの機能を利用するには、プランをアップグレードしてください。",
+      "credits_depleted_message": "サービスを継続してご利用いただくには、クレジットを追加してください。",
+      "opening_checkout": "チェックアウトを開いています…",
+      "premium_reset_message": "今の請求期間のクレジットをすべて使い切りました。次の請求サイクルの開始時に残高がリセットされます。",
+      "upgrade_plan_button": "プランをアップグレード",
+      "add_credits_button": "クレジットを追加",
+      "upgrade_to_premium": "Premiumにアップグレード"
+    },
+    "input": {
+      "placeholder": "矢印をクリックして続行してください...",
+      "disabled_placeholder": "続行するには矢印をクリックしてください..."
+    },
+    "welcome": {
+      "title": "ウェブサイトを作りましょう"
+    },
+    "assistant": {
+      "name": "Lora AI",
+      "generating": "コードを生成中...",
+      "generating_app": "アプリケーションを生成中...",
+      "building_website": "美味しい季節ウェブサイトを構築中..."
+    },
+    "prompts": {
+      "step1": "新しいレストラン「美味しい季節」のウェブサイトを作成してください。農場から食卓までをコンセプトとした場所で、清潔でプロフェッショナルなデザインが必要です。基本的な構造から始めてください。",
+      "step2": "良いスケルトンですね。では、ブランドのルック＆フィールを適用できますか？アースカラーとクラシックなセリフフォントを使用しています。スタイリングの基盤とより良いナビゲーションバーを整えましょう。",
+      "step3": "見た目が良くなりました！ヒーローセクションをもっと視覚的に魅力的にできますか？素敵なレストランの写真といくつかのスムーズなアニメーションを追加して、より親しみやすい印象にしてください。",
+      "step4": "完璧です！次に、メニューを紹介する必要があります。前菜、メインコース、デザートがあります。食欲をそそる料理の写真とともにメニューセクションを追加できますか？お客様に私たちの料理を見てもらう必要があります。",
+      "step5": "メニューは素晴らしく見えます！次に、お客様がテーブルを予約できる予約システムが必要です。日時、時間、人数、特別なリクエストのフィールドを含む予約システムを追加できますか？",
+      "step6": "もう少しです！お客様が星評価付きのレビューを残せるフィードバックセクションを追加できますか？また、私たちの農場から食卓までのストーリーを紹介するAbout Usページも必要です。仕上げをしましょう！"
+    },
+    "responses": {
+      "step1": "素晴らしい！美味しい季節のウェブサイト作成をお手伝いします。まず、シンプルで清潔な基盤から始めましょう。基本的なHTML構造と最小限のスタイリングで始めます。必要なメインセクションを設定しています：ホーム、メニュー、予約、概要です。",
+      "step2": "もちろんです。ブランドのアースカラーとクラシックなセリフフォントを使用したデザインシステムを確立します。また、プロフェッショナルな固定ナビゲーションバーでレイアウトを更新しています。これによりサイト全体の視覚的なトーンが設定されます。",
+      "step3": "素晴らしいフィードバックです！今、ヒーローセクションを目立たせています。美しいレストラン内装画像を生成し、フルスクリーンの背景として適用しています。また、温かく上品な印象にするためのスムーズな「フェードイン」アニメーションも追加しています。",
+      "step4": "素晴らしい！今度は楽しい部分です - メニューの紹介です。完全なメニューセクションを構築し、6つの食欲をそそる料理画像を生成しています：前菜2品（ブルスケッタとブラータ）、メイン2品（サーモンとリブアイ）、デザート2品（チーズケーキとチョコレートラバケーキ）。各画像は、農場から食卓までのダイニングを定義する新鮮で職人的な品質を強調するように作られています。",
+      "step5": "完璧です！予約システムの準備ができました。日時選択、人数オプション、特別なリクエストフィールドを含む包括的な予約フォームを作成しました。適切な検証と確認システムを追加し、お客様が予約時に即座にフィードバックを受け取れるようにしました。スタイリングは上品なレストランの美学と一致します。",
+      "step6": "ほぼ完成です！お客様が星評価と文章レビューを残せるインタラクティブなフィードバックシステムを追加しました。また、農場から食卓までのストーリーを語る魅力的な概要セクションも作成しました - 2020年の創設、地元農場とのパートナーシップ、季節メニューの哲学に焦点を当てています。すべてが完全なレストラン体験のためにシームレスに連携します！"
+    },
+    "usage_details": {
+      "title": "使用詳細",
+      "model": "モデル",
+      "token_usage": "トークン使用量",
+      "input": "入力",
+      "output": "出力",
+      "total_tokens": "合計トークン",
+      "image_usage": "画像使用量",
+      "total_images": "合計画像",
+      "model_types": {
+        "mini": "Lora Prime Mini 5.4",
+        "standard": "Lora Mythic 4.6",
+        "large": "Lora Prime 5.4"
+      },
+      "image_types": {
+        "basic": "ベーシック",
+        "standard": "スタンダード",
+        "premium": "プレミアム"
+      },
+      "operations": {
+        "generated": "生成済み",
+        "enhanced": "強化済み",
+        "batch_generated": "バッチ生成済み"
+      }
+    },
+    "restaurant_name": "美味しい季節",
+    "website": {
+      "nav": {
+        "about": "私たちについて",
+        "home": "ホーム",
+        "menu": "メニュー",
+        "reservations": "予約"
+      },
+      "skeleton": {
+        "coming_soon": "近日公開...",
+        "tagline": "農場から食卓への卓越した体験",
+        "welcome": "Savory Seasonsへようこそ"
+      },
+      "hero": {
+        "cta": "テーブルを予約する",
+        "tagline": "最も新鮮なファームトゥテーブル体験をお楽しみください"
+      },
+      "menu_section": {
+        "appetizers": "前菜",
+        "desserts": "デザート",
+        "loading": "料理の画像を生成してメニューを読み込んでいます...",
+        "main_courses": "メインコース",
+        "title": "季節のメニュー"
+      },
+      "reservations_section": {
+        "email_placeholder": "メールアドレス",
+        "name_placeholder": "フルネーム",
+        "party_1": "1名",
+        "party_2": "2名",
+        "party_3": "3名",
+        "party_4": "4名",
+        "party_5": "5名以上",
+        "party_size": "人数",
+        "phone_placeholder": "電話番号",
+        "special_requests": "特別リクエストや食事制限（任意）",
+        "submit": "テーブルを予約する",
+        "success_message": "ありがとうございます！予約リクエストを受け取りました。24時間以内にご連絡いたします。",
+        "success_title": "予約が確定しました！",
+        "title": "予約する"
+      },
+      "feedback_section": {
+        "email_placeholder": "メール（任意）",
+        "name_placeholder": "お名前（任意）",
+        "rating_label": "ご体験を評価してください：",
+        "review_placeholder": "ご訪問について教えてください...",
+        "submit": "フィードバックを送信",
+        "success_message": "フィードバックをいただきありがとうございます。サービス向上に活用いたします。",
+        "success_title": "ありがとうございます！",
+        "title": "ご体験をシェア"
+      },
+      "about_section": {
+        "para1": "2020年に設立されたSavory Seasonsは、地域コミュニティを最も新鮮な地元食材とつなぐ情熱から生まれました。近隣の農場と直接連携し、地域の自然な風味を称える季節のお料理をお届けします。",
+        "para2": "シェフが手がけるメニューは季節ごとに変わり、毎回の訪問で新しい体験をお届けします。薪グリルから自家製パスタまで、すべての料理が細部への配慮と情熱を持って作られています。",
+        "para3": "地元の農家、職人、そしてすべてをまとめる情熱的なチームのストーリーが込められた、忘れられないダイニング体験をお楽しみください。",
+        "title": "私たちのストーリー"
+      }
+    }
+  },
+  "pricing": {
+    "page_title": "料金",
+    "page_description": "誰にでも分かりやすい、透明性のある料金設定。無料で始めて、成長に合わせてスケールアップ。",
+    "title": "プランを探す",
+    "plans": {
+      "free": {
+        "name": "無料",
+        "description": "AIコンテンツ作成を始める個人に最適です。",
+        "features": {
+          "basic_access": "基本アクセス",
+          "limited_usage": "限定的な使用量",
+          "community_support": "コミュニティサポート"
+        },
+        "button": "始める"
+      },
+      "premium": {
+        "description": "専門家や成長企業に理想的です。"
+      },
+      "plus": {
+        "name": "プラス",
+        "price": "{{price}} / 月",
+        "features": {
+          "web_ios_android": "ウェブ、iOS、Android経由でLoraにアクセス",
+          "images_docs": "画像とドキュメントの分析",
+          "access_version": "Lora 1.5の使用"
+        },
+        "button": "始める"
+      },
+      "pro": {
+        "name": "プロ",
+        "price": "{{price}} / 月 *",
+        "features": {
+          "everything_free": "プラスプランの全機能",
+          "higher_limits": "拡張された使用許容量",
+          "create_projects": "ファイルをプロジェクトに整理",
+          "priority": "優先アクセス",
+          "early_access": "新機能のプレビュー",
+          "footnote": "* 最初の100,000トークンを含み、その後はシンプルな従量課金制"
+        },
+        "button": "始める"
+      },
+      "team": {
+        "name": "チーム",
+        "price": "{{price}} / 月",
+        "features": {
+          "everything_pro": "プロプランの全機能",
+          "higher_limits": "さらに拡張された使用許容量",
+          "teammates": "チームでの共同作業",
+          "billing": "一元化された請求",
+          "access": "高度な機能"
+        },
+        "footnote": "*年間請求の価格；月次請求の場合は{{price}}/月",
+        "button": "始める"
+      },
+      "enterprise": {
+        "name": "エンタープライズ",
+        "price": "営業にお問い合わせ",
+        "features": {
+          "everything_team": "チームプランの全機能",
+          "higher_limits": "カスタマイズ可能な使用制限",
+          "context_windows": "拡張されたコンテキスト容量",
+          "sso_rbac": "SSO & RBAC",
+          "audit_logs": "アクティビティ追跡",
+          "integrations": "カスタム統合"
+        },
+        "button": "営業に問い合わせ"
+      }
+    },
+    "models": {
+      "mini": "Miniモデル",
+      "standard": "Standardモデル",
+      "large": "Largeモデル",
+      "custom_api": "カスタムAPI (standard)",
+      "custom_api_large": "カスタムAPI (large)"
+    },
+    "images": {
+      "basic": "基本画像生成 (最大512x512)",
+      "standard": "標準画像生成 (最大1024x1024)",
+      "high_resolution": "高解像度画像生成 (最大2048x2048)",
+      "enhancement": "画像補正/編集",
+      "batch": "一括画像生成 (10画像)",
+      "per_image": "画像あたり",
+      "per_batch": "バッチあたり"
+    },
+    "pay_as_you_go": {
+      "title": "使った分だけお支払い。",
+      "description": "以下のカテゴリでの使用量に基づき、クレジット残高から差し引かせていただきます："
+    },
+    "charts": {
+      "model_usage_title": "モデル使用量",
+      "image_generation_title": "画像生成",
+      "model_header": "モデル",
+      "input_header": "入力 (100万トークンあたり)",
+      "output_header": "出力 (100万トークンあたり)",
+      "service_header": "サービス",
+      "price_header": "価格"
+    }
+  },
+  "enterprise": {
+    "title": "企業向けLora",
+    "description": "Loraを企業のデータに安全に統合し、信頼できるAIで各チームを強化します。",
+    "cta": "営業に問い合わせ"
+  },
+  "footer": {
+    "logo_alt": "ロゴ",
+    "sections": {
+      "solutions": "ソリューション",
+      "support": "サポート",
+      "company": "企業情報"
+    },
+    "solutions": {
+      "api": "API",
+      "team": "チーム",
+      "pricing": "料金",
+      "research": "研究",
+      "company": "企業情報"
+    },
+    "support": {
+      "press": "プレス",
+      "support": "サポート",
+      "status": "ステータス",
+      "availability": "可用性"
+    },
+    "company": {
+      "terms": "利用規約",
+      "privacy": "プライバシー通知",
+      "usage": "利用方針",
+      "compliance": "コンプライアンス",
+      "disclosure": "責任ある情報開示方針"
+    }
+  },
+  "checkout": {
+    "payment_status": {
+      "succeeded": "取引完了！",
+      "processing": "お支払いを処理中です。",
+      "requires_payment_method": "支払いが失敗しました。もう一度お試しください。",
+      "error": "問題が発生しました。"
+    },
+    "or": "または"
+  },
+  "return": {
+    "title": "注文状況",
+    "please_wait": "お待ちください..."
+  },
+  "signup": {
+    "title": "アカウントを作成",
+    "email": "メールアドレス",
+    "email_placeholder": "jenny@example.com",
+    "password": "パスワード",
+    "remember_me": "ログイン状態を保持",
+    "forgot_password": "パスワードをリセット",
+    "sign_up": "登録",
+    "already_member": "既にユーザーですか？",
+    "sign_in_link": "ここでログイン",
+    "password_disclaimer": "デモ専用です。実際のパスワードは使用しないでください。"
+  },
+  "signin": {
+    "title": "アカウントにアクセス",
+    "email": "メールアドレス",
+    "email_placeholder": "jenny@example.com",
+    "password": "パスワード",
+    "remember_me": "ログイン状態を保持",
+    "forgot_password": "パスワードをリセット",
+    "sign_in": "ログイン",
+    "not_member": "新規ユーザーですか？",
+    "sign_up_link": "ここで登録",
+    "password_disclaimer": "デモ専用です。検証は適用されません。",
+    "quickstart_multi": "クイックスタート（カスタム料金）",
+    "quickstart_sub": "Stripe と Metronome の顧客を作成し、支払い・遡及プレミアム契約・デモ利用へ。",
+    "quickstart_conflict": "このメールは Metronome で既に使われています。クイックスタートは新しいメールのみ — 別のメールを選んでください。",
+    "quickstart_loading": "チェックアウトを開いています…"
+  },
+  "common": {
+    "error": {
+      "default_message": "問題が発生しました。もう一度お試しください。",
+      "dismiss": "閉じる"
+    },
+    "close": "閉じる",
+    "get_started": "始める",
+    "loading": "読み込み中...",
+    "processing": "処理中..."
+  },
+  "subscription_team": {
+    "title": "チームプラン購読",
+    "team_members_question": "チームの人数は？",
+    "pay_monthly": "月次請求",
+    "pay_annually": "年次請求",
+    "monthly_price": "{{price}} / 月 / メンバー + 消費税",
+    "annual_price": "{{price}} / 月 / メンバー + 消費税",
+    "annual_savings": "17%割引、使用量は月次請求",
+    "team_summary": "{{members}}メンバー x {{price}}",
+    "subtotal": "小計",
+    "tax": "消費税（該当する場合）",
+    "total": "合計 / {{frequency}}",
+    "subscribe": "確認",
+    "after_your_first": "従量課金制：",
+    "usage": "使用量",
+    "pay_yearly": "年間請求"
+  },
+  "subscription_pro": {
+    "title": "プロプラン購読",
+    "subtotal": "小計",
+    "tax": "消費税（該当する場合）",
+    "total": "合計 / 月",
+    "subscribe": "進む",
+    "after_your_first": "100,000トークン後の従量課金制：",
+    "usage": "10万トークン以上の使用量",
+    "usage_total": "使用量"
+  },
+  "subscription_plus": {
+    "title": "プラスプラン購読",
+    "subtotal": "小計",
+    "tax": "消費税（該当する場合）",
+    "total": "合計 / 月",
+    "subscribe": "進む"
+  },
+  "subscription_free": {
+    "title": "ようこそ！",
+    "please_wait": "アカウントを設定中..."
+  },
+  "subscription_api": {
+    "title": "Lora APIでの開発を開始",
+    "check_out": "最新モデルを探索",
+    "continue": "決済に進む"
+  },
+  "settings": {
+    "sidebar": {
+      "billing": "請求",
+      "profile": "プロフィール",
+      "account": "アカウント"
+    },
+    "subscription": {
+      "title": "{{plan}}プランの購読",
+      "active": "有効",
+      "canceled": "キャンセル済み",
+      "paused": "一時停止中",
+      "pending": "保留中",
+      "unpaid": "未払い",
+      "trial": "トライアル",
+      "customer_id": "顧客ID",
+      "subscription_id": "購読ID",
+      "plan_type": "プランタイプ",
+      "usage_based": "従量課金制",
+      "fixed": "固定価格",
+      "billing_period": "請求期間",
+      "weekly": "毎週",
+      "monthly": "毎月",
+      "yearly": "毎年",
+      "months": "ヶ月",
+      "years": "年",
+      "every_x": "{{count}} {{interval}}ごと",
+      "start_date": "開始日",
+      "end_date": "終了日",
+      "next_billing": "次回請求日",
+      "current_usage": "現在の使用量",
+      "estimated_cost": "推定コスト",
+      "usage_billing_note": "従量課金制では、使用した分だけお支払いいただきます。実際の金額は請求期間の終わりに計算されます。",
+      "upgrade": "プランをアップグレード",
+      "downgrade": "プランをダウングレード",
+      "change_plan": "プランを変更",
+      "cancel": "購読をキャンセル",
+      "canceling": "キャンセル中...",
+      "renew": "購読を更新",
+      "reactivate": "再開する",
+      "view_usage": "使用量の詳細を表示",
+      "payment_method": "支払い方法",
+      "update_payment": "支払い方法を更新",
+      "billing_history": "請求履歴",
+      "view_invoices": "請求書を表示",
+      "manage_subscription": "購読を管理",
+      "cancel_confirmation": "本当に購読をキャンセルしますか？",
+      "cancel_note": "現在の請求期間が終了するまで、購読は有効です。",
+      "cancel_success": "購読が正常にキャンセルされました。",
+      "cancel_error": "購読のキャンセル中にエラーが発生しました。もう一度お試しください。",
+      "meter_usage": "使用量メーター",
+      "meter_tokens": "トークン使用量",
+      "meter_api": "APIリクエスト",
+      "meter_storage": "ストレージ",
+      "next_payment": "{{date}}に{{amount}}の次回支払い",
+      "rate_card_name": "料金表",
+      "plan_details": "プラン詳細",
+      "rate_details": "料金詳細",
+      "usage_limit": "使用制限",
+      "set_limit": "制限を設定",
+      "limit_note": "使用制限を設定すると、予期せぬ請求を防ぐのに役立ちます。",
+      "no_subscription": "現在有効な購読がありません。",
+      "subscription_expired": "購読が期限切れです。",
+      "subscription_canceled": "購読はキャンセルされました。",
+      "subscription_paused": "購読は現在一時停止中です。",
+      "resume_subscription": "購読を再開",
+      "pause_subscription": "購読を一時停止",
+      "sign_in_required": "購読設定を表示するにはサインインしてください。"
+    },
+    "rate_card": {
+      "volume_pricing": "ボリューム価格",
+      "graduated_pricing": "段階的価格",
+      "standard_pricing": "標準価格",
+      "monthly": "月次",
+      "yearly": "年次",
+      "every_x_months": "{{count}}ヶ月ごと",
+      "billing_cycle": "請求サイクル",
+      "included_rates": "含まれる料金",
+      "starting_at": "開始価格",
+      "unit": "ユニット"
+    },
+    "common": {
+      "loading": "読み込み中...",
+      "confirm": "確認",
+      "cancel": "キャンセル",
+      "save": "保存",
+      "edit": "編集",
+      "delete": "削除",
+      "view": "表示",
+      "back": "戻る",
+      "next": "次へ",
+      "continue": "続行",
+      "yes": "はい",
+      "no": "いいえ"
+    },
+    "errors": {
+      "general": "エラーが発生しました。もう一度お試しください。",
+      "not_found": "見つかりません",
+      "network_error": "ネットワークエラー。接続を確認してください。",
+      "server_error": "サーバーエラー。後でもう一度お試しください。",
+      "authorization_error": "認証エラー。再度ログインしてください。"
+    },
+    "notifications": {
+      "success": "成功！",
+      "error": "エラー！",
+      "warning": "警告！",
+      "info": "情報"
+    },
+    "teamMembers": {
+      "title": "チームメンバー",
+      "current": "アクティブなチームメンバー：{{count}}",
+      "update": "変更",
+      "confirm_changes": "変更を確認",
+      "immediately": "月額料金は即時更新されます。比例配分された料金は即時請求されます。クレジットは次回の月次請求書に表示されます。",
+      "confirm": "確認"
+    },
+    "payment": {
+      "ending_with": "末尾{{last4}}",
+      "external_payment_method": "外部支払い方法",
+      "replace": "置き換える",
+      "title": "支払い方法",
+      "update": "更新",
+      "add": "追加",
+      "promo_code": "プロモーションコードを適用",
+      "enter_promo_code": "プロモーションコード",
+      "applying": "適用中",
+      "apply": "適用",
+      "no_payment_method": "支払い方法が見つかりません"
+    },
+    "invoices": {
+      "finalized": "確定",
+      "title": "請求書",
+      "description": "過去の請求書を表示してダウンロード",
+      "date": "日付",
+      "total": "合計",
+      "status": "ステータス",
+      "actions": "アクション",
+      "draft": "下書き",
+      "paid": "支払済",
+      "open": "未払い",
+      "void": "無効",
+      "uncollectible": "回収不能",
+      "none": "まだ請求書はありません"
+    },
+    "cancellation": {
+      "logged_out_message": "確認後にログアウトされます。",
+      "reenrolled_message": "自動的に無料プランに再登録されます。月次クレジットは有効期限まで引き続き使用できます。",
+      "title": "解約",
+      "confirmTitle": "よろしいですか？",
+      "cancelPlan": "プランを解約",
+      "cancel": "解約",
+      "close": "閉じる",
+      "beforeYouGo": "解約する前に",
+      "stayWithOffer": "このオファーを利用して継続：",
+      "offer": "3ヶ月間20%割引",
+      "claim": "オファーを受け入れる",
+      "keep": "購読を維持する"
+    },
+    "credits": {
+      "custom": "カスタム",
+      "close": "閉じる",
+      "new": "新規",
+      "purchase": "クレジットを購入",
+      "buy": "APIトークンを購入する",
+      "provide": "より予測可能な組織の経費のために。",
+      "buy_button": "購入"
+    },
+    "meter": {
+      "close": "閉じる",
+      "enter_amount": "金額を入力",
+      "simulate": "使用量をシミュレート",
+      "sim": "テスト",
+      "current": "現在の使用量"
+    },
+    "meters": {
+      "used": "使用済みトークン"
+    }
+  },
+  "api_plans": {
+    "input": "入力",
+    "write": "プロンプトキャッシュ書き込み",
+    "read": "プロンプトキャッシュ読み取り",
+    "output": "出力",
+    "latest": "最新モデル",
+    "features": {
+      "latest_1": "ライブデータ更新",
+      "latest_2": "最新機能",
+      "latest_3": "最速モデル",
+      "e_1": "当社のフラッグシップモデル",
+      "e_2": "2024/03/14更新",
+      "e_3": "高信頼性",
+      "visual_1": "光学ベースモデル",
+      "visual_2": "ファイルアップロード可能"
+    },
+    "visual": "Loraビジュアル"
+  },
+  "tools": {
+    "title": "設定"
+  },
+  "loading": "読み込み中",
+  "redirect": "決済のためStripeにリダイレクトしています。お待ちください...",
+  "contact_us": {
+    "contact": "Loraに連絡する",
+    "connect": "APIおよびチーム向けLoraのご利用が増えるにつれ、追加リソースやサポートが必要な場合は、当社の営業チームにご連絡ください。",
+    "first_name": "名",
+    "last_name": "姓",
+    "email": "メールアドレス",
+    "company_name": "会社名",
+    "why": "お問い合わせの理由をもう少し詳しく教えてください",
+    "submit": "送信",
+    "loading": "読み込み中"
+  },
+  "auth": {
+    "errors": {
+      "general": "エラーが発生しました。もう一度お試しください。",
+      "unexpected": "予期せぬエラーが発生しました。もう一度お試しください。",
+      "checkout_session": "埋め込みチェックアウトセッションを作成できませんでした。サインインしていない可能性があります。",
+      "legacy_api": "レガシーサブスクリプションAPIは利用できなくなりました。料金プランのサブスクリプションを使用してください。"
+    }
+  },
+  "simulations": {
+    "advance_time": "時間を進める →",
+    "cancel": "キャンセル",
+    "advance": "進める",
+    "send_usage": "使用量をメーターに送信",
+    "enter_usage": "使用量を入力",
+    "send_usage_data": "使用量データを送信"
+  },
+  "config": {
+    "stripe_icon_alt": "Stripeアイコン",
+    "save_settings": "設定を保存"
+  },
+  "random1": "ラマがハミングできることをご存知ですか？彼らは互いにコミュニケーションをとる手段としてハミングを使います！",
+  "random2": "ラマはラクダの仲間ですが、こぶはありません。アルパカやビクーニャも含まれるラクダ科の一員です。",
+  "random3": "ラマの群れは「herds」または「pack」と呼ばれますが、「ラマドラマ」と呼んだら面白いと思いませんか？",
+  "random4": "ラマは本来、保護的であり、コヨーテや他の捕食者を追い払うため、羊の番犬として使われてきました。",
+  "random5": "ラマのウールは自然に撥水性があり、低アレルギー性です。ラマウールのセーターはいかがですか？",
+  "random6": "インカ帝国では、王族だけがラマ繊維で作られた服を着ることが許されていました。",
+  "random7": "ラマの赤ちゃんはスペイン語で「赤ちゃん」を意味する「crias」と呼ばれます。出生時の体重は最大30ポンドにもなります！",
+  "random8": "ラマは体重の25〜30%を1日に8〜13マイル運ぶことができます。彼らは南米の荷運び用のラバです！",
+  "random9": "ラマは非常に社会的な動物で、群れで生活することを好みます。彼らはラクダ界のパーティーアニマルです！",
+  "random10": "ラマの寿命は約20年です。ラマドラマには十分な時間があります！",
+  "random11": "ラマは一部の病院や介護施設でセラピーアニマルとして使用されています。彼らは自然界のふわふわしたセラピストです！",
+  "random12": "ラマは優れた視力を持ち、1マイル先から潜在的な捕食者を見つけることができます。彼らは草原の鷲のようです！",
+  "random13": "ラマは環境に優しいです！彼らのパッド付きの足は、ひづめよりも地形に優しく、侵食を防ぎます。",
+  "random14": "ラマ繊維には20以上の自然な色があり、これは繊維を生産する動物の中で最も多いです。彼らは歩く虹です！",
+  "random15": "ラマは賢く、カートを引いたり、荷物を運んだり、障害物コースで競争したりするように訓練できます。ラマオリンピックはいかがですか？",
+  "random16": "ラマは上の前歯がありません。代わりに、食べ物をすりつぶすのに役立つ硬い口蓋があります。",
+  "random17": "ラマはハミング、いななき、警報音など、さまざまな音を使って互いにコミュニケーションをとります。",
+  "random18": "ラマの平常体温は人間よりもはるかに高く、38〜39℃の範囲です。",
+  "random19": "ラマから話題を変えて：コアラの指紋は人間のものと非常に似ているため、犯罪現場で時々混同されることがあります。",
+  "random20": "ラマからギアを変えて：フラミンゴの群れが「flamboyance（華やかさ）」と呼ばれることをご存知でしたか？それはかなり素晴らしいですね！",
+  "products": {
+    "prod_mock_premium": {
+      "name": "プレミアム",
+      "description": "プロフェッショナルや成長企業に最適。"
+    },
+    "default_premium": {
+      "name": "プレミアム",
+      "description": "プロフェッショナルや成長企業に最適。"
+    },
+    "default_free": {
+      "name": "無料",
+      "description": "AIコンテンツ作成を始める個人に最適。"
+    },
+    "default_team": {
+      "name": "チーム",
+      "description": "企業や高ボリュームユーザー向けのカスタマイズソリューション。"
+    }
+  },
+  "plans": {
+    "price_details": {
+      "month": "/月"
+    },
+    "free": {
+      "description": "AIコンテンツ作成を始める個人に最適。",
+      "credit_description": "ライフタイムクレジット（1回限り）",
+      "features": {
+        "1": "個人利用無料",
+        "2": "無制限の画像・動画生成",
+        "3": "標準埋め込み作成",
+        "4": "コミュニティサポート",
+        "5": "基本分析ダッシュボード"
+      },
+      "button": {
+        "current": "現在のプラン",
+        "get_started": "無料で始める"
+      }
+    },
+    "premium": {
+      "description": "プロフェッショナルや成長企業に最適。",
+      "credit_description": "月次クレジット",
+      "features": {
+        "1": "無料プランの全機能",
+        "2": "優先メールサポート",
+        "3": "包括的分析ダッシュボード",
+        "4": "プログラム統合用API アクセス",
+        "5": "セキュリティ強化のためのSSO",
+        "6": "自動ゼロデータ保持機能"
+      },
+      "button": {
+        "current": "現在のプラン",
+        "get_started": "プレミアムを始める"
+      },
+      "name": "プレミアム"
+    },
+    "team": {
+      "credit_description": "ビジネスニーズに基づくクレジット配分",
+      "features": {
+        "1": "プレミアムプランの全機能",
+        "2": "高ボリュームユーザー向けカスタマイズソリューション",
+        "3": "専任アカウントマネージャー",
+        "4": "一元請求管理",
+        "5": "強化されたセキュリティ機能",
+        "6": "ベータ機能への独占アクセス"
+      },
+      "button": {
+        "contact_sales": "営業へのお問い合わせ"
+      },
+      "custom_pricing": "カスタム価格",
+      "custom_amount": "カスタム"
+    }
+  },
+  "rate_card": {
+    "checkout_title": "従量課金プランに登録",
+    "select_plan": "プランを選択",
+    "billing_cycle": "請求サイクル",
+    "monthly": "月次",
+    "yearly": "年次",
+    "every_x_months": "{{count}}ヶ月ごと",
+    "included_rates": "このプランに含まれる料金",
+    "id": "料金表ID",
+    "estimated_costs": "推定コスト",
+    "base_charges": "基本料金",
+    "estimated_tax": "推定税額",
+    "estimated_total": "推定合計",
+    "cost_explanation": "最終的な料金は、請求期間終了時の実際の使用量に基づいて計算されます。",
+    "usage_estimator": "使用量見積もりツール",
+    "usage_estimator_description": "以下のスライダーを調整して、予想される使用量に基づいた月額コストを見積もります。",
+    "how_it_works": "従量課金制の仕組み",
+    "step1_title": "登録",
+    "step1_description": "初期費用なしで従量課金制にサインアップ",
+    "step2_title": "サービスを利用",
+    "step2_description": "必要なだけAPIやプラットフォームを使用",
+    "step3_title": "使用分を支払う",
+    "step3_description": "各請求期間の終わりに、使用した分だけお支払い",
+    "footer_note": "アカウントのダッシュボードからいつでも現在の使用量を確認し、制限を設定できます。",
+    "volume_pricing": "ボリューム価格",
+    "graduated_pricing": "段階的価格",
+    "standard_pricing": "標準価格",
+    "starting_at": "開始価格",
+    "unit": "ユニット",
+    "subscription_details": "購読詳細",
+    "usage_details": "使用詳細",
+    "payment_details": "支払い詳細",
+    "subscription_confirmation": "購読確認",
+    "subscribe_button": "今すぐ登録",
+    "modify_button": "選択を変更",
+    "cancel_button": "キャンセル",
+    "low_usage": "低使用量",
+    "medium_usage": "中程度の使用量",
+    "high_usage": "高使用量",
+    "faq_title": "よくある質問",
+    "faq_1_question": "どのように請求されますか？",
+    "faq_1_answer": "各請求サイクルの終了時に、実際の使用量に基づいて請求されます。お支払い方法は自動的に課金されます。",
+    "faq_2_question": "最低利用金額はありますか？",
+    "faq_2_answer": "いいえ、最低利用金額の要件はありません。使用した分だけお支払いいただきます。",
+    "faq_3_question": "予想使用量を超えた場合はどうなりますか？",
+    "faq_3_answer": "段階的な料金体系に従って引き続き請求されます。大量使用の場合は、割引料金が自動的に適用されます。",
+    "faq_4_question": "使用制限を設定できますか？",
+    "faq_4_answer": "はい、アカウント設定で使用制限を設定して、予期せぬ請求を防ぐことができます。",
+    "tokens": "トークン",
+    "api_requests": "APIリクエスト",
+    "processing_units": "処理ユニット",
+    "storage": "ストレージ",
+    "per_unit": "ユニットあたり",
+    "per_token": "トークンあたり",
+    "per_request": "リクエストあたり",
+    "per_gb": "GBあたり",
+    "up_to": "最大",
+    "and_up": "以上",
+    "current_usage": "現在の使用量",
+    "usage_limit": "使用制限",
+    "set_limit": "制限を設定",
+    "processing": "購読を処理中...",
+    "success_message": "購読が有効になりました！今すぐサービスをご利用いただけます。",
+    "payment_method": "支払い方法",
+    "edit_payment_method": "支払い方法を編集",
+    "billing_address": "請求先住所",
+    "edit_billing_address": "請求先住所を編集",
+    "live": "ライブバージョン",
+    "no_rates_warning": "このバージョンには料金が定義されていません",
+    "version": {
+      "id": "バージョンID",
+      "created": "作成日",
+      "status": "ステータス: {{status}}",
+      "live": "ライブバージョン"
+    }
+  },
+  "units": {
+    "million_tokens": "Mトークン",
+    "unit": "ユニット"
+  },
+  "features": {
+    "section_pill": "スピード重視の設計",
+    "title": "ソフトウェアを構築する新しい方法",
+    "description": "完全な透明性でより速く出荷。当社のプラットフォームは、チームと共にスケールするエンタープライズグレードのツールを提供します。",
+    "ai_code_generation": {
+      "title": "AIコード生成",
+      "description": "単一のプロンプトからコンポーネント、サービス、およびアプリケーション全体を生成します。"
+    },
+    "usage_based_billing": {
+      "title": "従量課金制",
+      "description": "使った分だけお支払い。クレジット消費をリアルタイムで追跡します。"
+    },
+    "instant_deployment": {
+      "title": "即時デプロイ",
+      "description": "アイデアから本番アプリケーションまで数分で。インフラストラクチャは当社が管理します。"
+    },
+    "transparent_fair": {
+      "title": "透明性と公正性",
+      "description": "隠れた料金はありません。当社のクレジットシステムは明確で、予測可能で、公正です。"
+    }
+  },
+  "dashboard": {
+    "auto_top_up_status": "自動チャージ有効 · {{threshold}}を下回ると{{to}}まで補充",
+    "chat_token_usage_by_model": "モデル別チャットトークン使用量",
+    "credits_of_total": "残り{{available}}（{{total}}中）",
+    "greeting": "こんにちは、{{name}}さん",
+    "ai_credits": "クレジット",
+    "no_usage_data": "この期間の使用データがありません",
+    "spend": "利用枠",
+    "spend_meter_caption": "請求サイクル内の利用可能額 {{available}} / クレジット総額 {{credits}}",
+    "current_spend": {
+      "title": "現在の利用額",
+      "after_credits": "クレジット適用後: {{amount}}",
+      "subtitle_draft": "Metronome のドラフト請求書に基づきます。利用に応じて合計が更新されます。",
+      "period_through": "請求期間：{{date}} まで",
+      "no_period": "このサイクルのドラフトが作成されると請求期間が表示されます。",
+      "no_charges_yet": "この期間の利用明細はまだありません。",
+      "breakdown": "利用内訳",
+      "more_line_items": "他 {{count}} 件"
+    },
+    "credits_remaining": "残りのクレジット",
+    "credits_meter_caption": "{{total}} 中 {{available}} のクレジットが残っています",
+    "page": {
+      "title": "プランと請求",
+      "description": "購読、クレジット、支払い詳細を管理します。",
+      "sign_in_required": "ダッシュボードを表示するにはサインインしてください。"
+    },
+    "sidebar": {
+      "billing": "プランと請求",
+      "usage": "使用量",
+      "simulations": "ユーザーシミュレーション",
+      "settings": "設定"
+    },
+    "settings": {
+      "page_title": "設定"
+    },
+    "token_usage_by_model": "モデル別トークン使用量",
+    "usage": {
+      "page_title": "使用量と分析",
+      "page_description": "AIサービス使用量の詳細な内訳。",
+      "model_input_tokens": "モデル入力トークン",
+      "model_output_tokens": "モデル出力トークン",
+      "images_generated": "生成された画像",
+      "images_enhanced": "補正された画像",
+      "batch_images_processed": "一括処理された画像",
+      "across_all_models": "すべてのモデルタイプで",
+      "generated_responses": "生成された応答",
+      "all_resolutions": "すべての解像度",
+      "enhancement_operations": "補正操作",
+      "images_in_batches": "バッチ内の画像",
+      "aggregated": {
+        "title": "集計された使用量",
+        "description": "AIコンテンツ生成の使用量を追跡",
+        "unknown": "不明",
+        "total": "合計",
+        "daily_burn": "1日の消費量"
+      },
+      "tabs": {
+        "model_usage": "モデル使用量",
+        "image_generation": "画像生成",
+        "image_enhancement": "画像補正",
+        "image_batch_processing": "画像一括処理"
+      },
+      "charts": {
+        "model_usage_title": "モデル使用量",
+        "model_usage_desc": "モデルタイプ（Mini, Standard, Large, Custom API）別に整理されたトークン使用量",
+        "image_generation_title": "画像生成",
+        "image_generation_desc": "解像度別の生成画像数",
+        "image_enhancement_title": "画像補正",
+        "image_enhancement_desc": "補正された画像数",
+        "batch_processing_title": "画像一括処理",
+        "batch_processing_desc": "一括処理された画像数"
+      },
+      "project_storage": {
+        "title": "プロジェクト別使用量",
+        "used": "使用済み",
+        "capacity": "コミット",
+        "available": "残り",
+        "no_metrics": "課金可能なメトリクスが見つかりません。",
+        "no_project_dimension": "このメトリクスは project_id グループ化がありません。多プロジェクトのシードを使うか Metronome でグループキーを設定してください。",
+        "no_commitment_hint": "契約に月次コミットがありません — バーは相対シェアのみ表示します。",
+        "token_share_note": "請求小計はまだありません — バーは今月のプロジェクト別の計測トークン割合を表示します。",
+        "empty_hint": "この期間のプロジェクト別用量がありません。設定でデモデータを投入するかチャットを利用してください。マルチプロジェクトシードは3つの project_id を書き込みます。",
+        "no_usage_rows": "この期間に Metronome から用量行が返りませんでした。シード後に再試行するか API キーを確認してください。",
+        "aggregated_usage_label": "全用量",
+        "unallocated_usage_label": "未割当（明細行にプロジェクトなし）",
+        "aggregate_bar_note": "このメーターでは usage/groups にプロジェクト別の内訳がありません — バーは未請求インボイスの用量合計を表示します。"
+      }
+    },
+    "simulations": {
+      "page_title": "ユーザーシミュレーション",
+      "page_description": "テストおよびデモンストレーション用にさまざまなシミュレーションシナリオを実行します。",
+      "scenario_1": "シナリオ1",
+      "scenario_2": "シナリオ2",
+      "scenario_3": "シナリオ3",
+      "cycle_title": "サイクルシミュレーション",
+      "cycle_card_title": "完全な請求サイクルをシミュレート",
+      "cycle_status_running": "実行中",
+      "cycle_status_stopped": "停止",
+      "cycle_description_line1": "メーターに現実的な使用データを送信しながら1サイクル進みます。",
+      "cycle_description_line2": "中程度のトークン使用量（~30万トークン/月）と軽い画像生成（~2枚/月）を生成します。",
+      "cycle_description_line3": "予想コスト：実際の価格に基づいてクレジット消費を示します。毎月{{day}}日に請求されます。",
+      "cycle_current_date": "現在の日付：",
+      "cycle_button_start": "シミュレーションを開始",
+      "advance_time_button": "時間を進める →",
+      "clock_title": "テストクロック: 時間を進める",
+      "clock_current_time": "現在のシミュレーション時間：",
+      "clock_status": "ステータス：",
+      "clock_status_loading": "読み込み中",
+      "clock_status_advancing": "進行中",
+      "clock_status_ready": "準備完了",
+      "clock_advance_title": "時間を進める",
+      "clock_advance_description": "時計を進めて、発生するイベントや変更を確認します。",
+      "clock_warning": "シミュレーション内のすべての顧客が影響を受けます。",
+      "clock_buttons": {
+        "hour": "+ 1時間",
+        "day": "+ 1日",
+        "week": "+ 1週間",
+        "month": "+ 1ヶ月",
+        "year": "+ 1年"
+      },
+      "clock_note": "注：この時計は2030年12月31日午後11時59分まで進めることができます。",
+      "usage_title": "使用量をメーターに送信",
+      "usage_description": "さまざまなサービスの接続済みメーターにシミュレートされた使用量データを送信します。",
+      "usage_status_sending": "送信中",
+      "usage_status_idle": "待機中",
+      "usage_modal_title": "使用量をメーターに送信",
+      "usage_placeholder": "使用量を入力",
+      "usage_send_button": "使用量データを送信"
+    },
+    "cards": {
+      "current_plan": "現在のプラン",
+      "next_billing": "次回請求",
+      "no_upcoming_charges": "今後の請求はありません",
+      "next_billing_charge": "次回請求サイクルの料金",
+      "upgrade": "アップグレード",
+      "pay_as_you_use": "従量課金",
+      "pay_as_you_use_description": "消費トークンに基づき使用量を計測します。下記のレートに従い、実使用量に対して課金されます。",
+      "premium_package": "Premium",
+      "next_invoice_due": "支払期日 {{date}}",
+      "next_metronome_invoice": "未締め請求期間の見積合計",
+      "no_upcoming_invoice": "未締めの請求書はまだありません"
+    },
+    "usage_pacing": {
+      "title": "使用ペース",
+      "description": "月初からの請求可能な使用量と月間コミットメントの比較。",
+      "all_products": "すべての製品",
+      "all_models": "すべてのモデル",
+      "all_qualities": "すべての品質",
+      "all_tiers": "すべてのティア",
+      "month_to_date": "月初から現在",
+      "pct_of_monthly": "月間{{label}}の{{pct}}%",
+      "monthly_label": "月間{{label}}",
+      "prepaid_period": "この期間の前払い分",
+      "projected_month_end": "月末予測",
+      "within_prepaid": "前払い金額内",
+      "above_prepaid": "前払い超過 — 超過料金が発生します",
+      "commitment_cap": "月間{{label}}（上限）：{{amount}}",
+      "series_spend": "月初から現在（累計）",
+      "series_projected": "月末予測（トレンド）",
+      "commitment": "コミットメント",
+      "credit_balance": "クレジット残高",
+      "error_load": "請求書の詳細を読み込めませんでした："
+    },
+    "billing_payg": {
+      "title": "従量制料金",
+      "subtitle": "100万トークンあたりの料金（入力/出力）。請求書にはモデル別の集計使用量が反映されます。",
+      "effective": "2026年3月1日（UTC）より有効",
+      "col_model": "モデル",
+      "col_input": "入力",
+      "col_output": "出力"
+    },
+    "buttons": {
+      "cancel_auto_topup": "自動チャージをキャンセル",
+      "setup_auto_topup": "自動チャージを設定",
+      "purchase_credits": "クレジットを購入"
+    },
+    "invoice": {
+      "upcoming_title": "今後の請求書",
+      "billing_period_ending": "請求期間終了日：",
+      "unknown_item": "不明な項目",
+      "description": "説明",
+      "quantity": "数量",
+      "unit_price": "単価",
+      "amount": "金額",
+      "subtotal": "小計",
+      "tax": "税金",
+      "total": "合計",
+      "no_upcoming_charges": "現在のプランでは今後の請求はありません",
+      "no_charges": "今後の請求はありません",
+      "credits_applied": "適用済みクレジット",
+      "period_net_subtitle": "適用クレジット後の当期の正味金額です。表に利用内訳とクレジットを表示します。",
+      "period_net_subtitle_empty": "この期間の未確定請求はまだありません。利用が請求されると更新されます。",
+      "million_tokens_suffix": " / 100万トークン",
+      "usage_per_heading": "利用の内訳:",
+      "ungrouped_line_items": "その他の料金",
+      "line_item_names": {
+        "chat_input_tokens": "チャット - 入力トークン",
+        "chat_output_tokens": "チャット - 出力トークン",
+        "image_enhancement": "画像強化",
+        "image_generation": "画像生成",
+        "premium_subscription": "プレミアムサブスクリプション"
+      }
+    },
+    "date_picker": {
+      "last_7_days": "過去7日間",
+      "last_30_days": "過去30日間",
+      "current_billing_period": "現在の請求期間"
+    }
+  },
+  "landing": {
+    "technologies": {
+      "robot_alt": "手を振る、フレンドリーで未来的なロボットアシスタント"
+    },
+    "enterprise": {
+      "title": "Lora for Enterprise",
+      "description": "Loraを企業のデータと安全に統合し、信頼できるAIで各チームを強化します。",
+      "cta": "営業に連絡"
+    },
+    "hero": {
+      "main_title": "プロンプトから画像・動画・3Dへ",
+      "description": "透明なクレジット料金で、あらゆる生成ワークフローの本番向けメディアを作成します。",
+      "button_logged_in": "Lora Generateを開く",
+      "button_not_logged_in": "無料で生成を開始",
+      "no_credit_card": "クレジットカードは不要です",
+      "build_command": "構築"
+    },
+    "aggregated_usage": {
+      "title": "集計された使用量",
+      "description": "AIコンテンツ生成の使用量を追跡",
+      "unknown": "不明",
+      "total_daily_burn": "合計: {{value}}, 日次消費: {{burn}}"
+    }
+  },
+  "payments": {
+    "errors": {
+      "validation_error": "支払い方法の検証中にエラーが発生しました。",
+      "unexpected_error": "予期せぬエラーが発生しました。",
+      "generic_error": "予期せぬエラーが発生しました。",
+      "promo_not_available": "この購読タイプではプロモーションコード機能は利用できません。",
+      "promo_failed": "プロモーションコードの適用に失敗しました。もう一度お試しください。"
+    },
+    "success": {
+      "payment_updated": "お支払い方法が正常に更新されました。"
+    }
+  },
+  "most_popular": "最も人気",
+  "not_available": "N/A",
+  "faq": {
+    "title": "よくある質問",
+    "questions": {
+      "credits": {
+        "question": "クレジットとは何ですか？どのように機能しますか？",
+        "answer": "クレジットはAIサービスの支払いに使用されます。プレミアムプランには{{premiumCredits}}の月次クレジットが付与され、無料プランでは{{freeCredits}}の生涯クレジットが提供されます。"
+      },
+      "over_credits": {
+        "question": "クレジットを使い切った場合はどうなりますか？",
+        "intro": "クレジット割り当てを超過した場合、サービスの利用を継続するための柔軟なオプションがあります：",
+        "auto_topup": {
+          "title": "自動チャージ",
+          "description": "残高が少なくなったときにサービスが中断されないよう、クレジットの自動購入を設定します。"
+        },
+        "credit_packs": {
+          "title": "クレジットパック",
+          "description": "いつでもこれらの便利なオプションで追加のクレジットを購入できます：",
+          "pack1": "スタンダードパック: {{amount}}",
+          "pack2": "ラージパック: {{amount}}",
+          "pack3": "カスタム金額 (最小 {{amount}})"
+        }
+      },
+      "rollover": {
+        "question": "未使用のクレジットは繰り越せますか？",
+        "answer": "月次クレジットは各請求サイクルでリセットされ、繰り越されません。ただし、クレジットパックで購入したクレジットは有効期限がありません。"
+      },
+      "change_plan": {
+        "question": "いつでもプランを変更できますか？",
+        "answer": "はい、いつでもプランをアップグレードまたはダウングレードできます。変更は即座に有効になり、日割り計算による請求調整が行われます。"
+      }
+    }
+  },
+  "subscribe_metronome_package": {
+    "order_summary": "注文概要",
+    "custom_pricing": "個別見積もり",
+    "per_month": "月額",
+    "applicable_taxes": "＋適用される税金",
+    "loading": "パッケージ詳細を読み込み中…",
+    "not_found": "このパッケージの詳細を読み込めませんでした。",
+    "unknown_name": "選択したパッケージ"
+  },
+  "modals": {
+    "auto_top_up": {
+      "title": "自動チャージを設定",
+      "balance_threshold_label": "残高が下記を下回った時",
+      "top_up_amount_label": "自動トップアップ",
+      "disclaimer": "「設定を保存」をクリックすることで、クレジット残高が{{threshold}}を下回った時に{{topUpAmount}}まで自動チャージされることに同意します。",
+      "missing_stripe_customer": "自動チャージを有効にするには Stripe の顧客が必要です。再度サインインするか、ツールパネルでデモ顧客を確認してください。",
+      "missing_metronome_customer": "先にサインインするか、ツールパネルで Metronome の顧客を設定してください。"
+    },
+    "purchase_credits": {
+      "title": "クレジット購入",
+      "loading": "残高を読み込み中...",
+      "outstanding_balance_title": "要対応：未払い残高",
+      "top_up_credits_title": "クレジットをチャージ",
+      "outstanding_balance_message": "未払い残高を清算するまでLoraをご利用いただけません：",
+      "current_balance_message": "現在の残高は",
+      "recommended": "推奨",
+      "standard": "標準",
+      "large": "大容量",
+      "custom_amount": "カスタム金額",
+      "clears_outstanding_plus": "未払い残高を清算 + {{amount}}",
+      "processing": "処理中...",
+      "purchase_for": "{{amount}}で購入",
+      "select_amount": "金額を選択",
+      "min_amount": "最小 {{amount}}"
+    }
+  }
+}

@@ -1,0 +1,1127 @@
+{
+  "header": {
+    "main_nav": {
+      "account": "Cuenta",
+      "chat": "Charlar",
+      "pricing": "Precios",
+      "sign-out": "Cerrar sesión",
+      "sign_in": "Iniciar sesión"
+    },
+    "hero": {
+      "title": "Innovación y soluciones de IA priorizando la seguridad y la ética",
+      "new": "Nuevo",
+      "api": "API",
+      "new_title": "Presentando Lora 1.5",
+      "api_title": "Desarrolla con Lora",
+      "new_description": "Nuestra IA más sofisticada, ahora accesible.",
+      "api_description": "Comienza a utilizarla para mejorar la productividad e innovar modelos de negocio.",
+      "new_button": "Interactúa con Lora",
+      "api_button": "Lanzar ahora",
+      "typewriter": {
+        "text1": "un panel para seguir la interacción del usuario con gráficos en tiempo real",
+        "text2": "una aplicación móvil para una cafetería local con pedidos en línea",
+        "text3": "un sitio de comercio electrónico full-stack con un motor de recomendaciones",
+        "text4": "una biblioteca de componentes ligera para un sistema de diseño"
+      }
+    }
+  },
+  "chat": {
+    "you": "Tú",
+    "upgrade": "Estás en un plan gratuito limitado. ¡Actualiza!",
+    "submit": "Enviar",
+    "response": "Respuesta:",
+    "tokens": "{{tokens}} tokens - Último modelo",
+    "how": "¿Cómo puede ayudarte Lora hoy?",
+    "summarize": "Resumir texto",
+    "brainstorm": "Lluvia de ideas",
+    "analyze": "Analizar datos",
+    "make": "Hacer un plan",
+    "help_me": "Ayúdame a escribir",
+    "blocked_modal": {
+      "free_exhausted_message": "Tus créditos gratuitos se han agotado. Actualiza a Premium para seguir construyendo.",
+      "free_trial_title": "Has agotado tus créditos de prueba gratuita",
+      "credits_depleted_title": "Créditos agotados",
+      "free_trial_message": "Actualiza tu plan para continuar chateando y desbloquear más funciones.",
+      "credits_depleted_message": "Por favor, añade más créditos para continuar usando el servicio.",
+      "opening_checkout": "Abriendo pago…",
+      "premium_reset_message": "Has utilizado todos tus créditos para este período de facturación. Tu saldo se restablecerá al inicio del próximo ciclo de facturación.",
+      "upgrade_plan_button": "Actualizar plan",
+      "add_credits_button": "Añadir créditos",
+      "upgrade_to_premium": "Actualizar a Premium"
+    },
+    "input": {
+      "placeholder": "Haz clic en la flecha para continuar...",
+      "disabled_placeholder": "Haz clic en la flecha para continuar..."
+    },
+    "welcome": {
+      "title": "Vamos a crear un sitio web"
+    },
+    "assistant": {
+      "name": "Lora AI",
+      "generating": "Generando código...",
+      "generating_app": "Generando aplicación...",
+      "building_website": "Construyendo sitio web de Sabores Estaciones..."
+    },
+    "prompts": {
+      "step1": "Ayúdame a crear un sitio web para mi nuevo restaurante llamado Sabores Estaciones. Es un lugar de la granja a la mesa y necesito algo limpio y profesional. Solo empieza con la estructura básica.",
+      "step2": "Bien, eso es un buen esqueleto. ¿Ahora puedes aplicar la apariencia de nuestra marca? Usamos tonos tierra y una fuente serif clásica. Establezcamos la base del estilo y una mejor barra de navegación.",
+      "step3": "¡Esto se ve mucho mejor! ¿Ahora puedes hacer la sección hero más atractiva visualmente? ¿Tal vez agregar una bonita foto del restaurante y algunas animaciones suaves para que se sienta más acogedor?",
+      "step4": "¡Perfecto! Ahora necesito mostrar nuestro menú. Tenemos aperitivos, platos principales y postres. ¿Puedes agregar una sección de menú con fotos apetitosas de comida? Nuestros clientes necesitan ver lo que ofrecemos.",
+      "step5": "¡El menú se ve fantástico! Ahora necesito una forma para que los clientes hagan reservas. ¿Puedes agregar un sistema de reservas donde puedan reservar mesas? Me gustaría campos para fecha, hora, tamaño del grupo y solicitudes especiales.",
+      "step6": "¡Ya casi llegamos! ¿Puedes agregar una sección de comentarios donde los clientes puedan dejar reseñas con calificaciones de estrellas? También necesito una página Acerca de nosotros que cuente nuestra historia de la granja a la mesa. ¡Pulamos esto!"
+    },
+    "responses": {
+      "step1": "¡Perfecto! Te ayudaré a crear un sitio web para Sabores Estaciones. Déjame comenzar con una base limpia y simple - solo la estructura HTML básica y el estilo mínimo para empezar. Estoy configurando las secciones principales que necesitarás: inicio, menú, reservas y acerca de.",
+      "step2": "Por supuesto. Estableceré un sistema de diseño usando los colores tierra de tu marca y una fuente serif clásica. También estoy actualizando el diseño con una barra de navegación fija profesional. Esto establecerá el tono visual para el resto del sitio.",
+      "step3": "¡Excelente retroalimentación! Ahora estoy haciendo que esa sección hero destaque. Estoy generando una hermosa imagen del interior del restaurante y aplicándola como fondo de pantalla completa. También he agregado algunas animaciones suaves de 'aparición gradual' para que se sienta acogedor y elegante.",
+      "step4": "¡Excelente! Ahora viene la parte emocionante - la presentación de tu menú. Estoy construyendo una sección de menú completa y generando 6 imágenes de comida que dan agua en la boca: 2 aperitivos (bruschetta y burrata), 2 platos principales (salmón y ribeye), y 2 postres (cheesecake y pastel de lava de chocolate). Cada imagen está diseñada para resaltar la calidad fresca y artesanal que define la comida de la granja a la mesa.",
+      "step5": "¡Perfecto! Tu sistema de reservas está listo. He creado un formulario de reserva integral con selección de fecha/hora, opciones de tamaño de grupo y un campo de solicitudes especiales. Agregué validación adecuada y un sistema de confirmación para que los clientes reciban retroalimentación inmediata cuando reserven. El estilo coincide con tu estética elegante del restaurante.",
+      "step6": "¡Casi terminado! He agregado un sistema de comentarios interactivo donde los clientes pueden dejar calificaciones de estrellas y reseñas escritas. También creé una sección convincente Acerca de nosotros que cuenta tu historia de la granja a la mesa - enfocándose en tu fundación en 2020, asociaciones con granjas locales y filosofía de menú estacional. ¡Todo ahora funciona juntos sin problemas para una experiencia completa del restaurante!"
+    },
+    "usage_details": {
+      "title": "Detalles de uso",
+      "model": "Modelo",
+      "token_usage": "Uso de tokens",
+      "input": "Entrada",
+      "output": "Salida",
+      "total_tokens": "Total de tokens",
+      "image_usage": "Uso de imágenes",
+      "total_images": "Total de imágenes",
+      "model_types": {
+        "mini": "Lora Prime Mini 5.4",
+        "standard": "Lora Mythic 4.6",
+        "large": "Lora Prime 5.4"
+      },
+      "image_types": {
+        "basic": "Básico",
+        "standard": "Estándar",
+        "premium": "Premium"
+      },
+      "operations": {
+        "generated": "Generado",
+        "enhanced": "Mejorado",
+        "batch_generated": "Generación por Lotes"
+      }
+    },
+    "restaurant_name": "Sabores Estaciones",
+    "website": {
+      "nav": {
+        "about": "Acerca de",
+        "home": "Inicio",
+        "menu": "Menú",
+        "reservations": "Reservas"
+      },
+      "skeleton": {
+        "coming_soon": "Próximamente...",
+        "tagline": "Excelencia del campo a la mesa",
+        "welcome": "Bienvenido a Savory Seasons"
+      },
+      "hero": {
+        "cta": "Reserva tu mesa",
+        "tagline": "Descubre la experiencia más fresca de granja a mesa"
+      },
+      "menu_section": {
+        "appetizers": "Aperitivos",
+        "desserts": "Postres",
+        "loading": "Generando imágenes y cargando el menú...",
+        "main_courses": "Platos principales",
+        "title": "Nuestro menú de temporada"
+      },
+      "reservations_section": {
+        "email_placeholder": "Correo electrónico",
+        "name_placeholder": "Nombre completo",
+        "party_1": "1 persona",
+        "party_2": "2 personas",
+        "party_3": "3 personas",
+        "party_4": "4 personas",
+        "party_5": "5+ personas",
+        "party_size": "Tamaño del grupo",
+        "phone_placeholder": "Número de teléfono",
+        "special_requests": "Solicitudes especiales o restricciones dietéticas (opcional)",
+        "submit": "Reservar mesa",
+        "success_message": "¡Gracias! Hemos recibido tu solicitud y nos pondremos en contacto en 24 horas para confirmar tu reserva.",
+        "success_title": "¡Reserva confirmada!",
+        "title": "Hacer una reserva"
+      },
+      "feedback_section": {
+        "email_placeholder": "Email (opcional)",
+        "name_placeholder": "Tu nombre (opcional)",
+        "rating_label": "Califica tu experiencia:",
+        "review_placeholder": "Cuéntanos sobre tu visita...",
+        "submit": "Enviar comentario",
+        "success_message": "Agradecemos tus comentarios y los usaremos para mejorar nuestro servicio.",
+        "success_title": "¡Gracias!",
+        "title": "Comparte tu experiencia"
+      },
+      "about_section": {
+        "para1": "Fundado en 2020, Savory Seasons nació de la pasión por conectar a nuestra comunidad con los ingredientes locales más frescos. Nos asociamos directamente con granjas cercanas para ofrecerte platos de temporada.",
+        "para2": "Nuestro menú cambia con las estaciones, asegurando que cada visita ofrezca algo nuevo y emocionante. Desde nuestra parrilla de leña hasta nuestras pastas caseras, cada plato se elabora con cuidado.",
+        "para3": "Únete a nosotros para una experiencia gastronómica inolvidable donde cada comida cuenta la historia de nuestros agricultores locales y el apasionado equipo que lo hace posible.",
+        "title": "Nuestra historia"
+      }
+    }
+  },
+  "pricing": {
+    "page_title": "Precios",
+    "page_description": "Precios simples y transparentes para todos. Comienza gratis y escala a medida que creces.",
+    "title": "Descubre los planes",
+    "plans": {
+      "free": {
+        "name": "Gratis",
+        "description": "Perfecto para personas que comienzan con la creación de contenido con IA.",
+        "features": {
+          "basic_access": "Acceso básico",
+          "limited_usage": "Uso limitado",
+          "community_support": "Soporte de la comunidad"
+        },
+        "button": "Comenzar"
+      },
+      "premium": {
+        "description": "Ideal para profesionales y empresas en crecimiento."
+      },
+      "plus": {
+        "name": "Plus",
+        "price": "{{price}} / mes",
+        "features": {
+          "web_ios_android": "Acceso a Lora vía web, iOS y Android",
+          "images_docs": "Analiza imágenes y documentos",
+          "access_version": "Usa Lora 1.5"
+        },
+        "button": "Empezar"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "{{price}} / mes *",
+        "features": {
+          "everything_free": "Todas las características del plan Plus",
+          "higher_limits": "Límites de uso ampliados",
+          "create_projects": "Organiza archivos en proyectos",
+          "priority": "Acceso preferencial",
+          "early_access": "Vista previa de funciones próximas",
+          "footnote": "* incluye tus primeros 100,000 tokens, luego precios simples de pago por uso"
+        },
+        "button": "Empezar"
+      },
+      "team": {
+        "name": "Equipo",
+        "price": "{{price}} / mes",
+        "features": {
+          "everything_pro": "Todas las características del plan Pro",
+          "higher_limits": "Límites de uso aún más ampliados",
+          "teammates": "Colabora con el equipo",
+          "billing": "Facturación unificada",
+          "access": "Funciones avanzadas"
+        },
+        "footnote": "*precio para facturación anual; {{price}}/mes si se factura mensualmente",
+        "button": "Empezar"
+      },
+      "enterprise": {
+        "name": "Empresa",
+        "price": "Contactar con ventas",
+        "features": {
+          "everything_team": "Todas las características del plan de Equipo",
+          "higher_limits": "Límites de uso personalizables",
+          "context_windows": "Capacidad de contexto extendida",
+          "sso_rbac": "SSO y RBAC",
+          "audit_logs": "Seguimiento de actividad",
+          "integrations": "Integraciones personalizadas"
+        },
+        "button": "Contactar con ventas"
+      }
+    },
+    "models": {
+      "mini": "Modelo mini",
+      "standard": "Modelo estándar",
+      "large": "Modelo grande",
+      "custom_api": "API personalizada (estándar)",
+      "custom_api_large": "API personalizada (grande)"
+    },
+    "images": {
+      "basic": "Generación de imágenes básica (hasta 512x512)",
+      "standard": "Generación de imágenes estándar (hasta 1024x1024)",
+      "high_resolution": "Generación de imágenes de alta resolución (hasta 2048x2048)",
+      "enhancement": "Mejora/edición de imágenes",
+      "batch": "Generación de imágenes en lote (10 imágenes)",
+      "per_image": "por imagen",
+      "per_batch": "por lote"
+    },
+    "pay_as_you_go": {
+      "title": "Paga solo por lo que usas, nosotros nos encargamos del resto.",
+      "description": "Deduciremos de tu saldo de créditos según tu uso en las siguientes categorías:"
+    },
+    "charts": {
+      "model_usage_title": "Uso del modelo",
+      "image_generation_title": "Generación de imágenes",
+      "model_header": "Modelo",
+      "input_header": "Entrada (por 1M de tokens)",
+      "output_header": "Salida (por 1M de tokens)",
+      "service_header": "Servicio",
+      "price_header": "Precio"
+    }
+  },
+  "enterprise": {
+    "title": "Lora para Empresas",
+    "description": "Integra Lora de forma segura con los datos de tu empresa y mejora cada equipo con IA confiable.",
+    "cta": "Contactar con ventas"
+  },
+  "footer": {
+    "logo_alt": "Logo",
+    "sections": {
+      "solutions": "Soluciones",
+      "support": "Soporte",
+      "company": "Empresa"
+    },
+    "solutions": {
+      "api": "API",
+      "team": "Equipo",
+      "pricing": "Precios",
+      "research": "Investigación",
+      "company": "Empresa"
+    },
+    "support": {
+      "press": "Prensa",
+      "support": "Soporte",
+      "status": "Estado",
+      "availability": "Disponibilidad"
+    },
+    "company": {
+      "terms": "Términos de servicio",
+      "privacy": "Aviso de privacidad",
+      "usage": "Política de uso",
+      "compliance": "Cumplimiento",
+      "disclosure": "Política de divulgación responsable"
+    }
+  },
+  "checkout": {
+    "payment_status": {
+      "succeeded": "¡Transacción completada!",
+      "processing": "Procesando tu pago.",
+      "requires_payment_method": "Pago fallido, por favor intenta de nuevo.",
+      "error": "Ha ocurrido un problema."
+    },
+    "or": "o"
+  },
+  "return": {
+    "title": "Estado del pedido",
+    "please_wait": "Un momento..."
+  },
+  "signup": {
+    "title": "Crear una cuenta",
+    "email": "Dirección de correo electrónico",
+    "email_placeholder": "jenny@example.com",
+    "password": "Contraseña",
+    "remember_me": "Mantener sesión iniciada",
+    "forgot_password": "Restablecer contraseña",
+    "sign_up": "Registrarse",
+    "already_member": "¿Ya eres usuario?",
+    "sign_in_link": "Inicia sesión aquí",
+    "password_disclaimer": "Solo demostración. Evita usar contraseñas reales."
+  },
+  "signin": {
+    "title": "Accede a tu cuenta",
+    "email": "Dirección de correo electrónico",
+    "email_placeholder": "jenny@example.com",
+    "password": "Contraseña",
+    "remember_me": "Mantener sesión iniciada",
+    "forgot_password": "Restablecer contraseña",
+    "sign_in": "Iniciar sesión",
+    "not_member": "¿Nuevo usuario?",
+    "sign_up_link": "Regístrate aquí",
+    "password_disclaimer": "Solo demostración. No se aplica validación.",
+    "quickstart_multi": "Inicio rápido: precios personalizados",
+    "quickstart_sub": "Crea clientes en Stripe y Metronome, luego pago, contrato premium retroactivo y uso simulado.",
+    "quickstart_conflict": "Ese correo ya está en Metronome. Quickstart solo admite un correo nuevo — elige otro.",
+    "quickstart_loading": "Abriendo el checkout…"
+  },
+  "common": {
+    "error": {
+      "default_message": "Ha ocurrido un problema. Por favor, inténtalo de nuevo.",
+      "dismiss": "Cerrar"
+    },
+    "close": "Cerrar",
+    "get_started": "Comenzar",
+    "loading": "Cargando...",
+    "processing": "Procesando..."
+  },
+  "subscription_team": {
+    "title": "Suscripción al Plan de Equipo",
+    "team_members_question": "¿Tamaño del equipo?",
+    "pay_monthly": "Facturación mensual",
+    "pay_annually": "Facturación anual",
+    "monthly_price": "{{price}} / mes / miembro + IVA",
+    "annual_price": "{{price}} / mes / miembro + IVA",
+    "annual_savings": "17% de descuento, uso facturado mensualmente",
+    "team_summary": "{{members}} miembros x {{price}}",
+    "subtotal": "Subtotal",
+    "tax": "IVA (si aplica)",
+    "total": "Total / {{frequency}}",
+    "subscribe": "Confirmar",
+    "after_your_first": "Precios de pago por uso:",
+    "usage": "uso",
+    "pay_yearly": "Facturación anual"
+  },
+  "subscription_pro": {
+    "title": "Suscripción al Plan Pro",
+    "subtotal": "Subtotal",
+    "tax": "IVA (si aplica)",
+    "total": "Total / Mes",
+    "subscribe": "Proceder",
+    "after_your_first": "Pago por uso después de 100,000 tokens:",
+    "usage": "uso por encima de 100k tokens",
+    "usage_total": "uso"
+  },
+  "subscription_plus": {
+    "title": "Suscripción al Plan Plus",
+    "subtotal": "Subtotal",
+    "tax": "IVA (si aplica)",
+    "total": "Total / Mes",
+    "subscribe": "Proceder"
+  },
+  "subscription_free": {
+    "title": "¡Bienvenido!",
+    "please_wait": "Configurando tu cuenta..."
+  },
+  "subscription_api": {
+    "title": "Comienza a desarrollar con la API de Lora",
+    "check_out": "Explora nuestros últimos modelos",
+    "continue": "Proceder al pago"
+  },
+  "settings": {
+    "sidebar": {
+      "billing": "Facturación",
+      "profile": "Perfil",
+      "account": "Cuenta"
+    },
+    "subscription": {
+      "title": "Tu suscripción a {{plan}}",
+      "active": "Activa",
+      "canceled": "Cancelada",
+      "paused": "Pausada",
+      "pending": "Pendiente",
+      "unpaid": "Sin pagar",
+      "trial": "Prueba",
+      "customer_id": "ID de Cliente",
+      "subscription_id": "ID de Suscripción",
+      "plan_type": "Tipo de Plan",
+      "usage_based": "Basado en el uso",
+      "fixed": "Precio Fijo",
+      "billing_period": "Período de Facturación",
+      "weekly": "Semanal",
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "months": "meses",
+      "years": "años",
+      "every_x": "Cada {{count}} {{interval}}",
+      "start_date": "Fecha de Inicio",
+      "end_date": "Fecha de Fin",
+      "next_billing": "Próxima Fecha de Facturación",
+      "current_usage": "Uso Actual",
+      "estimated_cost": "Costo Estimado",
+      "usage_billing_note": "Con la facturación basada en el uso, solo pagarás por lo que uses. El monto real se calculará al final de tu período de facturación.",
+      "upgrade": "Actualizar Plan",
+      "downgrade": "Bajar de Plan",
+      "change_plan": "Cambiar Plan",
+      "cancel": "Cancelar Suscripción",
+      "canceling": "Cancelando...",
+      "renew": "Renovar Suscripción",
+      "reactivate": "Reactivar",
+      "view_usage": "Ver Detalles de Uso",
+      "payment_method": "Método de pago",
+      "update_payment": "Actualizar Método de Pago",
+      "billing_history": "Historial de Facturación",
+      "view_invoices": "Ver Facturas",
+      "manage_subscription": "Gestionar Suscripción",
+      "cancel_confirmation": "¿Estás seguro de que quieres cancelar tu suscripción?",
+      "cancel_note": "Tu suscripción permanecerá activa hasta el final del período de facturación actual.",
+      "cancel_success": "Tu suscripción ha sido cancelada exitosamente.",
+      "cancel_error": "Hubo un error al cancelar tu suscripción. Por favor, inténtalo de nuevo.",
+      "meter_usage": "Medidores de Uso",
+      "meter_tokens": "Uso de tokens",
+      "meter_api": "Solicitudes de API",
+      "meter_storage": "Almacenamiento",
+      "next_payment": "Próximo pago de {{amount}} el {{date}}",
+      "rate_card_name": "Tarjeta de Tarifas",
+      "plan_details": "Detalles del Plan",
+      "rate_details": "Detalles de la Tarifa",
+      "usage_limit": "Límite de Uso",
+      "set_limit": "Establecer Límite",
+      "limit_note": "Establecer un límite de uso ayuda a prevenir cargos inesperados.",
+      "subscription_expired": "Tu suscripción ha expirado.",
+      "subscription_canceled": "Tu suscripción ha sido cancelada.",
+      "subscription_paused": "Tu suscripción está actualmente en pausa.",
+      "resume_subscription": "Reanudar Suscripción",
+      "pause_subscription": "Pausar Suscripción",
+      "no_subscription": "No se encontró una suscripción activa. Por favor, suscríbete a un plan.",
+      "sign_in_required": "Por favor, inicia sesión para ver la configuración de tu suscripción."
+    },
+    "rate_card": {
+      "volume_pricing": "Precios por volumen",
+      "graduated_pricing": "Precios escalonados",
+      "standard_pricing": "Precios estándar",
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "every_x_months": "Cada {{count}} meses",
+      "billing_cycle": "Ciclo de facturación",
+      "included_rates": "Tarifas incluidas",
+      "starting_at": "Desde",
+      "unit": "unidad"
+    },
+    "common": {
+      "loading": "Cargando...",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "view": "Ver",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "continue": "Continuar",
+      "yes": "Sí",
+      "no": "No"
+    },
+    "errors": {
+      "general": "Ocurrió un error. Por favor, inténtalo de nuevo.",
+      "not_found": "No encontrado",
+      "network_error": "Error de red. Por favor, comprueba tu conexión.",
+      "server_error": "Error del servidor. Por favor, inténtalo más tarde.",
+      "authorization_error": "Error de autorización. Por favor, inicia sesión de nuevo."
+    },
+    "notifications": {
+      "success": "¡Éxito!",
+      "error": "¡Error!",
+      "warning": "¡Advertencia!",
+      "info": "Información"
+    },
+    "teamMembers": {
+      "title": "Miembros del equipo",
+      "current": "Miembros activos del equipo: {{count}}",
+      "update": "Modificar",
+      "confirm_changes": "Confirmar cambios",
+      "immediately": "Tu precio mensual se actualizará inmediatamente. Los cargos prorrateados se facturarán de inmediato. Los créditos aparecerán en tu próxima factura mensual.",
+      "confirm": "Confirmar"
+    },
+    "payment": {
+      "ending_with": " que termina en {{last4}}",
+      "external_payment_method": "Método de pago externo",
+      "replace": "Reemplazar",
+      "title": "Método de pago",
+      "update": "Reemplazar",
+      "add": "Añadir",
+      "promo_code": "Aplicar un código promocional",
+      "enter_promo_code": "Código promocional",
+      "applying": "Aplicando",
+      "apply": "Aplicar",
+      "no_payment_method": "No se encontró método de pago"
+    },
+    "invoices": {
+      "finalized": "Finalizado",
+      "title": "Facturas",
+      "description": "Ver y descargar sus facturas anteriores",
+      "date": "Fecha",
+      "total": "Total",
+      "status": "Estado",
+      "actions": "Acciones",
+      "draft": "Borrador",
+      "paid": "Pagado",
+      "open": "Abierta",
+      "void": "Anulada",
+      "uncollectible": "Incobrable",
+      "none": "Aún no hay facturas"
+    },
+    "cancellation": {
+      "logged_out_message": "Su sesión se cerrará tras la confirmación.",
+      "reenrolled_message": "Será reincorporado automáticamente al plan gratuito. Puede continuar usando sus créditos mensuales hasta que expiren.",
+      "title": "Cancelación",
+      "confirmTitle": "¿Estás seguro?",
+      "cancelPlan": "Cancelar plan",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "beforeYouGo": "Antes de que te vayas",
+      "stayWithOffer": "Quédate y benefíciate de esta oferta:",
+      "offer": "20% de descuento por 3 meses",
+      "claim": "Aceptar oferta",
+      "keep": "Mantener suscripción"
+    },
+    "credits": {
+      "custom": "Personalizado",
+      "close": "Cerrar",
+      "new": "NUEVO",
+      "purchase": "Comprar créditos",
+      "buy": "Comprar tokens API",
+      "provide": "para gastos organizacionales más predecibles.",
+      "buy_button": "Comprar"
+    },
+    "meter": {
+      "close": "Cerrar",
+      "enter_amount": "Ingresa el monto",
+      "simulate": "Simular uso",
+      "sim": "Probar",
+      "current": "Uso actual"
+    },
+    "meters": {
+      "used": "tokens utilizados"
+    }
+  },
+  "api_plans": {
+    "input": "Entrada",
+    "write": "Escritura de caché de prompt",
+    "read": "Lectura de caché de prompt",
+    "output": "Salida",
+    "latest": "Último modelo",
+    "features": {
+      "latest_1": "Actualizaciones de datos en vivo",
+      "latest_2": "Funciones más recientes",
+      "latest_3": "Modelo más rápido",
+      "e_1": "Nuestro modelo estrella",
+      "e_2": "Actualizado 14/03/2024",
+      "e_3": "Alta confiabilidad",
+      "visual_1": "Modelo basado en óptica",
+      "visual_2": "Carga de archivos disponible"
+    },
+    "visual": "Lora Visual"
+  },
+  "tools": {
+    "title": "Configuración"
+  },
+  "loading": "Cargando",
+  "redirect": "Por favor, espera mientras eres redirigido a Stripe para el pago...",
+  "contact_us": {
+    "contact": "Contactar con Lora",
+    "connect": "Conéctese con nuestro equipo de ventas para obtener recursos y soporte adicionales a medida que aumenta su uso a través de la API y Lora para equipos.",
+    "first_name": "Nombre",
+    "last_name": "Apellido",
+    "email": "Correo electrónico",
+    "company_name": "Nombre de la empresa",
+    "why": "Por favor, comparte un poco más sobre por qué nos contactas",
+    "submit": "Enviar",
+    "loading": "Cargando"
+  },
+  "auth": {
+    "errors": {
+      "general": "Ocurrió un error. Por favor, inténtalo de nuevo.",
+      "unexpected": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.",
+      "checkout_session": "No se pudo crear la sesión de pago integrada, puede que no hayas iniciado sesión.",
+      "legacy_api": "La API de suscripción heredada ya no está disponible. Utiliza las suscripciones del plan de precios."
+    }
+  },
+  "simulations": {
+    "advance_time": "Avanzar tiempo →",
+    "cancel": "Cancelar",
+    "advance": "Avanzar",
+    "send_usage": "Enviar uso a los medidores",
+    "enter_usage": "Ingresar uso",
+    "send_usage_data": "Enviar datos de uso"
+  },
+  "config": {
+    "stripe_icon_alt": "Icono de Stripe",
+    "save_settings": "Guardar configuración"
+  },
+  "random1": "¿Sabías que las llamas pueden tararear? ¡Usan el tarareo como una forma de comunicarse entre ellas!",
+  "random2": "Las llamas están emparentadas con los camellos, pero no tienen jorobas. Forman parte de la familia de los camélidos, que también incluye alpacas y vicuñas.",
+  "random3": "A un grupo de llamas se le llama 'hato' o 'manada', pero ¿no sería divertido que se llamara un 'drama de llamas'?",
+  "random4": "Las llamas se han utilizado como animales guardianes para las ovejas porque son naturalmente protectoras y ahuyentarán a los coyotes y otros depredadores.",
+  "random5": "La lana de una llama es naturalmente repelente al agua e hipoalergénica. ¿Alguien quiere suéteres de lana de llama?",
+  "random6": "En el Imperio Inca, solo a la realeza se le permitía usar ropa hecha de fibra de llama.",
+  "random7": "A las llamas bebé se les llama 'crías'. ¡Pueden pesar hasta 13.6 kg al nacer!",
+  "random8": "Las llamas pueden cargar del 25 al 30% de su peso corporal durante 13 a 21 km al día. ¡Son las mulas de carga de Sudamérica!",
+  "random9": "Las llamas son animales muy sociales y prefieren vivir en hatos. ¡Son los animales de fiesta del mundo de los camélidos!",
+  "random10": "La vida útil de una llama es de unos 20 años. ¡Es mucho tiempo para un drama de llamas!",
+  "random11": "Las llamas se utilizan como animales de terapia en algunos hospitales y centros de atención. ¡Son los terapeutas peludos de la naturaleza!",
+  "random12": "Las llamas tienen una vista excelente y pueden detectar posibles depredadores a una milla de distancia. ¡Son como las águilas de las praderas!",
+  "random13": "¡Las llamas son ecológicas! Sus patas acolchadas son más suaves para el terreno que las pezuñas, previniendo la erosión.",
+  "random14": "La fibra de llama viene en más de 20 colores naturales, la mayor cantidad de cualquier animal productor de fibra. ¡Son arcoíris andantes!",
+  "random15": "Las llamas son inteligentes y pueden ser entrenadas para tirar de carros, llevar cargas e incluso competir en carreras de obstáculos. ¿Olimpiadas de llamas, alguien?",
+  "random16": "Las llamas no tienen dientes en la mandíbula frontal superior. En su lugar, tienen un paladar duro que les ayuda a moler su comida.",
+  "random17": "Las llamas se comunican entre sí usando una variedad de sonidos que incluyen tarareos, relinchos y llamadas de alarma.",
+  "random18": "La temperatura corporal normal de una llama es mucho más alta que la de un humano, oscilando entre 38-39°C.",
+  "random19": "Cambiando de llamas: Las huellas dactilares de un koala son tan similares a las de los humanos que en ocasiones se han confundido en una escena del crimen.",
+  "random20": "Cambiando de tema: ¿Sabías que a un grupo de flamencos se le llama 'flamboyance' (extravagancia)? ¡Eso es bastante fabuloso!",
+  "products": {
+    "prod_mock_premium": {
+      "name": "Premium",
+      "description": "Ideal para profesionales y empresas en crecimiento."
+    },
+    "default_premium": {
+      "name": "Premium",
+      "description": "Ideal para profesionales y empresas en crecimiento."
+    },
+    "default_free": {
+      "name": "Gratuito",
+      "description": "Perfecto para individuos que comienzan con la creación de contenido de IA."
+    },
+    "default_team": {
+      "name": "Equipo",
+      "description": "Soluciones personalizadas para empresas y usuarios de alto volumen."
+    }
+  },
+  "plans": {
+    "price_details": {
+      "month": "/mes"
+    },
+    "free": {
+      "description": "Perfecto para individuos que comienzan con la creación de contenido de IA.",
+      "credit_description": "en créditos de por vida (una sola vez)",
+      "features": {
+        "1": "Gratuito para uso individual",
+        "2": "Generación ilimitada de imágenes y videos",
+        "3": "Creación de incrustaciones estándar",
+        "4": "Soporte de la comunidad",
+        "5": "Panel de análisis básico"
+      },
+      "button": {
+        "current": "Plan Actual",
+        "get_started": "Comenzar Gratis"
+      }
+    },
+    "premium": {
+      "description": "Ideal para profesionales y empresas en crecimiento.",
+      "credit_description": "en créditos mensuales",
+      "features": {
+        "1": "Todas las características del Plan Gratuito",
+        "2": "Soporte prioritario por correo electrónico",
+        "3": "Panel de análisis integral",
+        "4": "Acceso a API para integración programática",
+        "5": "Inicio de sesión único (SSO) para mayor seguridad",
+        "6": "Función automatizada de retención de datos cero"
+      },
+      "button": {
+        "current": "Plan Actual",
+        "get_started": "Comenzar con Premium"
+      },
+      "name": "Premium"
+    },
+    "team": {
+      "credit_description": "Asignación de créditos basada en necesidades comerciales",
+      "features": {
+        "1": "Todas las características del Plan Premium",
+        "2": "Soluciones personalizadas para usuarios de alto volumen",
+        "3": "Gerente de cuenta dedicado",
+        "4": "Gestión centralizada de facturación",
+        "5": "Características de seguridad mejoradas",
+        "6": "Acceso exclusivo a funciones beta"
+      },
+      "button": {
+        "contact_sales": "Contactar Ventas"
+      },
+      "custom_pricing": "Precios personalizados",
+      "custom_amount": "Personalizado"
+    }
+  },
+  "rate_card": {
+    "checkout_title": "Suscribirse al Plan Basado en Uso",
+    "select_plan": "Seleccionar un Plan",
+    "billing_cycle": "Ciclo de facturación",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "every_x_months": "Cada {{count}} meses",
+    "included_rates": "Incluido en este plan",
+    "id": "ID de Tarjeta de Tarifas",
+    "estimated_costs": "Costos Estimados",
+    "base_charges": "Cargos base",
+    "estimated_tax": "Impuesto estimado",
+    "estimated_total": "Total estimado",
+    "cost_explanation": "Los cargos finales se basarán en su uso real al final del período de facturación.",
+    "usage_estimator": "Estimador de Uso",
+    "usage_estimator_description": "Ajuste los controles deslizantes a continuación para estimar sus costos mensuales según el uso esperado.",
+    "how_it_works": "Cómo Funciona la Facturación Basada en el Uso",
+    "step1_title": "Suscribirse",
+    "step1_description": "Regístrese para la facturación basada en el uso sin costo inicial",
+    "step2_title": "Usar el Servicio",
+    "step2_description": "Use la API o la plataforma tanto como necesite",
+    "step3_title": "Pagar por el Uso",
+    "step3_description": "Pague solo por lo que usa al final de cada período de facturación",
+    "footer_note": "Puede ver su uso actual y establecer límites en cualquier momento desde el panel de su cuenta.",
+    "volume_pricing": "Precios por volumen",
+    "graduated_pricing": "Precios escalonados",
+    "standard_pricing": "Precios estándar",
+    "starting_at": "Desde",
+    "unit": "unidad",
+    "subscription_details": "Detalles de la Suscripción",
+    "usage_details": "Detalles de Uso",
+    "payment_details": "Detalles de Pago",
+    "subscription_confirmation": "Confirmación de Suscripción",
+    "subscribe_button": "Suscribirse Ahora",
+    "modify_button": "Modificar Selección",
+    "cancel_button": "Cancelar",
+    "low_usage": "Uso Bajo",
+    "medium_usage": "Uso Medio",
+    "high_usage": "Uso Alto",
+    "faq_title": "Preguntas frecuentes",
+    "faq_1_question": "¿Cómo se me cobra?",
+    "faq_1_answer": "Se le cobrará al final de cada ciclo de facturación según su uso real. Su método de pago se cargará automáticamente.",
+    "faq_2_question": "¿Hay un gasto mínimo?",
+    "faq_2_answer": "No, no hay un requisito de gasto mínimo. Solo paga por lo que usa.",
+    "faq_3_question": "¿Qué sucede si excedo mi uso esperado?",
+    "faq_3_answer": "Se le seguirá cobrando de acuerdo con la estructura de precios por niveles. Para un uso de gran volumen, se aplican automáticamente niveles con descuento.",
+    "faq_4_question": "¿Puedo establecer límites de uso?",
+    "faq_4_answer": "Sí, puede establecer límites de uso en la configuración de su cuenta para evitar cargos inesperados.",
+    "tokens": "Tokens",
+    "api_requests": "Solicitudes de API",
+    "processing_units": "Unidades de Procesamiento",
+    "storage": "Almacenamiento",
+    "per_unit": "por unidad",
+    "per_token": "por token",
+    "per_request": "por solicitud",
+    "per_gb": "por GB",
+    "up_to": "hasta",
+    "and_up": "y más",
+    "current_usage": "Uso Actual",
+    "usage_limit": "Límite de Uso",
+    "set_limit": "Establecer Límite",
+    "processing": "Procesando su suscripción...",
+    "success_message": "¡Su suscripción ha sido activada! Ahora puede comenzar a usar el servicio.",
+    "payment_method": "Método de Pago",
+    "edit_payment_method": "Editar Método de Pago",
+    "billing_address": "Dirección de Facturación",
+    "edit_billing_address": "Editar Dirección de Facturación",
+    "live": "Versión en Vivo",
+    "no_rates_warning": "Esta versión no tiene tarifas definidas",
+    "version": {
+      "id": "ID de Versión",
+      "created": "Creado",
+      "status": "Estado: {{status}}",
+      "live": "Versión en Vivo"
+    }
+  },
+  "units": {
+    "million_tokens": "MTok",
+    "unit": "unidad"
+  },
+  "features": {
+    "section_pill": "Construido para la Velocidad",
+    "title": "Una nueva forma de construir software",
+    "description": "Envía más rápido con total transparencia. Nuestra plataforma proporciona herramientas de nivel empresarial que escalan con tu equipo.",
+    "ai_code_generation": {
+      "title": "Generación de Código con IA",
+      "description": "Genera componentes, servicios y aplicaciones completas desde un solo prompt."
+    },
+    "usage_based_billing": {
+      "title": "Facturación Basada en el Uso",
+      "description": "Paga solo por lo que usas. Sigue el consumo de tus créditos en tiempo real."
+    },
+    "instant_deployment": {
+      "title": "Despliegue Instantáneo",
+      "description": "Pasa de la idea a la aplicación en vivo en minutos. Nosotros nos encargamos de la infraestructura."
+    },
+    "transparent_fair": {
+      "title": "Transparente y Justo",
+      "description": "Sin tarifas ocultas. Nuestro sistema de créditos es claro, predecible y justo."
+    }
+  },
+  "dashboard": {
+    "auto_top_up_status": "Recarga automática activada · recarga a {{to}} por debajo de {{threshold}}",
+    "chat_token_usage_by_model": "Uso de tokens de chat por modelo",
+    "credits_of_total": "{{available}} de {{total}} restantes",
+    "greeting": "Hola, {{name}}",
+    "ai_credits": "Créditos",
+    "no_usage_data": "Sin datos de uso para este período",
+    "spend": "Consumo",
+    "spend_meter_caption": "{{available}} disponibles de {{credits}} créditos en este ciclo de facturación",
+    "current_spend": {
+      "title": "Gasto actual",
+      "after_credits": "Tras créditos: {{amount}}",
+      "subtitle_draft": "Según tu borrador de factura en Metronome. Los totales se actualizan con el uso.",
+      "period_through": "Periodo de facturación hasta el {{date}}",
+      "no_period": "Las fechas del periodo aparecerán cuando Metronome abra un borrador para este ciclo.",
+      "no_charges_yet": "Aún no hay partidas de uso en este periodo.",
+      "breakdown": "Desglose de uso",
+      "more_line_items": "+{{count}} más"
+    },
+    "credits_remaining": "créditos restantes",
+    "credits_meter_caption": "{{available}} de {{total}} créditos restantes",
+    "page": {
+      "title": "Planes y Facturación",
+      "description": "Gestiona tu suscripción, créditos y detalles de pago.",
+      "sign_in_required": "Por favor, inicia sesión para ver tu panel."
+    },
+    "sidebar": {
+      "billing": "Planes y Facturación",
+      "usage": "Uso",
+      "simulations": "Simulaciones de Usuario",
+      "settings": "Ajustes"
+    },
+    "settings": {
+      "page_title": "Ajustes"
+    },
+    "token_usage_by_model": "Uso de tokens por modelo",
+    "usage": {
+      "page_title": "Uso y Analíticas",
+      "page_description": "Desglose detallado del uso de tu servicio de IA.",
+      "model_input_tokens": "Tokens de Entrada del Modelo",
+      "model_output_tokens": "Tokens de Salida del Modelo",
+      "images_generated": "Imágenes Generadas",
+      "images_enhanced": "Imágenes Mejoradas",
+      "batch_images_processed": "Imágenes Procesadas en Lote",
+      "across_all_models": "En todos los tipos de modelos",
+      "generated_responses": "Respuestas generadas",
+      "all_resolutions": "Todas las resoluciones",
+      "enhancement_operations": "Operaciones de mejora",
+      "images_in_batches": "Imágenes en lotes",
+      "aggregated": {
+        "title": "Uso Agregado",
+        "description": "Realiza un seguimiento del uso de generación de contenido de IA",
+        "unknown": "Desconocido",
+        "total": "Total",
+        "daily_burn": "Consumo Diario"
+      },
+      "tabs": {
+        "model_usage": "Uso del Modelo",
+        "image_generation": "Generación de Imágenes",
+        "image_enhancement": "Mejora de Imágenes",
+        "image_batch_processing": "Procesamiento de Imágenes en Lote"
+      },
+      "charts": {
+        "model_usage_title": "Uso del modelo",
+        "model_usage_desc": "Uso de tokens organizado por tipo de modelo (Mini, Estándar, Grande, API Personalizada)",
+        "image_generation_title": "Generación de imágenes",
+        "image_generation_desc": "Número de imágenes generadas por resolución",
+        "image_enhancement_title": "Mejora de Imágenes",
+        "image_enhancement_desc": "Número de imágenes mejoradas",
+        "batch_processing_title": "Procesamiento de Imágenes en Lote",
+        "batch_processing_desc": "Número de imágenes procesadas en lotes"
+      },
+      "project_storage": {
+        "title": "Uso por proyecto",
+        "used": "Usado",
+        "capacity": "Compromiso",
+        "available": "Disponible",
+        "no_metrics": "No se encontraron métricas facturables.",
+        "no_project_dimension": "Esta métrica no agrupa por project_id — use el seed multi-proyecto o configure claves en Metronome.",
+        "no_commitment_hint": "Sin compromiso mensual en el contrato — la barra muestra solo proporciones relativas.",
+        "token_share_note": "Aún no hay subtotal de factura — la barra muestra la proporción de tokens medidos por proyecto este mes.",
+        "empty_hint": "Aún no hay uso por proyecto en este periodo. Genera datos demo en Ajustes o usa el chat; el seed multi-proyecto escribe tres project_id.",
+        "no_usage_rows": "Metronome no devolvió filas de uso para esta ventana — reintenta tras el seed o revisa la clave API.",
+        "aggregated_usage_label": "Todo el uso",
+        "unallocated_usage_label": "Sin asignar (sin proyecto en las líneas)",
+        "aggregate_bar_note": "usage/groups no devolvió desglose por proyecto para este medidor — la barra muestra el total de uso de la factura borrador."
+      }
+    },
+    "simulations": {
+      "page_title": "Simulaciones de Usuario",
+      "page_description": "Ejecuta varios escenarios de simulación para pruebas y demostraciones.",
+      "scenario_1": "Escenario 1",
+      "scenario_2": "Escenario 2",
+      "scenario_3": "Escenario 3",
+      "cycle_title": "Simulación de Ciclo",
+      "cycle_card_title": "Simular Ciclo de Facturación Completo",
+      "cycle_status_running": "Ejecutando",
+      "cycle_status_stopped": "Detenido",
+      "cycle_description_line1": "Avanzar un ciclo mientras se envían datos de uso realistas a los medidores.",
+      "cycle_description_line2": "Genera uso moderado de tokens (~300K tokens/mes) y generación ligera de imágenes (~2/mes).",
+      "cycle_description_line3": "Costo esperado basado en precios reales para demostrar el consumo de créditos. Factura el día {{day}} de cada mes.",
+      "cycle_current_date": "Fecha Actual:",
+      "cycle_button_start": "Iniciar Simulación",
+      "advance_time_button": "Avanzar tiempo →",
+      "clock_title": "Reloj de Prueba: Avanzar en el Tiempo",
+      "clock_current_time": "Tiempo actual de simulación:",
+      "clock_status": "Estado:",
+      "clock_status_loading": "Cargando",
+      "clock_status_advancing": "Avanzando",
+      "clock_status_ready": "Listo",
+      "clock_advance_title": "Avanzar el reloj",
+      "clock_advance_description": "Avanza el reloj para ver los eventos y cambios que ocurren.",
+      "clock_warning": "Todos los clientes en la simulación se verán afectados.",
+      "clock_buttons": {
+        "hour": "+ 1 hora",
+        "day": "+ 1 día",
+        "week": "+ 1 semana",
+        "month": "+ 1 mes",
+        "year": "+ 1 año"
+      },
+      "clock_note": "Nota: Puedes avanzar este reloj hasta el 31 de diciembre de 2030 a las 11:59 PM.",
+      "usage_title": "Enviar Uso a los Medidores",
+      "usage_description": "Envía datos de uso simulados a medidores conectados para varios servicios.",
+      "usage_status_sending": "Enviando",
+      "usage_status_idle": "Inactivo",
+      "usage_modal_title": "Enviar Uso a los Medidores",
+      "usage_placeholder": "Ingresar uso",
+      "usage_send_button": "Enviar Datos de Uso"
+    },
+    "cards": {
+      "current_plan": "Plan Actual",
+      "next_billing": "Próxima Facturación",
+      "no_upcoming_charges": "Sin cargos próximos",
+      "next_billing_charge": "Cargo del próximo ciclo de facturación",
+      "upgrade": "Actualizar",
+      "pay_as_you_use": "Pago por uso",
+      "pay_as_you_use_description": "El uso se mide por tokens consumidos. Se le factura el uso real según las tarifas siguientes.",
+      "premium_package": "Premium",
+      "next_invoice_due": "Vence el {{date}}",
+      "next_metronome_invoice": "Total estimado del periodo de facturación abierto",
+      "no_upcoming_invoice": "Aún no hay factura abierta"
+    },
+    "usage_pacing": {
+      "title": "Seguimiento de uso",
+      "description": "Uso facturable desde el inicio del mes frente a su compromiso mensual.",
+      "all_products": "Todos los productos",
+      "all_models": "Todos los modelos",
+      "all_qualities": "Todas las calidades",
+      "all_tiers": "Todos los niveles",
+      "month_to_date": "Desde inicio de mes",
+      "pct_of_monthly": "{{pct}}% del {{label}} mensual",
+      "monthly_label": "{{label}} mensual",
+      "prepaid_period": "prepago para este período",
+      "projected_month_end": "Proyección fin de mes",
+      "within_prepaid": "Dentro del monto prepagado",
+      "above_prepaid": "Por encima del prepago — se aplica excedente",
+      "commitment_cap": "{{label}} mensual (límite): {{amount}}",
+      "series_spend": "Desde inicio de mes (acumulativo)",
+      "series_projected": "Proyección fin de mes (tendencia)",
+      "commitment": "Compromiso",
+      "credit_balance": "Saldo de créditos",
+      "error_load": "No se pudieron cargar los detalles de factura:"
+    },
+    "billing_payg": {
+      "title": "Precios por uso",
+      "subtitle": "Tarifas por millón de tokens (entrada vs salida). Su factura refleja el uso agregado por modelo.",
+      "effective": "Precios vigentes desde el 1 de marzo de 2026 (UTC)",
+      "col_model": "Modelo",
+      "col_input": "Entrada",
+      "col_output": "Salida"
+    },
+    "buttons": {
+      "cancel_auto_topup": "Cancelar Recarga Automática",
+      "setup_auto_topup": "Configurar Recarga Automática",
+      "purchase_credits": "Comprar Créditos"
+    },
+    "invoice": {
+      "upcoming_title": "Próxima Factura",
+      "billing_period_ending": "Para el período de facturación que finaliza el:",
+      "unknown_item": "Artículo Desconocido",
+      "description": "Descripción",
+      "quantity": "Cantidad",
+      "unit_price": "Precio Unitario",
+      "amount": "Monto",
+      "subtotal": "Subtotal",
+      "tax": "Impuesto",
+      "total": "Total",
+      "no_upcoming_charges": "Sin cargos próximos para tu plan actual",
+      "no_charges": "Sin cargos próximos",
+      "credits_applied": "Créditos aplicados",
+      "period_net_subtitle": "Importe neto del periodo tras créditos aplicados. La tabla detalla uso y créditos.",
+      "period_net_subtitle_empty": "Aún no hay factura abierta para este periodo: se actualizará cuando se facture el uso.",
+      "million_tokens_suffix": " / millón de tokens",
+      "usage_per_heading": "Uso por:",
+      "ungrouped_line_items": "Otros cargos",
+      "line_item_names": {
+        "chat_input_tokens": "Chat – Tokens de entrada",
+        "chat_output_tokens": "Chat – Tokens de salida",
+        "image_enhancement": "Mejora de imágenes",
+        "image_generation": "Generación de imágenes",
+        "premium_subscription": "Suscripción Premium"
+      }
+    },
+    "date_picker": {
+      "last_7_days": "Últimos 7 Días",
+      "last_30_days": "Últimos 30 Días",
+      "current_billing_period": "Período de Facturación Actual"
+    }
+  },
+  "payments": {
+    "errors": {
+      "validation_error": "Hubo un error al validar tu método de pago.",
+      "unexpected_error": "Ha ocurrido un error inesperado.",
+      "generic_error": "Ocurrió un error inesperado.",
+      "promo_not_available": "La función de código promocional no está disponible para este tipo de suscripción.",
+      "promo_failed": "Error al aplicar el código promocional. Por favor, inténtalo de nuevo."
+    },
+    "success": {
+      "payment_updated": "Tu método de pago ha sido actualizado correctamente."
+    }
+  },
+  "most_popular": "Más Popular",
+  "not_available": "N/D",
+  "faq": {
+    "title": "Preguntas Frecuentes",
+    "questions": {
+      "credits": {
+        "question": "¿Qué son los créditos y cómo funcionan?",
+        "answer": "Los créditos se utilizan para pagar los servicios de IA. Los planes Premium incluyen {{premiumCredits}} en créditos mensuales, y los planes gratuitos obtienen {{freeCredits}} en créditos de por vida."
+      },
+      "over_credits": {
+        "question": "¿Qué sucede cuando supero mis créditos?",
+        "intro": "Cuando excedes tu asignación de créditos, tienes opciones flexibles para continuar usando nuestros servicios:",
+        "auto_topup": {
+          "title": "Recarga Automática",
+          "description": "Configura compras automáticas de créditos para asegurar un servicio ininterrumpido cuando tu saldo esté bajo."
+        },
+        "credit_packs": {
+          "title": "Paquetes de Créditos",
+          "description": "Compra créditos adicionales en cualquier momento con estas opciones convenientes:",
+          "pack1": "Paquete Estándar: {{amount}}",
+          "pack2": "Paquete Grande: {{amount}}",
+          "pack3": "Cantidad Personalizada (mínimo {{amount}})"
+        }
+      },
+      "rollover": {
+        "question": "¿Se acumulan los créditos no utilizados?",
+        "answer": "Los créditos mensuales se reinician en cada ciclo de facturación y no se acumulan. Sin embargo, los créditos comprados a través de paquetes de créditos nunca expiran."
+      },
+      "change_plan": {
+        "question": "¿Puedo cambiar mi plan en cualquier momento?",
+        "answer": "Sí, puedes mejorar o degradar tu plan en cualquier momento. Los cambios entran en vigor de inmediato, con ajustes de facturación prorrateados."
+      }
+    }
+  },
+  "landing": {
+    "technologies": {
+      "robot_alt": "Un asistente robot amigable y futurista saludando"
+    },
+    "enterprise": {
+      "title": "Lora para Empresas",
+      "description": "Integra Lora con los datos de tu empresa de forma segura y mejora cada equipo con IA confiable.",
+      "cta": "Contactar ventas"
+    },
+    "hero": {
+      "main_title": "Del prompt a imágenes, vídeo y 3D",
+      "description": "Crea contenido listo para producción con precios transparentes basados en créditos.",
+      "button_logged_in": "Abrir Lora Generate",
+      "button_not_logged_in": "Comenzar a generar gratis",
+      "no_credit_card": "No se requiere tarjeta de crédito",
+      "build_command": "construir"
+    },
+    "aggregated_usage": {
+      "title": "Uso Agregado",
+      "description": "Sigue el uso de tu generación de contenido de IA",
+      "unknown": "Desconocido",
+      "total_daily_burn": "Total: {{value}}, Consumo Diario: {{burn}}"
+    }
+  },
+  "subscribe_metronome_package": {
+    "order_summary": "Resumen del pedido",
+    "custom_pricing": "Precio personalizado",
+    "per_month": "por mes",
+    "applicable_taxes": "+ impuestos aplicables",
+    "loading": "Cargando detalles del paquete…",
+    "not_found": "No pudimos cargar los detalles de este paquete.",
+    "unknown_name": "Paquete seleccionado"
+  },
+  "modals": {
+    "auto_top_up": {
+      "title": "Configurar Recarga Automática",
+      "balance_threshold_label": "Cuando mi saldo caiga por debajo de",
+      "top_up_amount_label": "Recarga automática",
+      "disclaimer": "Al hacer clic en \"Guardar Configuración\", acepto que se me recargue automáticamente a {{topUpAmount}} cuando mi saldo de crédito caiga por debajo de {{threshold}}.",
+      "missing_stripe_customer": "Se necesita un cliente de Stripe para activar la recarga automática. Vuelve a iniciar sesión o revisa el cliente de demostración en el panel de herramientas.",
+      "missing_metronome_customer": "Inicia sesión o configura un cliente de Metronome en el panel de herramientas."
+    },
+    "purchase_credits": {
+      "title": "Comprar Créditos",
+      "loading": "Cargando tu saldo...",
+      "outstanding_balance_title": "Acción Requerida: Saldo Pendiente",
+      "top_up_credits_title": "Recargar Créditos",
+      "outstanding_balance_message": "No podrás usar Lora hasta que liquides tu saldo pendiente:",
+      "current_balance_message": "Tu saldo actual es",
+      "recommended": "Recomendado",
+      "standard": "Estándar",
+      "large": "Grande",
+      "custom_amount": "Cantidad Personalizada",
+      "clears_outstanding_plus": "Liquida saldo pendiente + {{amount}}",
+      "processing": "Procesando...",
+      "purchase_for": "Comprar por {{amount}}",
+      "select_amount": "Seleccionar una cantidad",
+      "min_amount": "Mín {{amount}}"
+    }
+  }
+}

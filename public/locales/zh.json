@@ -1,0 +1,1127 @@
+{
+  "header": {
+    "main_nav": {
+      "account": "账户",
+      "chat": "对话",
+      "pricing": "定价",
+      "sign-out": "退出登录",
+      "sign_in": "登录"
+    },
+    "hero": {
+      "title": "优先考虑安全和道德的AI创新与解决方案",
+      "new": "最新",
+      "api": "API",
+      "new_title": "推出Lora 1.5",
+      "api_title": "使用Lora进行开发",
+      "new_description": "我们最先进的AI，现已开放使用。",
+      "api_description": "开始使用以提高生产力并创新商业模式。",
+      "new_button": "与Lora交互",
+      "api_button": "立即开始",
+      "typewriter": {
+        "text1": "一个带有实时图表的仪表板来跟踪用户参与度",
+        "text2": "一个本地咖啡店的移动应用程序，支持在线订购",
+        "text3": "一个带有推荐引擎的全栈电商网站",
+        "text4": "一个轻量级的设计系统组件库"
+      }
+    }
+  },
+  "chat": {
+    "you": "您",
+    "upgrade": "您正在使用受限的免费计划。立即升级！",
+    "submit": "提交",
+    "response": "回复：",
+    "tokens": "{{tokens}} tokens - 最新模型",
+    "how": "Lora今天能为您提供什么帮助？",
+    "summarize": "总结文本",
+    "brainstorm": "头脑风暴",
+    "analyze": "分析数据",
+    "make": "制定计划",
+    "help_me": "帮我写作",
+    "blocked_modal": {
+      "free_exhausted_message": "您的免费积分已用尽。升级到高级版以继续构建。",
+      "free_trial_title": "您已用完免费试用额度",
+      "credits_depleted_title": "您的积分已用尽",
+      "free_trial_message": "升级您的计划以继续对话并解锁更多功能。",
+      "credits_depleted_message": "请添加更多积分以继续使用服务。",
+      "opening_checkout": "正在打开结账…",
+      "premium_reset_message": "您已用完本计费周期的所有积分。您的余额将在下一个计费周期开始时重置。",
+      "upgrade_plan_button": "升级计划",
+      "add_credits_button": "添加更多积分",
+      "upgrade_to_premium": "升级到高级版"
+    },
+    "input": {
+      "placeholder": "点击箭头继续...",
+      "disabled_placeholder": "点击箭头继续..."
+    },
+    "welcome": {
+      "title": "让我们构建一个网站"
+    },
+    "assistant": {
+      "name": "Lora AI",
+      "generating": "生成代码中...",
+      "generating_app": "正在生成您的应用程序...",
+      "building_website": "正在构建Savory Seasons网站..."
+    },
+    "prompts": {
+      "step1": "帮我为我的新餐厅Savory Seasons创建一个网站。这是一家农场直供餐厅，我需要一些简洁专业的内容。先帮我搭建基本结构。",
+      "step2": "好的，这是一个不错的框架。现在你能应用我们品牌的外观和感觉吗？我们使用大地色调和经典的衬线字体。让我们建立样式基础并设计一个更好的导航栏。",
+      "step3": "这看起来好多了！现在你能让首屏部分更有视觉吸引力吗？也许添加一张漂亮的餐厅照片和一些流畅的动画，让它感觉更温馨？",
+      "step4": "完美！现在我需要展示我们的菜单。我们有开胃菜、主菜和甜点。你能添加一个菜单部分，包含一些诱人的食物照片吗？我们的客户需要看到我们提供的菜品。",
+      "step5": "菜单看起来太棒了！现在我需要一种方式让客户预订。你能添加一个预订系统让他们可以订桌吗？我希望有日期、时间、人数和特殊要求的字段。",
+      "step6": "我们快完成了！你能添加一个反馈区域，让客户可以留下星级评价吗？另外，我需要一个关于我们页面来讲述我们农场直供的故事。让我们完善它！"
+    },
+    "responses": {
+      "step1": "完美！我会帮您为Savory Seasons创建一个网站。让我从一个简洁的基础开始 - 只是基本的HTML结构和最简单的样式来开始。我正在设置您需要的主要部分：首页、菜单、预订和关于我们。",
+      "step2": "当然。我将使用您品牌的大地色调和经典衬线字体建立一个设计系统。我还在更新布局，添加一个专业的固定导航栏。这将为网站的其余部分设定视觉基调。",
+      "step3": "很好的反馈！现在我要让首屏部分脱颖而出。我正在生成一张漂亮的餐厅内部图像，并将其应用为全屏背景。我还添加了一些流畅的淡入动画，让它感觉温馨而优雅。",
+      "step4": "太好了！现在是激动人心的部分 - 您的菜单展示。我正在构建一个完整的菜单部分，并生成6张令人垂涎的食物图片：2个开胃菜（意式bruschetta和burrata）、2个主菜（三文鱼和肋眼牛排）和2个甜点（芝士蛋糕和巧克力熔岩蛋糕）。每张图片都精心制作，突出农场直供餐饮的新鲜和手工品质。",
+      "step5": "完美！您的预订系统现在准备好了。我创建了一个全面的预订表单，包含日期/时间选择、人数选项和特殊要求字段。添加了适当的验证和确认系统，这样客户在预订时可以立即获得反馈。样式与您优雅的餐厅美学相匹配。",
+      "step6": "快完成了！我添加了一个互动反馈系统，客户可以留下星级评价和文字评论。还创建了一个引人注目的关于我们部分，讲述您农场直供的故事 - 重点介绍您2020年创立、与本地农场的合作以及季节性菜单理念。现在一切都无缝协作，打造完整的餐厅体验！"
+    },
+    "usage_details": {
+      "title": "使用详情",
+      "model": "模型",
+      "token_usage": "Token使用量",
+      "input": "输入",
+      "output": "输出",
+      "total_tokens": "总Token数",
+      "image_usage": "图像使用量",
+      "total_images": "总图像数",
+      "model_types": {
+        "mini": "Lora Prime Mini 5.4",
+        "standard": "Lora Mythic 4.6",
+        "large": "Lora Prime 5.4"
+      },
+      "image_types": {
+        "basic": "基础版",
+        "standard": "标准版",
+        "premium": "高级版"
+      },
+      "operations": {
+        "generated": "已生成",
+        "enhanced": "已增强",
+        "batch_generated": "批量生成"
+      }
+    },
+    "restaurant_name": "Savory Seasons",
+    "website": {
+      "nav": {
+        "about": "关于我们",
+        "home": "首页",
+        "menu": "菜单",
+        "reservations": "预订"
+      },
+      "skeleton": {
+        "coming_soon": "即将推出...",
+        "tagline": "从农场到餐桌的卓越体验",
+        "welcome": "欢迎来到Savory Seasons"
+      },
+      "hero": {
+        "cta": "预订餐桌",
+        "tagline": "体验最新鲜的从农场到餐桌"
+      },
+      "menu_section": {
+        "appetizers": "开胃菜",
+        "desserts": "甜点",
+        "loading": "正在生成食物图片并加载菜单...",
+        "main_courses": "主菜",
+        "title": "我们的季节菜单"
+      },
+      "reservations_section": {
+        "email_placeholder": "电子邮件地址",
+        "name_placeholder": "全名",
+        "party_1": "1人",
+        "party_2": "2人",
+        "party_3": "3人",
+        "party_4": "4人",
+        "party_5": "5人以上",
+        "party_size": "人数",
+        "phone_placeholder": "电话号码",
+        "special_requests": "特殊要求或饮食限制（可选）",
+        "submit": "预订餐桌",
+        "success_message": "谢谢！我们已收到您的预订请求，将在24小时内与您联系确认。",
+        "success_title": "预订已确认！",
+        "title": "预订"
+      },
+      "feedback_section": {
+        "email_placeholder": "电子邮件（可选）",
+        "name_placeholder": "您的姓名（可选）",
+        "rating_label": "评价您的体验：",
+        "review_placeholder": "告诉我们您的体验...",
+        "submit": "提交反馈",
+        "success_message": "感谢您的反馈，我们将用它来改善我们的服务。",
+        "success_title": "谢谢！",
+        "title": "分享您的体验"
+      },
+      "about_section": {
+        "para1": "Savory Seasons成立于2020年，源于将社区与最新鲜的本地食材联系起来的热情。我们直接与附近的农场合作，为您带来庆祝我们地区自然风味的时令菜肴。",
+        "para2": "我们由厨师主导的菜单随季节变化，确保每次光顾都能带来新的惊喜。从柴火烤架到自制意面，每道菜都精心制作，注重细节。",
+        "para3": "加入我们，享受难忘的餐饮体验，每一道菜都诉说着我们当地农民、工匠和充满热情的团队的故事。",
+        "title": "我们的故事"
+      }
+    }
+  },
+  "pricing": {
+    "page_title": "定价",
+    "page_description": "简单、透明的定价，适合所有人。免费开始，随着成长扩展。",
+    "title": "探索套餐",
+    "plans": {
+      "free": {
+        "name": "免费版",
+        "description": "非常适合开始使用AI内容创作的个人用户。",
+        "features": {
+          "basic_access": "基础访问",
+          "limited_usage": "有限使用",
+          "community_support": "社区支持"
+        },
+        "button": "开始使用"
+      },
+      "premium": {
+        "description": "适合专业人士和成长型企业。"
+      },
+      "plus": {
+        "name": "增强版",
+        "price": "{{price}} / 月",
+        "features": {
+          "web_ios_android": "通过网页、iOS和Android访问Lora",
+          "images_docs": "分析图像和文档",
+          "access_version": "使用Lora 1.5"
+        },
+        "button": "开始使用"
+      },
+      "pro": {
+        "name": "专业版",
+        "price": "{{price}} / 月 *",
+        "features": {
+          "everything_free": "所有增强版功能",
+          "higher_limits": "扩展的使用配额",
+          "create_projects": "将文件组织到项目中",
+          "priority": "优先访问",
+          "early_access": "预览即将推出的功能",
+          "footnote": "* 包含您的前100,000个token，然后按简单的按需付费定价"
+        },
+        "button": "开始使用"
+      },
+      "team": {
+        "name": "团队版",
+        "price": "{{price}} / 月",
+        "features": {
+          "everything_pro": "所有专业版功能",
+          "higher_limits": "进一步扩展的使用配额",
+          "teammates": "与团队协作",
+          "billing": "统一计费",
+          "access": "高级功能"
+        },
+        "footnote": "*年度计费价格；按月计费{{price}}/月",
+        "button": "开始使用"
+      },
+      "enterprise": {
+        "name": "企业版",
+        "price": "联系销售",
+        "features": {
+          "everything_team": "所有团队版功能",
+          "higher_limits": "可自定义的使用限制",
+          "context_windows": "扩展的上下文容量",
+          "sso_rbac": "SSO和RBAC",
+          "audit_logs": "活动跟踪",
+          "integrations": "自定义集成"
+        },
+        "button": "联系销售"
+      }
+    },
+    "models": {
+      "mini": "迷你模型",
+      "standard": "标准模型",
+      "large": "大型模型",
+      "custom_api": "自定义API（标准版）",
+      "custom_api_large": "自定义API（大型版）"
+    },
+    "images": {
+      "basic": "基础图像生成（最高512x512）",
+      "standard": "标准图像生成（最高1024x1024）",
+      "high_resolution": "高分辨率图像生成（最高2048x2048）",
+      "enhancement": "图像增强/编辑",
+      "batch": "批量图像生成（10张图像）",
+      "per_image": "每张图像",
+      "per_batch": "每批次"
+    },
+    "pay_as_you_go": {
+      "title": "只为您使用的付费，其余交给我们处理。",
+      "description": "我们将根据您在以下类别中的使用情况从您的积分余额中扣除："
+    },
+    "charts": {
+      "model_usage_title": "模型使用量",
+      "image_generation_title": "图像生成",
+      "model_header": "模型",
+      "input_header": "输入（每百万token）",
+      "output_header": "输出（每百万token）",
+      "service_header": "服务",
+      "price_header": "价格"
+    }
+  },
+  "enterprise": {
+    "title": "Lora企业版",
+    "description": "安全地将Lora与您公司的数据集成，通过值得信赖的AI增强每个团队。",
+    "cta": "联系销售"
+  },
+  "footer": {
+    "logo_alt": "Logo",
+    "sections": {
+      "solutions": "解决方案",
+      "support": "支持",
+      "company": "公司"
+    },
+    "solutions": {
+      "api": "API",
+      "team": "团队",
+      "pricing": "定价",
+      "research": "研究",
+      "company": "公司"
+    },
+    "support": {
+      "press": "新闻",
+      "support": "支持",
+      "status": "状态",
+      "availability": "可用性"
+    },
+    "company": {
+      "terms": "服务条款",
+      "privacy": "隐私声明",
+      "usage": "使用政策",
+      "compliance": "合规",
+      "disclosure": "负责任的披露政策"
+    }
+  },
+  "checkout": {
+    "payment_status": {
+      "succeeded": "交易完成！",
+      "processing": "正在处理您的付款。",
+      "requires_payment_method": "付款失败，请重试。",
+      "error": "发生了问题。"
+    },
+    "or": "或"
+  },
+  "return": {
+    "title": "订单状态",
+    "please_wait": "请稍候..."
+  },
+  "signup": {
+    "title": "创建账户",
+    "email": "电子邮箱地址",
+    "email_placeholder": "jenny@example.com",
+    "password": "密码",
+    "remember_me": "保持登录状态",
+    "forgot_password": "重置密码",
+    "sign_up": "注册",
+    "already_member": "已有账户？",
+    "sign_in_link": "点击这里登录",
+    "password_disclaimer": "仅供演示。请勿使用真实密码。"
+  },
+  "signin": {
+    "title": "访问您的账户",
+    "email": "电子邮箱地址",
+    "email_placeholder": "jenny@example.com",
+    "password": "密码",
+    "remember_me": "保持登录状态",
+    "forgot_password": "重置密码",
+    "sign_in": "登录",
+    "not_member": "新用户？",
+    "sign_up_link": "点击这里注册",
+    "password_disclaimer": "仅供演示。未应用验证。",
+    "quickstart_multi": "快速开始（自定义定价）",
+    "quickstart_sub": "创建 Stripe 与 Metronome 客户，然后付款、回溯高级合同与模拟用量。",
+    "quickstart_conflict": "该邮箱已在 Metronome 中使用。快速开始仅支持全新邮箱；请换一个。",
+    "quickstart_loading": "正在打开结账…"
+  },
+  "common": {
+    "error": {
+      "default_message": "发生了问题。请重试。",
+      "dismiss": "关闭"
+    },
+    "close": "关闭",
+    "get_started": "开始使用",
+    "loading": "加载中...",
+    "processing": "处理中..."
+  },
+  "subscription_team": {
+    "title": "团队版订阅",
+    "team_members_question": "团队规模？",
+    "pay_monthly": "按月计费",
+    "pay_annually": "按年计费",
+    "monthly_price": "{{price}} / 月 / 成员 + 增值税",
+    "annual_price": "{{price}} / 月 / 成员 + 增值税",
+    "annual_savings": "17%折扣，使用量按月计费",
+    "team_summary": "{{members}} 成员 x {{price}}",
+    "subtotal": "小计",
+    "tax": "增值税（如适用）",
+    "total": "总计 / {{frequency}}",
+    "subscribe": "确认",
+    "after_your_first": "按需付费定价：",
+    "usage": "使用量",
+    "pay_yearly": "按年计费"
+  },
+  "subscription_pro": {
+    "title": "专业版订阅",
+    "subtotal": "小计",
+    "tax": "增值税（如适用）",
+    "total": "总计 / 月",
+    "subscribe": "继续",
+    "after_your_first": "100,000个token后按需付费：",
+    "usage": "超过10万token的使用量",
+    "usage_total": "使用量"
+  },
+  "subscription_plus": {
+    "title": "增强版订阅",
+    "subtotal": "小计",
+    "tax": "增值税（如适用）",
+    "total": "总计 / 月",
+    "subscribe": "继续"
+  },
+  "subscription_free": {
+    "title": "欢迎！",
+    "please_wait": "正在设置您的账户..."
+  },
+  "subscription_api": {
+    "title": "开始使用Lora API进行开发",
+    "check_out": "探索我们的最新模型",
+    "continue": "继续结账"
+  },
+  "settings": {
+    "sidebar": {
+      "billing": "计费",
+      "profile": "个人资料",
+      "account": "账户"
+    },
+    "subscription": {
+      "title": "您的{{plan}}订阅",
+      "active": "活跃",
+      "canceled": "已取消",
+      "paused": "已暂停",
+      "pending": "待处理",
+      "unpaid": "未付款",
+      "trial": "试用",
+      "customer_id": "客户ID",
+      "subscription_id": "订阅ID",
+      "plan_type": "计划类型",
+      "usage_based": "基于使用量",
+      "fixed": "固定价格",
+      "billing_period": "计费周期",
+      "weekly": "每周",
+      "monthly": "每月",
+      "yearly": "每年",
+      "months": "月",
+      "years": "年",
+      "every_x": "每{{count}}{{interval}}",
+      "start_date": "开始日期",
+      "end_date": "结束日期",
+      "next_billing": "下次计费日期",
+      "current_usage": "当前使用量",
+      "estimated_cost": "预估费用",
+      "usage_billing_note": "使用基于使用量的计费，您只需为实际使用付费。实际金额将在计费周期结束时计算。",
+      "upgrade": "升级计划",
+      "downgrade": "降级计划",
+      "change_plan": "更改计划",
+      "cancel": "取消订阅",
+      "canceling": "取消中...",
+      "renew": "续订",
+      "reactivate": "重新激活",
+      "view_usage": "查看使用详情",
+      "payment_method": "付款方式",
+      "update_payment": "更新付款方式",
+      "billing_history": "计费历史",
+      "view_invoices": "查看发票",
+      "manage_subscription": "管理订阅",
+      "cancel_confirmation": "您确定要取消订阅吗？",
+      "cancel_note": "您的订阅将在当前计费周期结束前保持活跃。",
+      "cancel_success": "您的订阅已成功取消。",
+      "cancel_error": "取消订阅时出错。请重试。",
+      "meter_usage": "使用量计量",
+      "meter_tokens": "Token使用量",
+      "meter_api": "API请求",
+      "meter_storage": "存储",
+      "next_payment": "下次付款{{amount}}，日期{{date}}",
+      "rate_card_name": "费率卡",
+      "plan_details": "计划详情",
+      "rate_details": "费率详情",
+      "usage_limit": "使用限制",
+      "set_limit": "设置限制",
+      "limit_note": "设置使用限制有助于防止意外费用。",
+      "subscription_expired": "您的订阅已过期。",
+      "subscription_canceled": "您的订阅已被取消。",
+      "subscription_paused": "您的订阅当前已暂停。",
+      "resume_subscription": "恢复订阅",
+      "pause_subscription": "暂停订阅",
+      "no_subscription": "未找到活跃订阅。请订阅计划。",
+      "sign_in_required": "请登录以查看您的订阅设置。"
+    },
+    "rate_card": {
+      "volume_pricing": "批量定价",
+      "graduated_pricing": "阶梯定价",
+      "standard_pricing": "标准定价",
+      "monthly": "每月",
+      "yearly": "每年",
+      "every_x_months": "每{{count}}个月",
+      "billing_cycle": "计费周期",
+      "included_rates": "包含的费率",
+      "starting_at": "起价",
+      "unit": "单位"
+    },
+    "common": {
+      "loading": "加载中...",
+      "confirm": "确认",
+      "cancel": "取消",
+      "save": "保存",
+      "edit": "编辑",
+      "delete": "删除",
+      "view": "查看",
+      "back": "返回",
+      "next": "下一步",
+      "continue": "继续",
+      "yes": "是",
+      "no": "否"
+    },
+    "errors": {
+      "general": "发生错误。请重试。",
+      "not_found": "未找到",
+      "network_error": "网络错误。请检查您的连接。",
+      "server_error": "服务器错误。请稍后重试。",
+      "authorization_error": "授权错误。请重新登录。"
+    },
+    "notifications": {
+      "success": "成功！",
+      "error": "错误！",
+      "warning": "警告！",
+      "info": "信息"
+    },
+    "teamMembers": {
+      "title": "团队成员",
+      "current": "活跃团队成员：{{count}}",
+      "update": "修改",
+      "confirm_changes": "确认更改",
+      "immediately": "您的月度价格将立即更新。按比例收费将立即计费。积分将显示在您的下一张月度账单上。",
+      "confirm": "确认"
+    },
+    "payment": {
+      "ending_with": " 尾号{{last4}}",
+      "external_payment_method": "外部付款方式",
+      "title": "付款方式",
+      "update": "替换",
+      "add": "添加",
+      "replace": "替换",
+      "promo_code": "应用促销码",
+      "enter_promo_code": "促销码",
+      "applying": "应用中",
+      "apply": "应用",
+      "no_payment_method": "未找到付款方式"
+    },
+    "invoices": {
+      "finalized": "已完成",
+      "title": "发票",
+      "description": "查看并下载您的历史发票",
+      "date": "日期",
+      "total": "总计",
+      "status": "状态",
+      "actions": "操作",
+      "draft": "草稿",
+      "open": "开放",
+      "paid": "已付款",
+      "void": "作废",
+      "uncollectible": "无法收款",
+      "none": "暂无发票"
+    },
+    "cancellation": {
+      "logged_out_message": "确认后您将被注销。",
+      "reenrolled_message": "您将自动重新注册免费套餐。您可以继续使用您的月度积分，直到它们到期。",
+      "title": "取消",
+      "confirmTitle": "您确定吗？",
+      "cancelPlan": "取消计划",
+      "cancel": "取消",
+      "close": "关闭",
+      "beforeYouGo": "在您离开之前",
+      "stayWithOffer": "留下来并享受此优惠：",
+      "offer": "3个月20%折扣",
+      "claim": "接受优惠",
+      "keep": "保留订阅"
+    },
+    "credits": {
+      "custom": "自定义",
+      "close": "关闭",
+      "new": "新",
+      "purchase": "购买积分",
+      "buy": "购买API Token",
+      "provide": "为了更可预测的组织支出。",
+      "buy_button": "购买"
+    },
+    "meter": {
+      "close": "关闭",
+      "enter_amount": "输入金额",
+      "simulate": "模拟使用",
+      "sim": "测试",
+      "current": "当前使用量"
+    },
+    "meters": {
+      "used": "已使用的token"
+    }
+  },
+  "api_plans": {
+    "input": "输入",
+    "write": "提示缓存写入",
+    "read": "提示缓存读取",
+    "output": "输出",
+    "latest": "最新模型",
+    "features": {
+      "latest_1": "实时数据更新",
+      "latest_2": "最新功能",
+      "latest_3": "最快的模型",
+      "e_1": "我们的旗舰模型",
+      "e_2": "更新于2024/03/14",
+      "e_3": "高可靠性",
+      "visual_1": "基于视觉的模型",
+      "visual_2": "可上传文件"
+    },
+    "visual": "Lora Visual"
+  },
+  "tools": {
+    "title": "设置"
+  },
+  "loading": "加载中",
+  "redirect": "请稍候，您将被重定向到Stripe进行结账...",
+  "contact_us": {
+    "contact": "联系Lora",
+    "connect": "联系我们的销售团队，在您通过API和Lora团队版扩大使用量时获得额外的资源和支持。",
+    "first_name": "名字",
+    "last_name": "姓氏",
+    "email": "电子邮箱",
+    "company_name": "公司名称",
+    "why": "请分享更多关于您联系我们的原因",
+    "submit": "提交",
+    "loading": "加载中"
+  },
+  "auth": {
+    "errors": {
+      "general": "发生错误。请重试。",
+      "unexpected": "发生意外错误。请重试。",
+      "checkout_session": "无法创建嵌入式结账会话，您可能未登录。",
+      "legacy_api": "旧版订阅API不再可用。请使用定价计划订阅。"
+    }
+  },
+  "simulations": {
+    "advance_time": "推进时间 →",
+    "cancel": "取消",
+    "advance": "推进",
+    "send_usage": "发送使用数据到计量器",
+    "enter_usage": "输入使用量",
+    "send_usage_data": "发送使用数据"
+  },
+  "config": {
+    "stripe_icon_alt": "Stripe图标",
+    "save_settings": "保存设置"
+  },
+  "random1": "您知道吗？羊驼会哼唱！它们用哼唱作为彼此交流的方式！",
+  "random2": "羊驼与骆驼有亲缘关系，但它们没有驼峰。它们属于骆驼科，还包括小羊驼和骆马。",
+  "random3": "一群羊驼被称为'兽群'或'群体'，但如果叫'羊驼戏剧'是不是会更有趣？",
+  "random4": "羊驼被用作羊群的守护动物，因为它们天生具有保护性，会驱赶土狼和其他捕食者。",
+  "random5": "羊驼的毛自然防水且低过敏性。羊驼毛衣，有人要吗？",
+  "random6": "在印加帝国，只有皇室才被允许穿由羊驼纤维制成的衣服。",
+  "random7": "小羊驼被称为'crias'，在西班牙语中意为'婴儿'。它们出生时可以重达30磅！",
+  "random8": "羊驼可以背负其体重25-30%的重量，行走8-13英里。它们是南美洲的驮骡！",
+  "random9": "羊驼是非常社交的动物，喜欢群居生活。它们是骆驼科中的派对动物！",
+  "random10": "羊驼的寿命约为20年。这是很多羊驼戏剧的时间！",
+  "random11": "羊驼在一些医院和护理机构被用作治疗动物。它们是大自然的毛茸茸治疗师！",
+  "random12": "羊驼有极好的视力，可以从一英里外发现潜在的捕食者。它们就像草原上的老鹰！",
+  "random13": "羊驼环保友好！它们的软垫脚比蹄子对地形更温和，防止侵蚀。",
+  "random14": "羊驼纤维有超过20种天然颜色，是所有产纤维动物中最多的。它们是行走的彩虹！",
+  "random15": "羊驼很聪明，可以被训练拉车、背包，甚至参加障碍赛。羊驼奥运会，有人要吗？",
+  "random16": "羊驼的上前颌没有牙齿。相反，它们有一个坚硬的上颚，帮助它们研磨食物。",
+  "random17": "羊驼使用各种声音相互交流，包括哼唱、嘶鸣和警报声。",
+  "random18": "羊驼的正常体温比人类高得多，范围从100.4到102.2°F（38-39°C）。",
+  "random19": "从羊驼切换话题：考拉的指纹与人类如此相似，以至于它们有时在犯罪现场被混淆。",
+  "random20": "从羊驼换个话题：您知道一群火烈鸟被称为'flamboyance'吗？这太华丽了！",
+  "rate_card": {
+    "checkout_title": "订阅基于使用量的计划",
+    "select_plan": "选择计划",
+    "billing_cycle": "计费周期",
+    "monthly": "每月",
+    "yearly": "每年",
+    "every_x_months": "每{{count}}个月",
+    "included_rates": "此计划包含的内容",
+    "id": "费率卡ID",
+    "estimated_costs": "预估费用",
+    "base_charges": "基本费用",
+    "estimated_tax": "预估税费",
+    "estimated_total": "预估总计",
+    "cost_explanation": "最终费用将根据您在计费周期结束时的实际使用量计算。",
+    "usage_estimator": "使用量估算器",
+    "usage_estimator_description": "调整下方滑块，根据预期使用量估算您的月度费用。",
+    "how_it_works": "基于使用量计费的工作原理",
+    "step1_title": "订阅",
+    "step1_description": "注册基于使用量的计费，无需预付费用",
+    "step2_title": "使用服务",
+    "step2_description": "根据需要使用API或平台",
+    "step3_title": "按使用付费",
+    "step3_description": "仅为您在每个计费周期结束时使用的内容付费",
+    "footer_note": "您可以随时从账户仪表板查看当前使用量并设置限制。",
+    "volume_pricing": "批量定价",
+    "graduated_pricing": "阶梯定价",
+    "standard_pricing": "标准定价",
+    "starting_at": "起价",
+    "unit": "单位",
+    "subscription_details": "订阅详情",
+    "usage_details": "使用详情",
+    "payment_details": "付款详情",
+    "subscription_confirmation": "订阅确认",
+    "subscribe_button": "立即订阅",
+    "modify_button": "修改选择",
+    "cancel_button": "取消",
+    "low_usage": "低使用量",
+    "medium_usage": "中使用量",
+    "high_usage": "高使用量",
+    "faq_title": "常见问题",
+    "faq_1_question": "如何收费？",
+    "faq_1_answer": "您将在每个计费周期结束时根据实际使用量收费。您的付款方式将自动扣费。",
+    "faq_2_question": "有最低消费吗？",
+    "faq_2_answer": "没有，没有最低消费要求。您只需为实际使用付费。",
+    "faq_3_question": "如果我超过预期使用量会怎样？",
+    "faq_3_answer": "您将继续按照阶梯定价结构收费。对于大容量使用，折扣层级会自动应用。",
+    "faq_4_question": "我可以设置使用限制吗？",
+    "faq_4_answer": "可以，您可以在账户设置中设置使用限制，以防止意外费用。",
+    "tokens": "Token",
+    "api_requests": "API请求",
+    "processing_units": "处理单元",
+    "storage": "存储",
+    "per_unit": "每单位",
+    "per_token": "每token",
+    "per_request": "每请求",
+    "per_gb": "每GB",
+    "up_to": "最高",
+    "and_up": "及以上",
+    "current_usage": "当前使用量",
+    "usage_limit": "使用限制",
+    "set_limit": "设置限制",
+    "processing": "正在处理您的订阅...",
+    "success_message": "您的订阅已激活！您现在可以开始使用服务了。",
+    "payment_method": "付款方式",
+    "edit_payment_method": "编辑付款方式",
+    "billing_address": "账单地址",
+    "edit_billing_address": "编辑账单地址",
+    "live": "当前版本",
+    "no_rates_warning": "此版本未定义任何费率",
+    "version": {
+      "id": "版本ID",
+      "created": "创建时间",
+      "status": "状态：{{status}}",
+      "live": "当前版本"
+    }
+  },
+  "units": {
+    "million_tokens": "MTok",
+    "unit": "单位"
+  },
+  "features": {
+    "section_pill": "为速度而生",
+    "title": "构建软件的新方式",
+    "description": "在完全透明的情况下更快地交付。我们的平台提供可随团队扩展的企业级工具。",
+    "ai_code_generation": {
+      "title": "AI代码生成",
+      "description": "从单个提示生成组件、服务和完整应用程序。"
+    },
+    "usage_based_billing": {
+      "title": "基于使用量的计费",
+      "description": "只为您使用的付费。实时跟踪您的积分消耗。"
+    },
+    "instant_deployment": {
+      "title": "即时部署",
+      "description": "在几分钟内从想法到实时应用程序。我们处理基础设施。"
+    },
+    "transparent_fair": {
+      "title": "透明且公平",
+      "description": "没有隐藏费用。我们的积分系统清晰、可预测且公平。"
+    }
+  },
+  "dashboard": {
+    "auto_top_up_status": "自动充值已开启 · 余额低于{{threshold}}时充值至{{to}}",
+    "chat_token_usage_by_model": "按模型的聊天令牌使用量",
+    "credits_of_total": "剩余{{available}}（共{{total}}）",
+    "greeting": "欢迎{{name}}",
+    "ai_credits": "积分",
+    "no_usage_data": "此期间无使用数据",
+    "spend": "消费额度",
+    "spend_meter_caption": "本账期可用 {{available}}，周期内积分额度 {{credits}}",
+    "current_spend": {
+      "title": "当前消费",
+      "after_credits": "抵扣额度后：{{amount}}",
+      "subtitle_draft": "来自 Metronome 未结草稿账单，总额随用量更新。",
+      "period_through": "账期截至 {{date}}",
+      "no_period": "Metronome 为本周期生成草稿后，将显示账期日期。",
+      "no_charges_yet": "本账期尚无用量明细。",
+      "breakdown": "用量明细",
+      "more_line_items": "另有 {{count}} 项"
+    },
+    "credits_remaining": "剩余积分",
+    "credits_meter_caption": "{{available}} / {{total}} 积分剩余",
+    "page": {
+      "title": "计划与计费",
+      "description": "管理您的订阅、积分和付款详情。",
+      "sign_in_required": "请登录以查看您的仪表板。"
+    },
+    "sidebar": {
+      "billing": "计划与计费",
+      "usage": "使用量",
+      "simulations": "用户模拟",
+      "settings": "设置"
+    },
+    "settings": {
+      "page_title": "设置"
+    },
+    "token_usage_by_model": "按模型的令牌使用量",
+    "usage": {
+      "page_title": "使用量与分析",
+      "page_description": "您的AI服务使用情况的详细分析。",
+      "model_input_tokens": "模型输入Token",
+      "model_output_tokens": "模型输出Token",
+      "images_generated": "生成的图像",
+      "images_enhanced": "增强的图像",
+      "batch_images_processed": "批量处理的图像",
+      "across_all_models": "跨所有模型类型",
+      "generated_responses": "生成的响应",
+      "all_resolutions": "所有分辨率",
+      "enhancement_operations": "增强操作",
+      "images_in_batches": "批量中的图像",
+      "tabs": {
+        "model_usage": "模型使用量",
+        "image_generation": "图像生成",
+        "image_enhancement": "图像增强",
+        "image_batch_processing": "图像批量处理"
+      },
+      "charts": {
+        "model_usage_title": "模型使用量",
+        "model_usage_desc": "按模型类型（迷你版、标准版、大型版、自定义API）组织的Token使用量",
+        "image_generation_title": "图像生成",
+        "image_generation_desc": "按分辨率生成的图像数量",
+        "image_enhancement_title": "图像增强",
+        "image_enhancement_desc": "增强的图像数量",
+        "batch_processing_title": "图像批量处理",
+        "batch_processing_desc": "批量处理的图像数量"
+      },
+      "aggregated": {
+        "title": "汇总使用量",
+        "description": "跟踪您的AI内容生成使用情况",
+        "unknown": "未知",
+        "total": "总计",
+        "daily_burn": "每日消耗"
+      },
+      "project_storage": {
+        "title": "按项目用量",
+        "used": "已用",
+        "capacity": "承诺额度",
+        "available": "可用",
+        "no_metrics": "未找到可计费指标。",
+        "no_project_dimension": "当前指标不支持按 project_id 分组 — 请使用多项目演示种子或在 Metronome 中配置分组键。",
+        "no_commitment_hint": "合同无月度承诺 — 条形图仅显示相对占比。",
+        "token_share_note": "暂无发票小计 — 条形图按本月各项目的计量 token 占比显示。",
+        "empty_hint": "本期尚无按项目拆分的用量。请在设置中生成演示数据或使用聊天；多项目种子会写入三个 project_id。",
+        "no_usage_rows": "Metronome 在此时间窗未返回用量行 — 请先生成种子数据或检查 API 密钥。",
+        "aggregated_usage_label": "全部用量",
+        "unallocated_usage_label": "未归属（明细行无项目）",
+        "aggregate_bar_note": "此指标的 usage/groups 未返回按项目拆分 — 条形图显示未结发票上的用量合计。"
+      }
+    },
+    "simulations": {
+      "page_title": "用户模拟",
+      "page_description": "运行各种模拟场景进行测试和演示。",
+      "scenario_1": "场景1",
+      "scenario_2": "场景2",
+      "clock_title": "测试时钟：向前推进时间",
+      "clock_current_time": "当前模拟时间：",
+      "clock_status": "状态：",
+      "clock_status_loading": "加载中",
+      "clock_status_advancing": "推进中",
+      "clock_status_ready": "就绪",
+      "clock_advance_title": "推进时钟",
+      "clock_advance_description": "推进时钟以查看发生的事件和变化。",
+      "clock_warning": "模拟中的所有客户都将受到影响。",
+      "clock_buttons": {
+        "hour": "+ 1小时",
+        "day": "+ 1天",
+        "week": "+ 1周",
+        "month": "+ 1个月",
+        "year": "+ 1年"
+      },
+      "clock_note": "注意：您可以将此时钟推进到2030年12月31日晚上11:59。",
+      "usage_title": "发送使用数据到计量器",
+      "usage_description": "向连接的计量器发送各种服务的模拟使用数据。",
+      "usage_status_sending": "发送中",
+      "usage_status_idle": "空闲",
+      "usage_modal_title": "发送使用数据到计量器",
+      "usage_placeholder": "输入使用量",
+      "usage_send_button": "发送使用数据",
+      "scenario_3": "场景3",
+      "cycle_title": "周期模拟",
+      "cycle_card_title": "模拟完整计费周期",
+      "cycle_status_running": "运行中",
+      "cycle_status_stopped": "已停止",
+      "cycle_description_line1": "向前推进一个周期，同时向计量器发送真实的使用数据。",
+      "cycle_description_line2": "生成适度的token使用量（约30万token/月）和少量图像生成（约2张/月）。",
+      "cycle_description_line3": "预期费用基于实际定价以展示积分消耗。在每月的第{{day}}天计费。",
+      "cycle_current_date": "当前日期：",
+      "cycle_button_start": "开始模拟",
+      "advance_time_button": "推进时间 →"
+    },
+    "date_picker": {
+      "last_7_days": "最近7天",
+      "last_30_days": "最近30天",
+      "current_billing_period": "当前计费周期"
+    },
+    "cards": {
+      "current_plan": "当前计划",
+      "next_billing": "下次付款",
+      "no_upcoming_charges": "无即将到来的费用",
+      "next_billing_charge": "下一计费周期费用",
+      "upgrade": "升级",
+      "pay_as_you_use": "按量付费",
+      "pay_as_you_use_description": "用量按消耗的 token 计量。将根据下方费率按实际使用计费。",
+      "premium_package": "Premium",
+      "next_invoice_due": "应付日期：{{date}}",
+      "next_metronome_invoice": "当前开放账期的预估合计",
+      "no_upcoming_invoice": "暂无未结发票"
+    },
+    "usage_pacing": {
+      "title": "用量追踪",
+      "description": "本月至今的可计费用量与月度承诺对比。",
+      "all_products": "所有产品",
+      "all_models": "所有模型",
+      "all_qualities": "所有质量",
+      "all_tiers": "所有层级",
+      "month_to_date": "本月至今",
+      "pct_of_monthly": "月度{{label}}的{{pct}}%",
+      "monthly_label": "月度{{label}}",
+      "prepaid_period": "本周期预付款",
+      "projected_month_end": "月末预测",
+      "within_prepaid": "在预付金额以内",
+      "above_prepaid": "超出预付金额 — 将产生超额费用",
+      "commitment_cap": "月度{{label}}（上限）：{{amount}}",
+      "series_spend": "本月至今（累计）",
+      "series_projected": "月末预测（趋势）",
+      "commitment": "承诺额度",
+      "credit_balance": "积分余额",
+      "error_load": "无法加载账单明细："
+    },
+    "billing_payg": {
+      "title": "按用量定价",
+      "subtitle": "每百万 token 的单价（输入/输出）。账单按模型汇总用量。",
+      "effective": "价格自 2026 年 3 月 1 日（UTC）起生效",
+      "col_model": "模型",
+      "col_input": "输入",
+      "col_output": "输出"
+    },
+    "buttons": {
+      "cancel_auto_topup": "取消自动充值",
+      "setup_auto_topup": "设置自动充值",
+      "purchase_credits": "购买积分"
+    },
+    "invoice": {
+      "upcoming_title": "即将到来的发票",
+      "billing_period_ending": "计费周期结束于：",
+      "unknown_item": "未知项目",
+      "description": "描述",
+      "quantity": "数量",
+      "unit_price": "单价",
+      "amount": "金额",
+      "subtotal": "小计",
+      "tax": "税费",
+      "total": "总计",
+      "no_upcoming_charges": "您当前计划没有即将到来的费用",
+      "no_charges": "无即将到来的费用",
+      "credits_applied": "已应用积分",
+      "period_net_subtitle": "扣除已应用积分后的本期净额。表格展示用量与积分明细。",
+      "period_net_subtitle_empty": "本期尚无未结发票 — 用量出账后将在此更新。",
+      "million_tokens_suffix": " / 百万token",
+      "usage_per_heading": "用量：",
+      "ungrouped_line_items": "其他费用",
+      "line_item_names": {
+        "chat_input_tokens": "聊天 - 输入令牌",
+        "chat_output_tokens": "聊天 - 输出令牌",
+        "image_enhancement": "图像增强",
+        "image_generation": "图像生成",
+        "premium_subscription": "高级订阅"
+      }
+    }
+  },
+  "landing": {
+    "technologies": {
+      "robot_alt": "一个友好的、未来感十足的机器人助手在挥手"
+    },
+    "enterprise": {
+      "title": "Lora企业版",
+      "description": "安全地将Lora与您公司的数据集成，通过值得信赖的AI增强每个团队。",
+      "cta": "联系销售"
+    },
+    "hero": {
+      "main_title": "从提示词到图像、视频和 3D",
+      "description": "通过透明的积分定价，为每种生成工作流创建可投入生产的媒体。",
+      "button_logged_in": "打开 Lora Generate",
+      "button_not_logged_in": "免费开始生成",
+      "no_credit_card": "无需信用卡",
+      "build_command": "构建"
+    },
+    "aggregated_usage": {
+      "title": "汇总使用量",
+      "description": "跟踪您的AI内容生成使用情况",
+      "unknown": "未知",
+      "total_daily_burn": "总计：{{value}}，每日消耗：{{burn}}"
+    }
+  },
+  "payments": {
+    "errors": {
+      "validation_error": "验证您的付款方式时出错。",
+      "unexpected_error": "发生意外错误。",
+      "generic_error": "发生意外错误。",
+      "promo_not_available": "此订阅类型不提供促销码功能。",
+      "promo_failed": "应用促销码失败。请重试。"
+    },
+    "success": {
+      "payment_updated": "您的付款方式已成功更新。"
+    }
+  },
+  "most_popular": "最受欢迎",
+  "not_available": "不适用",
+  "faq": {
+    "title": "常见问题",
+    "questions": {
+      "credits": {
+        "question": "什么是积分，它们如何工作？",
+        "answer": "积分用于支付AI服务。高级计划每月附带{{premiumCredits}}积分，而免费计划获得{{freeCredits}}终身积分。"
+      },
+      "over_credits": {
+        "question": "当我超出积分时会怎样？",
+        "intro": "当您超出积分配额时，您有灵活的选项继续使用我们的服务：",
+        "auto_topup": {
+          "title": "自动充值",
+          "description": "设置自动购买积分，以确保当余额不足时服务不中断。"
+        },
+        "credit_packs": {
+          "title": "积分包",
+          "description": "随时使用这些便捷选项购买额外积分：",
+          "pack1": "标准包：{{amount}}",
+          "pack2": "大包：{{amount}}",
+          "pack3": "自定义金额（最低{{amount}}）"
+        }
+      },
+      "rollover": {
+        "question": "未使用的积分会结转吗？",
+        "answer": "每月积分在每个计费周期重置，不会结转。但是，通过积分包购买的积分永不过期。"
+      },
+      "change_plan": {
+        "question": "我可以随时更改我的计划吗？",
+        "answer": "可以，您可以随时升级或降级您的计划。更改立即生效，并进行按比例计费调整。"
+      }
+    }
+  },
+  "products": {
+    "prod_mock_premium": {
+      "name": "高级版",
+      "description": "适合专业人士和成长型企业。"
+    },
+    "default_premium": {
+      "name": "高级版",
+      "description": "适合专业人士和成长型企业。"
+    },
+    "default_free": {
+      "name": "免费版",
+      "description": "非常适合开始使用AI内容创作的个人用户。"
+    },
+    "default_team": {
+      "name": "团队版",
+      "description": "为企业和大容量用户量身定制的解决方案。"
+    }
+  },
+  "plans": {
+    "price_details": {
+      "month": "/月"
+    },
+    "free": {
+      "description": "非常适合开始使用AI内容创作的个人用户。",
+      "credit_description": "终身积分（一次性）",
+      "features": {
+        "1": "个人使用免费",
+        "2": "无限图像和视频生成",
+        "3": "标准嵌入创建",
+        "4": "社区支持",
+        "5": "基础分析仪表板"
+      },
+      "button": {
+        "current": "当前计划",
+        "get_started": "免费开始"
+      }
+    },
+    "premium": {
+      "description": "适合专业人士和成长型企业。",
+      "credit_description": "每月积分",
+      "features": {
+        "1": "所有免费计划功能",
+        "2": "通过电子邮件的优先支持",
+        "3": "全面的分析仪表板",
+        "4": "用于编程集成的API访问",
+        "5": "单点登录（SSO）以增强安全性",
+        "6": "自动零数据保留功能"
+      },
+      "button": {
+        "current": "当前计划",
+        "get_started": "开始使用高级版"
+      },
+      "name": "高级版"
+    },
+    "team": {
+      "credit_description": "基于业务需求的积分分配",
+      "features": {
+        "1": "所有高级计划功能",
+        "2": "为大容量用户量身定制的解决方案",
+        "3": "专属客户经理",
+        "4": "集中计费管理",
+        "5": "增强的安全功能",
+        "6": "独家访问测试版功能"
+      },
+      "button": {
+        "contact_sales": "联系销售"
+      },
+      "custom_pricing": "自定义定价",
+      "custom_amount": "自定义"
+    }
+  },
+  "subscribe_metronome_package": {
+    "order_summary": "订单摘要",
+    "custom_pricing": "定制定价",
+    "per_month": "每月",
+    "applicable_taxes": "+ 适用税费",
+    "loading": "正在加载套餐详情…",
+    "not_found": "无法加载此套餐的详情。",
+    "unknown_name": "所选套餐"
+  },
+  "modals": {
+    "auto_top_up": {
+      "title": "设置自动充值",
+      "balance_threshold_label": "当我的余额低于",
+      "top_up_amount_label": "自动充值",
+      "disclaimer": "点击\"保存设置\"，即表示我同意当我的积分余额低于{{threshold}}时，将自动充值至{{topUpAmount}}。",
+      "missing_stripe_customer": "启用自动充值需要 Stripe 客户。请重新登录或在工具面板中检查演示客户。",
+      "missing_metronome_customer": "请先登录，或在工具面板中设置 Metronome 客户。"
+    },
+    "purchase_credits": {
+      "title": "购买积分",
+      "loading": "正在加载您的余额...",
+      "outstanding_balance_title": "需要操作：未结余额",
+      "top_up_credits_title": "充值积分",
+      "outstanding_balance_message": "您在清除未结余额之前将无法使用Lora：",
+      "current_balance_message": "您的当前余额是",
+      "recommended": "推荐",
+      "standard": "标准",
+      "large": "大",
+      "custom_amount": "自定义金额",
+      "clears_outstanding_plus": "清除未结余额 + {{amount}}",
+      "processing": "处理中...",
+      "purchase_for": "购买{{amount}}",
+      "select_amount": "选择金额",
+      "min_amount": "最低{{amount}}"
+    }
+  }
+}

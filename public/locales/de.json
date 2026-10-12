@@ -1,0 +1,1127 @@
+{
+  "header": {
+    "main_nav": {
+      "account": "Konto",
+      "chat": "Chatten",
+      "pricing": "Preise",
+      "sign-out": "Abmelden",
+      "sign_in": "Anmelden"
+    },
+    "hero": {
+      "title": "KI-Innovation und -Lösungen mit Fokus auf Sicherheit und Ethik",
+      "new": "Neu",
+      "api": "API",
+      "new_title": "Lora 1.5 vorgestellt",
+      "api_title": "Entwickeln Sie mit Lora",
+      "new_description": "Unsere fortschrittlichste KI, jetzt verfügbar.",
+      "api_description": "Beginnen Sie jetzt, um die Produktivität zu steigern und Geschäftsmodelle zu innovieren.",
+      "new_button": "Mit Lora interagieren",
+      "api_button": "Jetzt starten",
+      "typewriter": {
+        "text1": "ein Dashboard zur Verfolgung der Benutzerinteraktion mit Echtzeit-Diagrammen",
+        "text2": "eine mobile App für ein lokales Café mit Online-Bestellung",
+        "text3": "eine Full-Stack-E-Commerce-Website mit einer Empfehlungs-Engine",
+        "text4": "eine leichtgewichtige Komponentenbibliothek für ein Designsystem"
+      }
+    }
+  },
+  "chat": {
+    "you": "Du",
+    "upgrade": "Sie nutzen einen eingeschränkten kostenlosen Plan. Upgrade durchführen!",
+    "submit": "Absenden",
+    "response": "Antwort:",
+    "tokens": "{{tokens}} Token - Neuestes Modell",
+    "how": "Wie kann Lora Ihnen heute helfen?",
+    "summarize": "Text zusammenfassen",
+    "brainstorm": "Brainstorming",
+    "analyze": "Daten analysieren",
+    "make": "Machen Sie einen Plan",
+    "help_me": "Hilf mir zu schreiben",
+    "blocked_modal": {
+      "free_exhausted_message": "Ihre kostenlosen Credits sind aufgebraucht. Upgraden Sie auf Premium, um weiterzumachen.",
+      "free_trial_title": "Sie haben Ihre kostenlosen Testguthaben aufgebraucht",
+      "credits_depleted_title": "Guthaben erschöpft",
+      "free_trial_message": "Upgraden Sie Ihren Plan, um weiter zu chatten und mehr Funktionen freizuschalten.",
+      "credits_depleted_message": "Bitte fügen Sie mehr Guthaben hinzu, um den Service weiter zu nutzen.",
+      "opening_checkout": "Kasse wird geöffnet…",
+      "premium_reset_message": "Sie haben alle Ihre Credits für diesen Abrechnungszeitraum verbraucht. Ihr Guthaben wird zu Beginn des nächsten Abrechnungszyklus zurückgesetzt.",
+      "upgrade_plan_button": "Plan upgraden",
+      "add_credits_button": "Guthaben hinzufügen",
+      "upgrade_to_premium": "Auf Premium upgraden"
+    },
+    "input": {
+      "placeholder": "Klicken Sie auf den Pfeil, um fortzufahren...",
+      "disabled_placeholder": "Klicken Sie auf den Pfeil, um fortzufahren..."
+    },
+    "welcome": {
+      "title": "Lassen Sie uns eine Website erstellen"
+    },
+    "assistant": {
+      "name": "Lora AI",
+      "generating": "Code wird generiert...",
+      "generating_app": "Anwendung wird generiert...",
+      "building_website": "Würzige Jahreszeiten-Website wird erstellt..."
+    },
+    "prompts": {
+      "step1": "Helfen Sie mir, eine Website für mein neues Restaurant namens Würzige Jahreszeiten zu erstellen. Es ist ein Farm-to-Table-Restaurant und ich brauche etwas Sauberes und Professionelles. Beginnen Sie einfach mit der grundlegenden Struktur.",
+      "step2": "Okay, das ist ein gutes Grundgerüst. Können Sie jetzt das Aussehen und die Atmosphäre unserer Marke anwenden? Wir verwenden erdige Töne und eine klassische Serifenschrift. Lassen Sie uns die Styling-Grundlage und eine bessere Navigationsleiste einrichten.",
+      "step3": "Das sieht viel besser aus! Können Sie jetzt den Hero-Bereich visuell ansprechender gestalten? Vielleicht fügen Sie ein schönes Restaurant-Foto und einige sanfte Animationen hinzu, damit es einladender wirkt?",
+      "step4": "Perfekt! Jetzt muss ich unser Menü präsentieren. Wir haben Vorspeisen, Hauptgerichte und Desserts. Können Sie einen Menübereich mit appetitlichen Speisefotos hinzufügen? Unsere Kunden müssen sehen, was wir anbieten.",
+      "step5": "Das Menü sieht fantastisch aus! Jetzt brauche ich eine Möglichkeit für Kunden, Reservierungen zu machen. Können Sie ein Reservierungssystem hinzufügen, bei dem sie Tische buchen können? Ich hätte gerne Felder für Datum, Uhrzeit, Gruppengröße und besondere Wünsche.",
+      "step6": "Wir sind fast da! Können Sie einen Feedback-Bereich hinzufügen, wo Kunden Bewertungen mit Sternebewertungen hinterlassen können? Außerdem brauche ich eine Über-uns-Seite, die unsere Farm-to-Table-Geschichte erzählt. Lassen Sie uns das verfeinern!"
+    },
+    "responses": {
+      "step1": "Perfekt! Ich helfe Ihnen bei der Erstellung einer Website für Würzige Jahreszeiten. Lassen Sie mich mit einer sauberen, einfachen Grundlage beginnen - nur die grundlegende HTML-Struktur und minimales Styling, um anzufangen. Ich richte die Hauptbereiche ein, die Sie benötigen: Startseite, Menü, Reservierungen und Über uns.",
+      "step2": "Natürlich. Ich erstelle ein Designsystem mit den erdigen Farben Ihrer Marke und einer klassischen Serifenschrift. Ich aktualisiere auch das Layout mit einer professionellen festen Navigationsleiste. Dies wird den visuellen Ton für den Rest der Website setzen.",
+      "step3": "Großartiges Feedback! Jetzt hebe ich diesen Hero-Bereich hervor. Ich generiere ein schönes Restaurant-Interieur-Bild und verwende es als Vollbild-Hintergrund. Ich habe auch einige sanfte 'Einblend'-Animationen hinzugefügt, damit es einladend und elegant wirkt.",
+      "step4": "Ausgezeichnet! Jetzt kommt der aufregende Teil - Ihre Menü-Präsentation. Ich erstelle einen vollständigen Menübereich und generiere 6 appetitliche Speisebilder: 2 Vorspeisen (Bruschetta und Burrata), 2 Hauptgerichte (Lachs und Ribeye) und 2 Desserts (Käsekuchen und Schokoladen-Lava-Kuchen). Jedes Bild ist darauf ausgelegt, die frische, handwerkliche Qualität zu betonen, die Farm-to-Table-Dining definiert.",
+      "step5": "Perfekt! Ihr Reservierungssystem ist jetzt bereit. Ich habe ein umfassendes Buchungsformular mit Datum-/Zeitauswahl, Gruppengrößenoptionen und einem Feld für besondere Wünsche erstellt. Ich habe ordnungsgemäße Validierung und ein Bestätigungssystem hinzugefügt, damit Kunden sofortiges Feedback erhalten, wenn sie buchen. Das Styling passt zu Ihrer eleganten Restaurant-Ästhetik.",
+      "step6": "Fast fertig! Ich habe ein interaktives Feedback-System hinzugefügt, wo Kunden Sternebewertungen und schriftliche Bewertungen hinterlassen können. Außerdem habe ich einen überzeugenden Über-uns-Bereich erstellt, der Ihre Farm-to-Table-Geschichte erzählt - mit Fokus auf Ihre Gründung 2020, lokale Bauernhof-Partnerschaften und saisonale Menü-Philosophie. Alles funktioniert jetzt nahtlos zusammen für ein komplettes Restaurant-Erlebnis!"
+    },
+    "usage_details": {
+      "title": "Nutzungsdetails",
+      "model": "Modell",
+      "token_usage": "Token-Nutzung",
+      "input": "Eingabe",
+      "output": "Ausgabe",
+      "total_tokens": "Gesamt Token",
+      "image_usage": "Bild-Nutzung",
+      "total_images": "Gesamt Bilder",
+      "model_types": {
+        "mini": "Lora Prime Mini 5.4",
+        "standard": "Lora Mythic 4.6",
+        "large": "Lora Prime 5.4"
+      },
+      "image_types": {
+        "basic": "Basic",
+        "standard": "Standard",
+        "premium": "Premium"
+      },
+      "operations": {
+        "generated": "Generiert",
+        "enhanced": "Verbessert",
+        "batch_generated": "Batch-Generiert"
+      }
+    },
+    "restaurant_name": "Würzige Jahreszeiten",
+    "website": {
+      "nav": {
+        "about": "Über uns",
+        "home": "Startseite",
+        "menu": "Menü",
+        "reservations": "Reservierungen"
+      },
+      "skeleton": {
+        "coming_soon": "Demnächst...",
+        "tagline": "Farm-to-Table-Exzellenz",
+        "welcome": "Willkommen bei Savory Seasons"
+      },
+      "hero": {
+        "cta": "Tisch reservieren",
+        "tagline": "Entdecken Sie das frischeste Farm-to-Table-Erlebnis"
+      },
+      "menu_section": {
+        "appetizers": "Vorspeisen",
+        "desserts": "Desserts",
+        "loading": "Generiere Bilder und lade Menü...",
+        "main_courses": "Hauptgerichte",
+        "title": "Unser saisonales Menü"
+      },
+      "reservations_section": {
+        "email_placeholder": "E-Mail-Adresse",
+        "name_placeholder": "Vollständiger Name",
+        "party_1": "1 Person",
+        "party_2": "2 Personen",
+        "party_3": "3 Personen",
+        "party_4": "4 Personen",
+        "party_5": "5+ Personen",
+        "party_size": "Personenanzahl",
+        "phone_placeholder": "Telefonnummer",
+        "special_requests": "Besondere Wünsche oder Ernährungsbedürfnisse (optional)",
+        "submit": "Tisch buchen",
+        "success_message": "Danke! Wir haben Ihre Anfrage erhalten und werden Sie innerhalb von 24 Stunden zur Bestätigung kontaktieren.",
+        "success_title": "Reservierung bestätigt!",
+        "title": "Tisch reservieren"
+      },
+      "feedback_section": {
+        "email_placeholder": "E-Mail (optional)",
+        "name_placeholder": "Ihr Name (optional)",
+        "rating_label": "Bewerten Sie Ihre Erfahrung:",
+        "review_placeholder": "Erzählen Sie uns von Ihrem Besuch...",
+        "submit": "Feedback senden",
+        "success_message": "Wir schätzen Ihr Feedback und werden es nutzen, um unseren Service zu verbessern.",
+        "success_title": "Vielen Dank!",
+        "title": "Teilen Sie Ihre Erfahrung"
+      },
+      "about_section": {
+        "para1": "Gegründet 2020, entstand Savory Seasons aus der Leidenschaft, unsere Gemeinschaft mit den frischesten lokalen Zutaten zu verbinden. Wir arbeiten direkt mit nahegelegenen Farmen zusammen, um Ihnen saisonale Gerichte zu bringen, die die natürlichen Aromen unserer Region zelebrieren.",
+        "para2": "Unser Menü wechselt mit den Jahreszeiten und sorgt dafür, dass jeder Besuch etwas Neues bietet. Vom Holzfeuer-Grill bis zu hausgemachten Pasta-Gerichten wird jedes Gericht mit Sorgfalt zubereitet.",
+        "para3": "Erleben Sie ein unvergessliches Gastronomie-Erlebnis, bei dem jede Mahlzeit die Geschichte unserer lokalen Landwirte und des leidenschaftlichen Teams erzählt, das alles zusammenbringt.",
+        "title": "Unsere Geschichte"
+      }
+    }
+  },
+  "pricing": {
+    "page_title": "Preise",
+    "page_description": "Einfache, transparente Preise für alle. Starten Sie kostenlos und skalieren Sie nach Bedarf.",
+    "title": "Pläne entdecken",
+    "plans": {
+      "free": {
+        "name": "Kostenlos",
+        "description": "Perfekt für Einzelpersonen, die mit der KI-Inhaltserstellung beginnen.",
+        "features": {
+          "basic_access": "Grundlegender Zugriff",
+          "limited_usage": "Begrenzte Nutzung",
+          "community_support": "Community-Support"
+        },
+        "button": "Loslegen"
+      },
+      "premium": {
+        "description": "Ideal für Profis und wachsende Unternehmen."
+      },
+      "plus": {
+        "name": "Plus",
+        "price": "{{price}} / Monat",
+        "features": {
+          "web_ios_android": "Zugriff auf Lora über Web, iOS und Android",
+          "images_docs": "Analyse von Bildern und Dokumenten",
+          "access_version": "Nutzung von Lora 1.5"
+        },
+        "button": "Loslegen"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "{{price}} / Monat *",
+        "features": {
+          "everything_free": "Alle Funktionen des Plus-Tarifs",
+          "higher_limits": "Erweiterte Nutzungsgrenzen",
+          "create_projects": "Dateien in Projekten organisieren",
+          "priority": "Bevorzugter Zugang",
+          "early_access": "Vorschau auf kommende Funktionen",
+          "footnote": "* beinhaltet Ihre ersten 100.000 Token, danach einfache Pay-as-you-go-Preise"
+        },
+        "button": "Loslegen"
+      },
+      "team": {
+        "name": "Team",
+        "price": "{{price}} / Monat",
+        "features": {
+          "everything_pro": "Alle Funktionen der Pro-Version",
+          "higher_limits": "Noch weiter erweiterte Nutzungsgrenzen",
+          "teammates": "Zusammenarbeit im Team",
+          "billing": "Einheitliche Abrechnung",
+          "access": "Erweiterte Funktionen"
+        },
+        "footnote": "*Preis bei jährlicher Abrechnung; {{price}}/Monat bei monatlicher Abrechnung",
+        "button": "Loslegen"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Vertrieb kontaktieren",
+        "features": {
+          "everything_team": "Alle Funktionen der Team-Version",
+          "higher_limits": "Anpassbare Nutzungsgrenzen",
+          "context_windows": "Erweiterte Kontextkapazität",
+          "sso_rbac": "SSO & RBAC",
+          "audit_logs": "Aktivitätsverfolgung",
+          "integrations": "Benutzerdefinierte Integrationen"
+        },
+        "button": "Vertrieb kontaktieren"
+      }
+    },
+    "models": {
+      "mini": "Mini-Modell",
+      "standard": "Standard-Modell",
+      "large": "Großes Modell",
+      "custom_api": "Benutzerdefinierte API (standard)",
+      "custom_api_large": "Benutzerdefinierte API (groß)"
+    },
+    "images": {
+      "basic": "Basis-Bildgenerierung (bis zu 512x512)",
+      "standard": "Standard-Bildgenerierung (bis zu 1024x1024)",
+      "high_resolution": "Hochauflösende Bildgenerierung (bis zu 2048x2048)",
+      "enhancement": "Bildverbesserung/bearbeitung",
+      "batch": "Batch-Bildgenerierung (10 Bilder)",
+      "per_image": "pro Bild",
+      "per_batch": "pro Batch"
+    },
+    "pay_as_you_go": {
+      "title": "Zahlen Sie nur für das, was Sie nutzen, wir kümmern uns um den Rest.",
+      "description": "Wir ziehen von Ihrem Guthaben basierend auf Ihrer Nutzung in den folgenden Kategorien ab:"
+    },
+    "charts": {
+      "model_usage_title": "Modellnutzung",
+      "image_generation_title": "Bildgenerierung",
+      "model_header": "Modell",
+      "input_header": "Eingabe (pro 1M Token)",
+      "output_header": "Ausgabe (pro 1M Token)",
+      "service_header": "Service",
+      "price_header": "Preis"
+    }
+  },
+  "enterprise": {
+    "title": "Lora für Unternehmen",
+    "description": "Integrieren Sie Lora sicher mit den Daten Ihres Unternehmens und verbessern Sie jedes Team mit vertrauenswürdiger KI.",
+    "cta": "Vertrieb kontaktieren"
+  },
+  "footer": {
+    "logo_alt": "Logo",
+    "sections": {
+      "solutions": "Lösungen",
+      "support": "Support",
+      "company": "Unternehmen"
+    },
+    "solutions": {
+      "api": "API",
+      "team": "Team",
+      "pricing": "Preise",
+      "research": "Forschung",
+      "company": "Unternehmen"
+    },
+    "support": {
+      "press": "Presse",
+      "support": "Support",
+      "status": "Status",
+      "availability": "Verfügbarkeit"
+    },
+    "company": {
+      "terms": "Nutzungsbedingungen",
+      "privacy": "Datenschutzerklärung",
+      "usage": "Nutzungsrichtlinien",
+      "compliance": "Compliance",
+      "disclosure": "Richtlinien zur verantwortungsvollen Offenlegung"
+    }
+  },
+  "checkout": {
+    "payment_status": {
+      "succeeded": "Transaktion abgeschlossen!",
+      "processing": "Ihre Zahlung wird verarbeitet.",
+      "requires_payment_method": "Zahlung fehlgeschlagen, bitte versuchen Sie es erneut.",
+      "error": "Ein Problem ist aufgetreten."
+    },
+    "or": "oder"
+  },
+  "return": {
+    "title": "Bestellstatus",
+    "please_wait": "Einen Moment bitte..."
+  },
+  "signup": {
+    "title": "Konto erstellen",
+    "email": "E-Mail-Adresse",
+    "email_placeholder": "jenny@example.com",
+    "password": "Passwort",
+    "remember_me": "Angemeldet bleiben",
+    "forgot_password": "Passwort zurücksetzen",
+    "sign_up": "Registrieren",
+    "already_member": "Bereits Mitglied?",
+    "sign_in_link": "Hier anmelden",
+    "password_disclaimer": "Nur zu Demonstrationszwecken. Verwenden Sie keine echten Passwörter."
+  },
+  "signin": {
+    "title": "Zugang zu Ihrem Konto",
+    "email": "E-Mail-Adresse",
+    "email_placeholder": "jenny@example.com",
+    "password": "Passwort",
+    "remember_me": "Angemeldet bleiben",
+    "forgot_password": "Passwort zurücksetzen",
+    "sign_in": "Anmelden",
+    "not_member": "Noch kein Mitglied?",
+    "sign_up_link": "Hier registrieren",
+    "password_disclaimer": "Nur zu Demonstrationszwecken. Keine Validierung angewendet.",
+    "quickstart_multi": "Quickstart: individuelle Preise",
+    "quickstart_sub": "Legt Stripe- und Metronome-Kunden an, dann Zahlung, rückwirkenden Premium-Vertrag und Demo-Nutzung.",
+    "quickstart_conflict": "Diese E-Mail wird in Metronome bereits verwendet. Quickstart nur mit einer neuen E-Mail — bitte eine andere wählen.",
+    "quickstart_loading": "Checkout wird gestartet…"
+  },
+  "common": {
+    "error": {
+      "default_message": "Ein Problem ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "dismiss": "Schließen"
+    },
+    "close": "Schließen",
+    "get_started": "Jetzt starten",
+    "loading": "Wird geladen...",
+    "processing": "Verarbeite..."
+  },
+  "subscription_team": {
+    "title": "Team-Plan Abonnement",
+    "team_members_question": "Wie viele Teammitglieder?",
+    "pay_monthly": "Monatliche Abrechnung",
+    "pay_annually": "Jährliche Abrechnung",
+    "monthly_price": "{{price}} / Monat / Mitglied + MwSt.",
+    "annual_price": "{{price}} / Monat / Mitglied + MwSt.",
+    "annual_savings": "17% Rabatt, Nutzung wird monatlich abgerechnet",
+    "team_summary": "{{members}} Mitglieder x {{price}}",
+    "subtotal": "Zwischensumme",
+    "tax": "MwSt. (falls zutreffend)",
+    "total": "Gesamt / {{frequency}}",
+    "subscribe": "Bestätigen",
+    "after_your_first": "Pay-as-you-go-Preise:",
+    "usage": "Nutzung",
+    "pay_yearly": "Jährliche Abrechnung"
+  },
+  "subscription_pro": {
+    "title": "Pro-Plan Abonnement",
+    "subtotal": "Zwischensumme",
+    "tax": "MwSt. (falls zutreffend)",
+    "total": "Gesamt / Monat",
+    "subscribe": "Fortfahren",
+    "after_your_first": "Pay-as-you-go nach 100.000 Token:",
+    "usage": "Nutzung über 100k Token",
+    "usage_total": "Nutzung"
+  },
+  "subscription_plus": {
+    "title": "Plus-Plan Abonnement",
+    "subtotal": "Zwischensumme",
+    "tax": "MwSt. (falls zutreffend)",
+    "total": "Gesamt / Monat",
+    "subscribe": "Fortfahren"
+  },
+  "subscription_free": {
+    "title": "Willkommen!",
+    "please_wait": "Ihr Konto wird eingerichtet..."
+  },
+  "subscription_api": {
+    "title": "Beginnen Sie mit der Entwicklung mit der Lora API",
+    "check_out": "Entdecken Sie unsere neuesten Modelle",
+    "continue": "Zur Kasse gehen"
+  },
+  "settings": {
+    "sidebar": {
+      "billing": "Abrechnung",
+      "profile": "Profil",
+      "account": "Konto"
+    },
+    "subscription": {
+      "title": "Ihr {{plan}} Abonnement",
+      "active": "Aktiv",
+      "canceled": "Gekündigt",
+      "paused": "Pausiert",
+      "pending": "Ausstehend",
+      "unpaid": "Unbezahlt",
+      "trial": "Testphase",
+      "customer_id": "Kunden-ID",
+      "subscription_id": "Abonnement-ID",
+      "plan_type": "Plan-Typ",
+      "usage_based": "Nutzungsbasiert",
+      "fixed": "Festpreis",
+      "billing_period": "Abrechnungszeitraum",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "yearly": "Jährlich",
+      "months": "Monate",
+      "years": "Jahre",
+      "every_x": "Alle {{count}} {{interval}}",
+      "start_date": "Startdatum",
+      "end_date": "Enddatum",
+      "next_billing": "Nächstes Abrechnungsdatum",
+      "current_usage": "Aktuelle Nutzung",
+      "estimated_cost": "Geschätzte Kosten",
+      "usage_billing_note": "Bei nutzungsbasierter Abrechnung zahlen Sie nur für das, was Sie tatsächlich nutzen. Der tatsächliche Betrag wird am Ende Ihres Abrechnungszeitraums berechnet.",
+      "upgrade": "Plan upgraden",
+      "downgrade": "Plan herabstufen",
+      "change_plan": "Plan ändern",
+      "cancel": "Abonnement kündigen",
+      "canceling": "Wird gekündigt...",
+      "renew": "Abonnement verlängern",
+      "reactivate": "Reaktivieren",
+      "view_usage": "Nutzungsdetails anzeigen",
+      "payment_method": "Zahlungsmethode",
+      "update_payment": "Zahlungsmethode aktualisieren",
+      "billing_history": "Abrechnungsverlauf",
+      "view_invoices": "Rechnungen anzeigen",
+      "manage_subscription": "Abonnement verwalten",
+      "cancel_confirmation": "Sind Sie sicher, dass Sie Ihr Abonnement kündigen möchten?",
+      "cancel_note": "Ihr Abonnement bleibt bis zum Ende des aktuellen Abrechnungszeitraums aktiv.",
+      "cancel_success": "Ihr Abonnement wurde erfolgreich gekündigt.",
+      "cancel_error": "Bei der Kündigung Ihres Abonnements ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+      "meter_usage": "Nutzungsmesser",
+      "meter_tokens": "Token-Nutzung",
+      "meter_api": "API-Anfragen",
+      "meter_storage": "Speicher",
+      "next_payment": "Nächste Zahlung von {{amount}} am {{date}}",
+      "rate_card_name": "Preiskarte",
+      "plan_details": "Plan-Details",
+      "rate_details": "Tarif-Details",
+      "usage_limit": "Nutzungslimit",
+      "set_limit": "Limit festlegen",
+      "limit_note": "Das Festlegen eines Nutzungslimits hilft, unerwartete Kosten zu vermeiden.",
+      "subscription_expired": "Ihr Abonnement ist abgelaufen.",
+      "subscription_canceled": "Ihr Abonnement wurde gekündigt.",
+      "subscription_paused": "Ihr Abonnement ist derzeit pausiert.",
+      "resume_subscription": "Abonnement fortsetzen",
+      "pause_subscription": "Abonnement pausieren",
+      "no_subscription": "Kein aktives Abonnement gefunden. Bitte abonnieren Sie einen Plan.",
+      "sign_in_required": "Bitte melden Sie sich an, um Ihre Abonnementeinstellungen anzuzeigen."
+    },
+    "rate_card": {
+      "volume_pricing": "Mengenpreise",
+      "graduated_pricing": "Gestaffelte Preise",
+      "standard_pricing": "Standardpreise",
+      "monthly": "Monatlich",
+      "yearly": "Jährlich",
+      "every_x_months": "Alle {{count}} Monate",
+      "billing_cycle": "Abrechnungszyklus",
+      "included_rates": "Enthaltene Tarife",
+      "starting_at": "Ab",
+      "unit": "Einheit"
+    },
+    "common": {
+      "loading": "Wird geladen...",
+      "confirm": "Bestätigen",
+      "cancel": "Abbrechen",
+      "save": "Speichern",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "view": "Ansehen",
+      "back": "Zurück",
+      "next": "Weiter",
+      "continue": "Fortfahren",
+      "yes": "Ja",
+      "no": "Nein"
+    },
+    "errors": {
+      "general": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "not_found": "Nicht gefunden",
+      "network_error": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+      "server_error": "Serverfehler. Bitte versuchen Sie es später erneut.",
+      "authorization_error": "Autorisierungsfehler. Bitte melden Sie sich erneut an."
+    },
+    "notifications": {
+      "success": "Erfolgreich!",
+      "error": "Fehler!",
+      "warning": "Warnung!",
+      "info": "Information"
+    },
+    "teamMembers": {
+      "title": "Teammitglieder",
+      "current": "Aktive Teammitglieder: {{count}}",
+      "update": "Ändern",
+      "confirm_changes": "Änderungen bestätigen",
+      "immediately": "Ihr monatlicher Preis wird sofort aktualisiert. Anteilige Gebühren werden sofort berechnet. Gutschriften erscheinen auf Ihrer nächsten monatlichen Rechnung.",
+      "confirm": "Bestätigen"
+    },
+    "payment": {
+      "ending_with": " endet mit {{last4}}",
+      "external_payment_method": "Externe Zahlungsmethode",
+      "replace": "Ersetzen",
+      "title": "Zahlungsmethode",
+      "update": "Ersetzen",
+      "add": "Hinzufügen",
+      "promo_code": "Gutscheincode anwenden",
+      "enter_promo_code": "Gutscheincode",
+      "applying": "Wird angewendet",
+      "apply": "Anwenden",
+      "no_payment_method": "Keine Zahlungsmethode gefunden"
+    },
+    "invoices": {
+      "finalized": "Abgeschlossen",
+      "title": "Rechnungen",
+      "description": "Ansehen und Herunterladen Ihrer vergangenen Rechnungen",
+      "date": "Datum",
+      "total": "Gesamt",
+      "status": "Status",
+      "actions": "Aktionen",
+      "draft": "Entwurf",
+      "paid": "Bezahlt",
+      "open": "Offen",
+      "void": "Ungültig",
+      "uncollectible": "Uneinbringlich",
+      "none": "Noch keine Rechnungen"
+    },
+    "cancellation": {
+      "logged_out_message": "Sie werden nach der Bestätigung abgemeldet.",
+      "reenrolled_message": "Sie werden automatisch in den kostenlosen Tarif eingetragen. Sie können Ihre monatlichen Credits bis zu deren Ablauf weiterhin nutzen.",
+      "title": "Kündigung",
+      "confirmTitle": "Sind Sie sicher?",
+      "cancelPlan": "Plan kündigen",
+      "cancel": "Kündigen",
+      "close": "Schließen",
+      "beforeYouGo": "Bevor Sie gehen",
+      "stayWithOffer": "Bleiben Sie und profitieren Sie von diesem Angebot:",
+      "offer": "20% Rabatt für 3 Monate",
+      "claim": "Angebot annehmen",
+      "keep": "Abonnement behalten"
+    },
+    "credits": {
+      "custom": "Benutzerdefiniert",
+      "close": "Schließen",
+      "new": "NEU",
+      "purchase": "Credits kaufen",
+      "buy": "Kaufen Sie API-Tokens",
+      "provide": "für besser vorhersehbare Organisationskosten.",
+      "buy_button": "Kaufen"
+    },
+    "meter": {
+      "close": "Schließen",
+      "enter_amount": "Betrag eingeben",
+      "simulate": "Nutzung simulieren",
+      "sim": "Testen",
+      "current": "Aktuelle Nutzung"
+    },
+    "meters": {
+      "used": "verwendete Token"
+    }
+  },
+  "api_plans": {
+    "input": "Eingabe",
+    "write": "Prompt-Caching-Schreiben",
+    "read": "Prompt-Caching-Lesen",
+    "output": "Ausgabe",
+    "latest": "Neuestes Modell",
+    "features": {
+      "latest_1": "Live-Datenaktualisierungen",
+      "latest_2": "Neueste Funktionen",
+      "latest_3": "Schnellstes Modell",
+      "e_1": "Unser Flaggschiffmodell",
+      "e_2": "Aktualisiert am 14.03.2024",
+      "e_3": "Hohe Zuverlässigkeit",
+      "visual_1": "Optikbasiertes Modell",
+      "visual_2": "Datei-Upload verfügbar"
+    },
+    "visual": "Lora Visual"
+  },
+  "tools": {
+    "title": "Einstellungen"
+  },
+  "loading": "Lädt",
+  "redirect": "Bitte warten Sie, während Sie zur Kasse bei Stripe weitergeleitet werden...",
+  "contact_us": {
+    "contact": "Kontaktieren Sie Lora",
+    "connect": "Kontaktieren Sie unser Vertriebsteam, um zusätzliche Ressourcen und Unterstützung zu erhalten, während Sie Ihre Nutzung über die API und Lora für Teams steigern.",
+    "first_name": "Vorname",
+    "last_name": "Nachname",
+    "email": "E-Mail",
+    "company_name": "Name der Firma",
+    "why": "Bitte teilen Sie uns etwas mehr darüber mit, warum Sie uns kontaktieren",
+    "submit": "Einreichen",
+    "loading": "Laden"
+  },
+  "auth": {
+    "errors": {
+      "general": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "unexpected": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+      "checkout_session": "Die eingebettete Checkout-Sitzung konnte nicht erstellt werden. Möglicherweise sind Sie nicht angemeldet.",
+      "legacy_api": "Die Legacy-Abonnement-API ist nicht mehr verfügbar. Bitte verwenden Sie Preisplan-Abonnements."
+    }
+  },
+  "simulations": {
+    "advance_time": "Zeit vorrücken →",
+    "cancel": "Abbrechen",
+    "advance": "Vorrücken",
+    "send_usage": "Nutzung an Zähler senden",
+    "enter_usage": "Nutzung eingeben",
+    "send_usage_data": "Nutzungsdaten senden"
+  },
+  "config": {
+    "stripe_icon_alt": "Stripe-Symbol",
+    "save_settings": "Einstellungen speichern"
+  },
+  "random1": "Wussten Sie, dass Lamas summen können? Sie nutzen das Summen, um miteinander zu kommunizieren!",
+  "random2": "Lamas sind mit Kamelen verwandt, haben aber keine Höcker. Sie gehören zur Familie der Kameliden, zu der auch Alpakas und Vicuñas gehören.",
+  "random3": "Eine Gruppe von Lamas wird „Herde“ oder „Rudel“ genannt, aber wäre es nicht lustig, wenn man es ein „Lama-Drama“ nennen würde?",
+  "random4": "Lamas wurden als Wachtiere für Schafe eingesetzt, da sie von Natur aus Schutz bieten und Kojoten und andere Raubtiere vertreiben.",
+  "random5": "Die Wolle eines Lamas ist von Natur aus wasserabweisend und hypoallergen. \nHat irgendjemand Lama-Wollpullover?",
+  "random6": "Im Inkareich war es nur dem Königshaus gestattet, Kleidung aus Lamafasern zu tragen.",
+  "random7": "Baby-Lamas werden „Crias“ genannt, was auf Spanisch „Baby“ bedeutet. \nSie können bei der Geburt bis zu 30 Pfund wiegen!",
+  "random8": "Lamas können 25–30 % ihres Körpergewichts täglich 13–21 Kilometer weit tragen. \nSie sind die Packesel Südamerikas!",
+  "random9": "Lamas sind sehr soziale Tiere und leben am liebsten in Herden. \nSie sind die Partytiere der Kamelidenwelt!",
+  "random10": "Die Lebenserwartung eines Lamas beträgt etwa 20 Jahre. \nDas ist viel Zeit für Lama-Drama!",
+  "random11": "In einigen Krankenhäusern und Pflegeeinrichtungen werden Lamas als Therapietiere eingesetzt. \nSie sind die Fuzzy-Therapeuten der Natur!",
+  "random12": "Lamas haben ein ausgezeichnetes Sehvermögen und können potenzielle Raubtiere aus einer Entfernung von einer Meile erkennen. \nSie sind wie die Adler des Graslandes!",
+  "random13": "Lamas sind umweltfreundlich! \nIhre gepolsterten Füße schonen das Gelände als Hufe und verhindern so Erosion.",
+  "random14": "Lamafasern gibt es in über 20 natürlichen Farben, die meisten von allen faserproduzierenden Tieren. \nSie wandeln im Regenbogen!",
+  "random15": "Lamas sind schlau und können trainiert werden, Karren zu ziehen, Rucksäcke zu tragen und sogar an Hindernisparcours teilzunehmen. \nLama-Olympiade, irgendjemand?",
+  "random16": "Lamas haben im oberen Vorderkiefer keine Zähne. \nStattdessen haben sie einen harten Gaumen, der ihnen beim Mahlen ihrer Nahrung hilft.",
+  "random17": "Lamas kommunizieren miteinander über eine Vielzahl von Geräuschen, darunter Summen, Wiehern und Alarmrufe.",
+  "random18": "Die normale Körpertemperatur eines Lamas ist viel höher als die eines Menschen und liegt zwischen 38 und 39 °C (100,4 bis 102,2 °F).",
+  "random19": "Wechsel von Lamas: Die Fingerabdrücke eines Koalas sind denen von Menschen so ähnlich, dass sie am Tatort schon einmal verwechselt wurden.",
+  "random20": "Abwechslung von Lamas: Wussten Sie, dass eine Gruppe Flamingos ‚Flamingos' genannt wird? \nDas ist ziemlich fabelhaft!",
+  "products": {
+    "prod_mock_premium": {
+      "name": "Premium",
+      "description": "Ideal für Profis und wachsende Unternehmen."
+    },
+    "default_premium": {
+      "name": "Premium",
+      "description": "Ideal für Profis und wachsende Unternehmen."
+    },
+    "default_free": {
+      "name": "Kostenlos",
+      "description": "Perfekt für Einzelpersonen, die mit der Erstellung von KI-Inhalten beginnen."
+    },
+    "default_team": {
+      "name": "Team",
+      "description": "Maßgeschneiderte Lösungen für Unternehmen und Nutzer mit hohem Volumen."
+    }
+  },
+  "plans": {
+    "price_details": {
+      "month": "/Monat"
+    },
+    "free": {
+      "description": "Perfekt für Einzelpersonen, die mit der Erstellung von KI-Inhalten beginnen.",
+      "credit_description": "in lebenslangen Credits (einmalig)",
+      "features": {
+        "1": "Kostenlos für den individuellen Gebrauch",
+        "2": "Unbegrenzte Bild- und Videogenerierung",
+        "3": "Standard-Einbettungserstellung",
+        "4": "Community-Support",
+        "5": "Grundlegendes Analyse-Dashboard"
+      },
+      "button": {
+        "current": "Aktueller Plan",
+        "get_started": "Kostenlos loslegen"
+      }
+    },
+    "premium": {
+      "description": "Ideal für Profis und wachsende Unternehmen.",
+      "credit_description": "in monatlichen Credits",
+      "features": {
+        "1": "Alle Funktionen des kostenlosen Plans",
+        "2": "Vorrangiger Support per E-Mail",
+        "3": "Umfassendes Analyse-Dashboard",
+        "4": "API-Zugang für programmatische Integration",
+        "5": "Single Sign-On (SSO) für erhöhte Sicherheit",
+        "6": "Automatisierte Null-Daten-Aufbewahrungsfunktion"
+      },
+      "button": {
+        "current": "Aktueller Plan",
+        "get_started": "Mit Premium loslegen"
+      },
+      "name": "Premium"
+    },
+    "team": {
+      "credit_description": "Kreditzuteilung nach Geschäftsanforderungen",
+      "features": {
+        "1": "Alle Funktionen des Premium-Plans",
+        "2": "Maßgeschneiderte Lösungen für Nutzer mit hohem Volumen",
+        "3": "Engagierter Account Manager",
+        "4": "Zentralisierte Rechnungsverwaltung",
+        "5": "Erweiterte Sicherheitsfunktionen",
+        "6": "Exklusiver Zugang zu Beta-Funktionen"
+      },
+      "button": {
+        "contact_sales": "Vertrieb kontaktieren"
+      },
+      "custom_pricing": "Individuelle Preise",
+      "custom_amount": "Individuell"
+    }
+  },
+  "rate_card": {
+    "checkout_title": "Nutzungsbasiertes Abo abschließen",
+    "select_plan": "Wählen Sie einen Plan",
+    "billing_cycle": "Abrechnungszyklus",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich",
+    "every_x_months": "Alle {{count}} Monate",
+    "included_rates": "In diesem Plan enthalten",
+    "id": "Preiskarten-ID",
+    "estimated_costs": "Geschätzte Kosten",
+    "base_charges": "Grundgebühren",
+    "estimated_tax": "Geschätzte Steuern",
+    "estimated_total": "Geschätzte Gesamtsumme",
+    "cost_explanation": "Die endgültigen Gebühren basieren auf Ihrer tatsächlichen Nutzung am Ende des Abrechnungszeitraums.",
+    "usage_estimator": "Nutzungsrechner",
+    "usage_estimator_description": "Passen Sie die Schieberegler unten an, um Ihre monatlichen Kosten basierend auf der erwarteten Nutzung zu schätzen.",
+    "how_it_works": "So funktioniert die nutzungsbasierte Abrechnung",
+    "step1_title": "Abonnieren",
+    "step1_description": "Registrieren Sie sich für nutzungsbasierte Abrechnung ohne Vorabkosten",
+    "step2_title": "Service nutzen",
+    "step2_description": "Nutzen Sie die API oder Plattform so viel Sie benötigen",
+    "step3_title": "Für Nutzung bezahlen",
+    "step3_description": "Bezahlen Sie nur für das, was Sie am Ende jedes Abrechnungszeitraums genutzt haben",
+    "footer_note": "Sie können Ihre aktuelle Nutzung jederzeit in Ihrem Kontodashboard einsehen und Limits festlegen.",
+    "volume_pricing": "Mengenpreise",
+    "graduated_pricing": "Gestaffelte Preise",
+    "standard_pricing": "Standardpreise",
+    "starting_at": "Ab",
+    "unit": "Einheit",
+    "subscription_details": "Abonnement-Details",
+    "usage_details": "Nutzungsdetails",
+    "payment_details": "Zahlungsdetails",
+    "subscription_confirmation": "Abonnementbestätigung",
+    "subscribe_button": "Jetzt abonnieren",
+    "modify_button": "Auswahl ändern",
+    "cancel_button": "Abbrechen",
+    "low_usage": "Geringe Nutzung",
+    "medium_usage": "Mittlere Nutzung",
+    "high_usage": "Hohe Nutzung",
+    "faq_title": "Häufig gestellte fragen",
+    "faq_1_question": "Wie werde ich berechnet?",
+    "faq_1_answer": "Sie werden am Ende jedes Abrechnungszyklus basierend auf Ihrer tatsächlichen Nutzung berechnet. Ihre Zahlungsmethode wird automatisch belastet.",
+    "faq_2_question": "Gibt es einen Mindestbetrag?",
+    "faq_2_answer": "Nein, es gibt keine Mindestausgabenanforderung. Sie zahlen nur für das, was Sie nutzen.",
+    "faq_3_question": "Was passiert, wenn ich meine erwartete Nutzung überschreite?",
+    "faq_3_answer": "Sie werden weiterhin gemäß der gestaffelten Preisstruktur berechnet. Für hohe Nutzungsmengen werden automatisch vergünstigte Stufen angewendet.",
+    "faq_4_question": "Kann ich Nutzungslimits festlegen?",
+    "faq_4_answer": "Ja, Sie können in Ihren Kontoeinstellungen Nutzungslimits festlegen, um unerwartete Gebühren zu vermeiden.",
+    "tokens": "Token",
+    "api_requests": "API-Anfragen",
+    "processing_units": "Verarbeitungseinheiten",
+    "storage": "Speicher",
+    "per_unit": "pro Einheit",
+    "per_token": "pro Token",
+    "per_request": "pro Anfrage",
+    "per_gb": "pro GB",
+    "up_to": "bis zu",
+    "and_up": "und mehr",
+    "current_usage": "Aktuelle Nutzung",
+    "usage_limit": "Nutzungslimit",
+    "set_limit": "Limit festlegen",
+    "processing": "Ihr Abonnement wird verarbeitet...",
+    "success_message": "Ihr Abonnement wurde aktiviert! Sie können den Service jetzt nutzen.",
+    "payment_method": "Zahlungsmethode",
+    "edit_payment_method": "Zahlungsmethode bearbeiten",
+    "billing_address": "Rechnungsadresse",
+    "edit_billing_address": "Rechnungsadresse bearbeiten",
+    "live": "Live-Version",
+    "no_rates_warning": "Diese Version hat keine definierten Tarife",
+    "version": {
+      "id": "Versions-ID",
+      "created": "Erstellt",
+      "status": "Status: {{status}}",
+      "live": "Live-Version"
+    }
+  },
+  "units": {
+    "million_tokens": "MTok",
+    "unit": "Einheit"
+  },
+  "features": {
+    "section_pill": "Für Geschwindigkeit gebaut",
+    "title": "Eine neue Art, Software zu erstellen",
+    "description": "Schneller liefern mit vollständiger Transparenz. Unsere Plattform bietet unternehmenstaugliche Werkzeuge, die mit Ihrem Team skalieren.",
+    "ai_code_generation": {
+      "title": "KI-Code-Generierung",
+      "description": "Generieren Sie Komponenten, Dienste und ganze Anwendungen aus einer einzigen Anweisung."
+    },
+    "usage_based_billing": {
+      "title": "Nutzungsbasierte Abrechnung",
+      "description": "Zahlen Sie nur für das, was Sie nutzen. Verfolgen Sie Ihren Guthabenverbrauch in Echtzeit."
+    },
+    "instant_deployment": {
+      "title": "Sofortige Bereitstellung",
+      "description": "Von der Idee zur Live-Anwendung in Minuten. Wir kümmern uns um die Infrastruktur."
+    },
+    "transparent_fair": {
+      "title": "Transparent & Gerecht",
+      "description": "Keine versteckten Gebühren. Unser Guthabensystem ist klar, vorhersehbar und gerecht."
+    }
+  },
+  "dashboard": {
+    "auto_top_up_status": "Automatisches Aufladen aktiv · lädt auf {{to}} auf, wenn unter {{threshold}}",
+    "chat_token_usage_by_model": "Chat-Token-Nutzung nach Modell",
+    "credits_of_total": "{{available}} von {{total}} verbleibend",
+    "greeting": "Hallo, {{name}}",
+    "ai_credits": "Guthaben",
+    "no_usage_data": "Keine Nutzungsdaten für diesen Zeitraum",
+    "spend": "Verfügung",
+    "spend_meter_caption": "{{available}} verfügbar von {{credits}} Credits in diesem Abrechnungszyklus",
+    "current_spend": {
+      "title": "Aktuelle Ausgaben",
+      "after_credits": "Nach Gutschriften: {{amount}}",
+      "subtitle_draft": "Aus Ihrer offenen Metronome-Entwurfsrechnung. Summen aktualisieren sich mit der Nutzung.",
+      "period_through": "Abrechnungszeitraum bis {{date}}",
+      "no_period": "Zeitraumdaten erscheinen, sobald Metronome einen Entwurf für diesen Zyklus erstellt.",
+      "no_charges_yet": "Noch keine Nutzungspositionen in diesem Zeitraum.",
+      "breakdown": "Nutzungsaufschlüsselung",
+      "more_line_items": "+{{count}} weitere"
+    },
+    "credits_remaining": "verbleibende Guthaben",
+    "credits_meter_caption": "{{available}} von {{total}} Credits verbleibend",
+    "page": {
+      "title": "Pläne & Abrechnung",
+      "description": "Verwalten Sie Ihr Abonnement, Guthaben und Zahlungsdetails.",
+      "sign_in_required": "Bitte melden Sie sich an, um Ihr Dashboard anzuzeigen."
+    },
+    "sidebar": {
+      "billing": "Pläne & Abrechnung",
+      "usage": "Nutzung",
+      "simulations": "Benutzersimulationen",
+      "settings": "Einstellungen"
+    },
+    "settings": {
+      "page_title": "Einstellungen"
+    },
+    "token_usage_by_model": "Token-Nutzung nach Modell",
+    "usage": {
+      "page_title": "Nutzung & Analytik",
+      "page_description": "Detaillierte Aufschlüsselung Ihrer KI-Dienstnutzung.",
+      "model_input_tokens": "Modell-Eingabe-Token",
+      "model_output_tokens": "Modell-Ausgabe-Token",
+      "images_generated": "Generierte Bilder",
+      "images_enhanced": "Verbesserte Bilder",
+      "batch_images_processed": "Batch-verarbeitete Bilder",
+      "across_all_models": "Über alle Modelltypen hinweg",
+      "generated_responses": "Generierte Antworten",
+      "all_resolutions": "Alle Auflösungen",
+      "enhancement_operations": "Verbesserungsoperationen",
+      "images_in_batches": "Bilder in Batches",
+      "aggregated": {
+        "title": "Aggregierte Nutzung",
+        "description": "Verfolgen Sie Ihre KI-Inhaltserstellung",
+        "unknown": "Unbekannt",
+        "total": "Gesamt",
+        "daily_burn": "Täglicher Verbrauch"
+      },
+      "tabs": {
+        "model_usage": "Modellnutzung",
+        "image_generation": "Bilderzeugung",
+        "image_enhancement": "Bildverbesserung",
+        "image_batch_processing": "Bild-Batch-Verarbeitung"
+      },
+      "charts": {
+        "model_usage_title": "Modellnutzung",
+        "model_usage_desc": "Token-Nutzung nach Modelltyp (Mini, Standard, Groß, Custom API)",
+        "image_generation_title": "Bilderzeugung",
+        "image_generation_desc": "Anzahl der generierten Bilder nach Auflösung",
+        "image_enhancement_title": "Bildverbesserung",
+        "image_enhancement_desc": "Anzahl der verbesserten Bilder",
+        "batch_processing_title": "Bild-Batch-Verarbeitung",
+        "batch_processing_desc": "Anzahl der in Batches verarbeiteten Bilder"
+      },
+      "project_storage": {
+        "title": "Nutzung nach Projekt",
+        "used": "Genutzt",
+        "capacity": "Commitment",
+        "available": "Verfügbar",
+        "no_metrics": "Keine abrechenbaren Metriken gefunden.",
+        "no_project_dimension": "Diese Metrik hat keine project_id-Gruppierung — Multi-Projekt-Seeding nutzen oder Gruppenschlüssel in Metronome konfigurieren.",
+        "no_commitment_hint": "Kein monatliches Commitment im Vertrag — Balken zeigt nur relative Anteile.",
+        "token_share_note": "Noch kein Rechnungszwischensumme — Balken zeigt den Anteil der gemessenen Tokens pro Projekt in diesem Monat.",
+        "empty_hint": "Noch keine nutzungsbezogene Aufteilung nach Projekt. Demo-Daten unter Einstellungen erzeugen oder Chat nutzen; Multi-Projekt-Seed schreibt drei project_id-Werte.",
+        "no_usage_rows": "Metronome lieferte keine Nutzungszeilen für dieses Fenster — nach dem Seeding erneut versuchen oder API-Schlüssel prüfen.",
+        "aggregated_usage_label": "Gesamtnutzung",
+        "unallocated_usage_label": "Nicht zugeordnet (kein Projekt in Positionen)",
+        "aggregate_bar_note": "usage/groups lieferte für diesen Meter keine Aufteilung nach Projekt — der Balken zeigt die Nutzungssumme aus der offenen Rechnung."
+      }
+    },
+    "simulations": {
+      "page_title": "Benutzersimulationen",
+      "page_description": "Führen Sie verschiedene Simulationsszenarien zum Testen und Demonstrieren aus.",
+      "scenario_1": "Szenario 1",
+      "scenario_2": "Szenario 2",
+      "scenario_3": "Szenario 3",
+      "cycle_title": "Zyklus-Simulation",
+      "cycle_card_title": "Vollständigen Abrechnungszyklus simulieren",
+      "cycle_status_running": "Läuft",
+      "cycle_status_stopped": "Gestoppt",
+      "cycle_description_line1": "Einen Zyklus vorwärts bewegen und realistische Nutzungsdaten an Zähler senden.",
+      "cycle_description_line2": "Erzeugt moderate Token-Nutzung (~300K Token/Monat) und leichte Bildgenerierung (~2/Monat).",
+      "cycle_description_line3": "Erwartete Kosten basierend auf tatsächlicher Preisgestaltung zur Demonstration des Guthabenverbrauchs. Abrechnung am Tag {{day}} jedes Monats.",
+      "cycle_current_date": "Aktuelles Datum:",
+      "cycle_button_start": "Simulation starten",
+      "advance_time_button": "Zeit vorwärts bewegen →",
+      "clock_title": "Testuhr: In der Zeit vorwärts bewegen",
+      "clock_current_time": "Aktuelle Simulationszeit:",
+      "clock_status": "Status:",
+      "clock_status_loading": "Wird geladen",
+      "clock_status_advancing": "Rückt vor",
+      "clock_status_ready": "Bereit",
+      "clock_advance_title": "Die Uhr vorrücken",
+      "clock_advance_description": "Rücken Sie die Uhr vor, um die Ereignisse und Änderungen zu sehen, die auftreten.",
+      "clock_warning": "Alle Kunden in der Simulation werden betroffen sein.",
+      "clock_buttons": {
+        "hour": "+ 1 Stunde",
+        "day": "+ 1 Tag",
+        "week": "+ 1 Woche",
+        "month": "+ 1 Monat",
+        "year": "+ 1 Jahr"
+      },
+      "clock_note": "Hinweis: Sie können diese Uhr bis zum 31. Dezember 2030 um 23:59 Uhr vorrücken.",
+      "usage_title": "Nutzung an Zähler senden",
+      "usage_description": "Senden Sie simulierte Nutzungsdaten an verbundene Zähler für verschiedene Dienste.",
+      "usage_status_sending": "Senden",
+      "usage_status_idle": "Leerlauf",
+      "usage_modal_title": "Nutzung an Zähler senden",
+      "usage_placeholder": "Nutzung eingeben",
+      "usage_send_button": "Nutzungsdaten senden"
+    },
+    "cards": {
+      "current_plan": "Aktueller Plan",
+      "next_billing": "Nächste Abrechnung",
+      "no_upcoming_charges": "Keine anstehenden Gebühren",
+      "next_billing_charge": "Gebühr des nächsten Abrechnungszyklus",
+      "upgrade": "Upgrade",
+      "pay_as_you_use": "Nutzungsbasierte Abrechnung",
+      "pay_as_you_use_description": "Die Nutzung wird anhand verbrauchter Tokens gemessen. Sie zahlen für die tatsächliche Nutzung zu den untenstehenden Sätzen.",
+      "premium_package": "Premium",
+      "next_invoice_due": "Fällig am {{date}}",
+      "next_metronome_invoice": "Geschätzte Summe für die laufende Abrechnungsperiode",
+      "no_upcoming_invoice": "Noch keine offene Rechnung"
+    },
+    "usage_pacing": {
+      "title": "Verbrauchsverlauf",
+      "description": "Abgerechnete Nutzung seit Monatsbeginn im Vergleich zu Ihrem monatlichen Kontingent.",
+      "all_products": "Alle Produkte",
+      "all_models": "Alle Modelle",
+      "all_qualities": "Alle Qualitätsstufen",
+      "all_tiers": "Alle Stufen",
+      "month_to_date": "Seit Monatsbeginn",
+      "pct_of_monthly": "{{pct}}% des monatlichen {{label}}",
+      "monthly_label": "Monatliches {{label}}",
+      "prepaid_period": "vorausbezahlt für diesen Zeitraum",
+      "projected_month_end": "Prognostiziertes Monatsende",
+      "within_prepaid": "Innerhalb des vorausbezahlten Betrags",
+      "above_prepaid": "Über dem Vorauszahlungsbetrag — Überschreitung wird berechnet",
+      "commitment_cap": "Monatliches {{label}} (Limit): {{amount}}",
+      "series_spend": "Seit Monatsbeginn (kumulativ)",
+      "series_projected": "Prognose Monatsende (Trend)",
+      "commitment": "Kontingent",
+      "credit_balance": "Guthaben",
+      "error_load": "Rechnungsaufschlüsselung konnte nicht geladen werden:"
+    },
+    "billing_payg": {
+      "title": "Nutzungsbasierte Preise",
+      "subtitle": "Preise pro Million Tokens (Eingabe vs Ausgabe). Ihre Rechnung spiegelt die aggregierte Nutzung pro Modell wider.",
+      "effective": "Preise gültig ab 1. März 2026 (UTC)",
+      "col_model": "Modell",
+      "col_input": "Eingabe",
+      "col_output": "Ausgabe"
+    },
+    "buttons": {
+      "cancel_auto_topup": "Automatisches Aufladen abbrechen",
+      "setup_auto_topup": "Automatisches Aufladen einrichten",
+      "purchase_credits": "Guthaben kaufen"
+    },
+    "date_picker": {
+      "last_7_days": "Letzte 7 Tage",
+      "last_30_days": "Letzte 30 Tage",
+      "current_billing_period": "Aktueller Abrechnungszeitraum"
+    },
+    "invoice": {
+      "upcoming_title": "Kommende Rechnung",
+      "billing_period_ending": "Für Abrechnungszeitraum endend am:",
+      "unknown_item": "Unbekannter Artikel",
+      "description": "Beschreibung",
+      "quantity": "Menge",
+      "unit_price": "Einzelpreis",
+      "amount": "Betrag",
+      "subtotal": "Zwischensumme",
+      "tax": "MwSt.",
+      "total": "Gesamt",
+      "no_upcoming_charges": "Keine anstehenden Gebühren für Ihren aktuellen Plan",
+      "no_charges": "Keine anstehenden Gebühren",
+      "credits_applied": "Credits angerechnet",
+      "period_net_subtitle": "Nettobetrag für diese Periode nach angerechneten Credits. Die Tabelle zeigt Nutzung und Credits.",
+      "period_net_subtitle_empty": "Noch keine offene Rechnung für diese Periode — wird aktualisiert, sobald Nutzung abgerechnet wird.",
+      "million_tokens_suffix": " / Million Tokens",
+      "usage_per_heading": "Nutzung nach:",
+      "ungrouped_line_items": "Weitere Gebühren",
+      "line_item_names": {
+        "chat_input_tokens": "Chat – Eingabe-Token",
+        "chat_output_tokens": "Chat – Ausgabe-Token",
+        "image_enhancement": "Bildverbesserung",
+        "image_generation": "Bildgenerierung",
+        "premium_subscription": "Premium-Abonnement"
+      }
+    }
+  },
+  "landing": {
+    "technologies": {
+      "robot_alt": "Ein freundlicher, futuristischer Roboterassistent, der winkt"
+    },
+    "enterprise": {
+      "title": "Lora für Unternehmen",
+      "description": "Integrieren Sie Lora sicher in die Daten Ihres Unternehmens und verbessern Sie jedes Team mit vertrauenswürdiger KI.",
+      "cta": "Vertrieb kontaktieren"
+    },
+    "hero": {
+      "build_command": "erstellen",
+      "main_title": "Vom Prompt zu Bild, Video und 3D",
+      "description": "Erstellen Sie produktionsreife Medien mit transparenter, kreditbasierter Preisgestaltung.",
+      "button_logged_in": "Lora Generate öffnen",
+      "button_not_logged_in": "Kostenlos generieren",
+      "no_credit_card": "Keine Kreditkarte erforderlich"
+    },
+    "aggregated_usage": {
+      "title": "Aggregierte Nutzung",
+      "description": "Verfolgen Sie Ihre Nutzung der KI-Inhaltsgenerierung",
+      "unknown": "Unbekannt",
+      "total_daily_burn": "Gesamt: {{value}}, Täglicher Verbrauch: {{burn}}"
+    }
+  },
+  "payments": {
+    "errors": {
+      "validation_error": "Bei der Überprüfung Ihrer Zahlungsmethode ist ein Fehler aufgetreten.",
+      "unexpected_error": "Ein unerwarteter Fehler ist aufgetreten.",
+      "generic_error": "Ein unerwarteter Fehler ist aufgetreten.",
+      "promo_not_available": "Die Gutscheincode-Funktion ist für diesen Abonnementtyp nicht verfügbar.",
+      "promo_failed": "Gutscheincode konnte nicht angewendet werden. Bitte versuchen Sie es erneut."
+    },
+    "success": {
+      "payment_updated": "Ihre Zahlungsmethode wurde erfolgreich aktualisiert."
+    }
+  },
+  "most_popular": "Am beliebtesten",
+  "not_available": "N/V",
+  "faq": {
+    "title": "Häufig gestellte Fragen",
+    "questions": {
+      "credits": {
+        "question": "Was sind Credits und wie funktionieren sie?",
+        "answer": "Credits werden zur Bezahlung von KI-Diensten verwendet. Premium-Pläne enthalten {{premiumCredits}} monatliche Credits, während kostenlose Pläne {{freeCredits}} lebenslange Credits erhalten."
+      },
+      "over_credits": {
+        "question": "Was passiert, wenn ich meine Credits überschreite?",
+        "intro": "Wenn Sie Ihre Credit-Zuteilung überschreiten, haben Sie flexible Optionen, um unsere Dienste weiter zu nutzen:",
+        "auto_topup": {
+          "title": "Automatisches Aufladen",
+          "description": "Richten Sie automatische Credit-Käufe ein, um einen unterbrechungsfreien Service zu gewährleisten, wenn Ihr Guthaben zur Neige geht."
+        },
+        "credit_packs": {
+          "title": "Credit-Pakete",
+          "description": "Kaufen Sie jederzeit zusätzliche Credits mit diesen praktischen Optionen:",
+          "pack1": "Standard-Paket: {{amount}}",
+          "pack2": "Großes Paket: {{amount}}",
+          "pack3": "Benutzerdefinierter Betrag (Minimum {{amount}})"
+        }
+      },
+      "rollover": {
+        "question": "Werden ungenutzte Credits übertragen?",
+        "answer": "Monatliche Credits werden in jedem Abrechnungszeitraum zurückgesetzt und nicht übertragen. Credits, die über Credit-Pakete gekauft werden, laufen jedoch nie ab."
+      },
+      "change_plan": {
+        "question": "Kann ich meinen Plan jederzeit ändern?",
+        "answer": "Ja, Sie können Ihren Plan jederzeit upgraden oder herabstufen. Änderungen werden sofort wirksam, mit anteiligen Abrechnungsanpassungen."
+      }
+    }
+  },
+  "subscribe_metronome_package": {
+    "order_summary": "Bestellübersicht",
+    "custom_pricing": "Individuelle Preisgestaltung",
+    "per_month": "pro Monat",
+    "applicable_taxes": "+ zzgl. Steuern",
+    "loading": "Paketdetails werden geladen…",
+    "not_found": "Details zu diesem Paket konnten nicht geladen werden.",
+    "unknown_name": "Ausgewähltes Paket"
+  },
+  "modals": {
+    "auto_top_up": {
+      "title": "Automatisches Aufladen einrichten",
+      "balance_threshold_label": "Wenn mein Guthaben unter",
+      "top_up_amount_label": "Automatisch aufladen",
+      "disclaimer": "Durch Klicken auf \"Einstellungen speichern\" stimme ich zu, dass ich automatisch auf {{topUpAmount}} aufgeladen werde, wenn mein Guthaben unter {{threshold}} fällt.",
+      "missing_stripe_customer": "Für automatisches Aufladen ist ein Stripe-Kunde erforderlich. Melden Sie sich erneut an oder prüfen Sie den Demo-Kunden im Tools-Panel.",
+      "missing_metronome_customer": "Bitte zuerst anmelden oder im Tools-Panel einen Metronome-Kunden setzen."
+    },
+    "purchase_credits": {
+      "title": "Guthaben kaufen",
+      "loading": "Lade dein Guthaben...",
+      "outstanding_balance_title": "Handlung erforderlich: Offener Betrag",
+      "top_up_credits_title": "Guthaben aufladen",
+      "outstanding_balance_message": "Sie können Lora nicht verwenden, bis Sie Ihren offenen Betrag beglichen haben:",
+      "current_balance_message": "Ihr aktuelles Guthaben beträgt",
+      "recommended": "Empfohlen",
+      "standard": "Standard",
+      "large": "Groß",
+      "custom_amount": "Benutzerdefinierter Betrag",
+      "clears_outstanding_plus": "Begleicht offenen Betrag + {{amount}}",
+      "processing": "Wird verarbeitet...",
+      "purchase_for": "Kaufen für {{amount}}",
+      "select_amount": "Betrag auswählen",
+      "min_amount": "Min {{amount}}"
+    }
+  }
+}

@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f1eeee;
+  --background-hover: #dadada;
+  --foreground: #222222;
+  --foreground-hover: #313131;
+  --blurple: #635bff;
+  --blurple-hover: #544cdd;
+  --purple: #9595fa;
+  --purple-hover: #6c6cc2;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.bg-pattern {
+  background: #ffffff;
+  background-image:
+    linear-gradient(90deg, rgba(204, 204, 204, 0.15) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(204, 204, 204, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Reveal Stripe elements */
+.__PrivateStripeElement::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  margin: 10px; /* Added */
+  display: block;
+  box-shadow:
+    0 0 4px #635cff,
+    inset 0 0 2px #635cff;
+  border-radius: 12px;
+  opacity: 0;
+  transition:
+    opacity 1.4s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.3s ease;
+}
+.__PrivateStripeElement::after {
+  content: '';
+  display: block;
+  position: absolute;
+  /* Sets the text outside the border */
+  top: -34px;
+  right: 0;
+  /* Sets the text inside the border */
+  /* top: -3px;
+  right: 3px; */
+  font-size: 12px;
+  font-weight: 600;
+  /* color: #c38f3f; */
+  color: #635cff;
+  opacity: 0;
+  transition:
+    opacity 1.4s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.3s ease;
+}
+.reveal-elements .__PrivateStripeElement::before,
+.reveal-elements .__PrivateStripeElement::after {
+  opacity: 1;
+}
+#link-authentication-element .__PrivateStripeElement::after {
+  content: 'Link Authentication Element';
+}
+#express-checkout-section .__PrivateStripeElement::after {
+  content: 'Express Checkout Element';
+}
+#address-element .__PrivateStripeElement::after {
+  content: 'Address Element';
+}
+#payment-element .__PrivateStripeElement::after {
+  content: 'Payment Element';
+}
+#stripe-demo-highlights {
+  opacity: 65%;
+  transition:
+    opacity 1.4s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.7s ease;
+}
+#stripe-demo-highlights:hover {
+  opacity: 100%;
+  transition:
+    opacity 1.4s cubic-bezier(0.19, 1, 0.22, 1),
+    box-shadow 0.1s ease;
+}
+
+@layer base {
+  :root {
+    --background: 15 7% 93%;
+    --foreground: 0 0% 13%;
+    --card: 15 7% 93%;
+    --card-foreground: 0 0% 13%;
+    --popover: 15 7% 93%;
+    --popover-foreground: 0 0% 13%;
+    --primary: 242 100% 68%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 93% 78%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 85%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 244 69% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 242 100% 68%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 0 0% 13%;
+    --foreground: 15 7% 93%;
+    --card: 0 0% 13%;
+    --card-foreground: 15 7% 93%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 15 7% 93%;
+    --primary: 242 100% 68%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 93% 78%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 19%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 244 69% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 19%;
+    --input: 0 0% 19%;
+    --ring: 242 100% 68%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    background: var(--background) !important;
+    color: var(--foreground) !important;
+  }
+}

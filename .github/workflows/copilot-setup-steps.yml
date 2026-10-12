@@ -1,0 +1,39 @@
+name: 'Copilot Setup Steps'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Generate GitHub Token
+        id: generate-github-token
+        uses: 'actions/create-github-app-token@93c1f04d6f14ea5b416e7a8dfd80446101c6adef' # actions/create-github-app-token@v2
+        with:
+          app-id: 2886105
+          private-key: ${{ secrets.DEMOENG_MINION_APP_PRIVATE_KEY }}
+          owner: stripe-demos
+          skip-token-revoke: true
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.generate-github-token.outputs.token }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+
+      - name: Configure git and install dependencies
+        run: |
+          echo "machine github.com login x-access-token password ${{ steps.generate-github-token.outputs.token }}" > ~/.netrc
+          chmod 600 ~/.netrc
+          git config --global url."https://github.com/stripe-demos/".insteadOf "ssh://git@github.com/stripe-demos/"
+          npm install
