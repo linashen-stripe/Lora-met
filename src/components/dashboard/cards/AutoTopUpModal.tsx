@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import { formatPrice } from '@/utils/helpers';
 import { formatMetronomeAmount } from '@/utils/metronomeAmount';
+import { GENERATION_CREDIT_USD } from '@/config/generationCatalog';
 
 interface AutoTopUpModalProps {
   open: boolean;
@@ -113,6 +114,22 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
             </DialogTitle>
             <div className='mt-2 space-y-4'>
               {error && <p className='text-red-500'>{error}</p>}
+              {customCreditTypeName && (
+                <div className='rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900'>
+                  <p className='font-medium'>
+                    1 {customCreditTypeName} ={' '}
+                    {formatPrice(
+                      GENERATION_CREDIT_USD * 100,
+                      settings?.language,
+                      settings?.currency,
+                    )}
+                  </p>
+                  <p className='mt-1 text-xs text-violet-700'>
+                    You are charged only for the credits added to restore the
+                    balance to your target.
+                  </p>
+                </div>
+              )}
               <div>
                 <label
                   htmlFor='threshold'
