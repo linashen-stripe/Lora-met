@@ -26,10 +26,16 @@ export async function GET(request: NextRequest) {
   const customerId = searchParams.get('customerId');
   const story = (searchParams.get('story') ?? 'healthy') as GenerationSeedStory;
   const trailingDaysRaw = searchParams.get('trailingDays');
+  const spendCapRaw = searchParams.get('spendCap');
   let trailingUnseededDays: number | undefined;
+  let commitmentSpendCapFraction: number | undefined;
   if (trailingDaysRaw != null && trailingDaysRaw !== '') {
     const v = parseInt(trailingDaysRaw, 10);
     if (Number.isFinite(v) && v >= 0) trailingUnseededDays = v;
+  }
+  if (spendCapRaw != null && spendCapRaw !== '') {
+    const value = Number(spendCapRaw);
+    if (Number.isFinite(value)) commitmentSpendCapFraction = value;
   }
   if (!customerId) {
     return NextResponse.json({ error: 'customerId is required' }, { status: 400 });
@@ -44,6 +50,9 @@ export async function GET(request: NextRequest) {
     customerId,
     story,
     ...(trailingUnseededDays !== undefined ? { trailingUnseededDays } : {}),
+    ...(commitmentSpendCapFraction !== undefined
+      ? { commitmentSpendCapFraction }
+      : {}),
   });
 
   return NextResponse.json(result);

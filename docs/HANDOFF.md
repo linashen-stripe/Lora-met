@@ -20,6 +20,7 @@
 - Legacy fallback floors to the current hour instead of scheduling at the next hour, so paid contracts activate and invoice immediately.
 - Generation upgrade auto-selection matches configured Pro package names rather than searching only for `premium`.
 - Future Pro contracts left by the old fallback are archived and safely replaced on retry.
+- Generation Quickstart seeding scales to the active credit pool: healthy targets 42%, burst 65%, and at-risk 82%, with an optional `spendCap` override.
 - A single bulk batch that exhausts the Free balance now opens the Pro upgrade prompt.
 - TypeScript and focused lint checks pass.
 

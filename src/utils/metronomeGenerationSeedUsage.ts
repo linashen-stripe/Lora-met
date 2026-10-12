@@ -4,6 +4,10 @@ import {
   GENERATION_SKUS,
 } from '@/config/generationCatalog';
 import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
+import {
+  metronomeContractPoolCapCents,
+  pickPrimaryMetronomeContract,
+} from '@/utils/metronomeContractPool';
 
 export type GenerationSeedStory = 'healthy' | 'at-risk' | 'burst';
 
@@ -31,6 +35,7 @@ export interface SeedGenerationUsageParams {
   story?: GenerationSeedStory;
   lookbackDays?: number;
   trailingUnseededDays?: number;
+  commitmentSpendCapFraction?: number;
 }
 
 export interface SeedGenerationUsageResult {
@@ -55,6 +60,7 @@ export async function seedGenerationUsage({
   story = 'healthy',
   lookbackDays = 30,
   trailingUnseededDays = 1,
+  commitmentSpendCapFraction,
 }: SeedGenerationUsageParams): Promise<SeedGenerationUsageResult> {
   const safeLookback = Math.min(32, Math.max(1, Math.floor(lookbackDays)));
   const safeTrailing = Math.min(
@@ -67,16 +73,47 @@ export async function seedGenerationUsage({
       : ['creator@example.com'];
   const now = new Date();
   const events: ReturnType<typeof buildGenerationUsageEvent>[] = [];
+  const contracts = await metronome.v2.contracts.list({
+    customer_id: customerId,
+    covering_date: now.toISOString(),
+    include_balance: true,
+  } as any);
+  const contract = pickPrimaryMetronomeContract(contracts.data ?? []);
+  const poolCredits = contract
+    ? metronomeContractPoolCapCents({
+        commits: contract.commits,
+        credits: contract.credits,
+      })
+    : 0;
+  const defaultSpendFraction =
+    story === 'at-risk' ? 0.82 : story === 'burst' ? 0.65 : 0.42;
+  const spendFraction =
+    commitmentSpendCapFraction != null &&
+    Number.isFinite(commitmentSpendCapFraction)
+      ? Math.min(0.95, Math.max(0.05, commitmentSpendCapFraction))
+      : defaultSpendFraction;
+  const targetCredits = poolCredits > 0 ? poolCredits * spendFraction : 0;
+  const dayOffsets = Array.from(
+    { length: safeLookback - safeTrailing },
+    (_, index) => safeLookback - index,
+  );
+  const totalWeight = dayOffsets.reduce(
+    (total, _dayOffset, dayIndex) =>
+      total + eventsPerDay(story, dayIndex),
+    0,
+  );
 
-  for (
-    let dayOffset = safeLookback;
-    dayOffset > safeTrailing;
-    dayOffset -= 1
-  ) {
-    const dayIndex = safeLookback - dayOffset;
-    const count = eventsPerDay(story, dayIndex);
+  for (const [dayIndex, dayOffset] of dayOffsets.entries()) {
+    const baseCount = eventsPerDay(story, dayIndex);
+    const dailyTarget =
+      targetCredits > 0
+        ? (targetCredits * baseCount) / Math.max(totalWeight, 1)
+        : 0;
+    let dailyCredits = 0;
+    const count = targetCredits > 0 ? 500 : baseCount;
 
     for (let slot = 0; slot < count; slot += 1) {
+      if (targetCredits > 0 && dailyCredits >= dailyTarget) break;
       const seed = `${customerId}:${story}:${dayOffset}:${slot}`;
       const sku = GENERATION_SKUS[stableIndex(`${seed}:sku`, GENERATION_SKUS.length)];
       const userId = users[stableIndex(`${seed}:user`, users.length)];
@@ -98,6 +135,7 @@ export async function seedGenerationUsage({
           timestamp: timestamp.toISOString(),
         }),
       );
+      dailyCredits += sku.credits;
     }
   }
 
@@ -124,6 +162,6 @@ export async function seedGenerationUsage({
     products: Array.from(new Set(events.map((event) => String(event.properties.modality)))),
     models: Array.from(new Set(events.map((event) => String(event.properties.model)))),
     projectIds: [...PROJECTS],
-    message: `Seeded ${events.length} synthetic generation jobs across ${safeLookback - safeTrailing} days.`,
+    message: `Seeded ${events.length} synthetic generation jobs across ${safeLookback - safeTrailing} days, targeting ${(spendFraction * 100).toFixed(0)}% of the ${poolCredits.toLocaleString()} credit pool.`,
   };
 }
