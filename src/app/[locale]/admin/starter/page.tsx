@@ -38,6 +38,8 @@ type StarterPackage =
       key: 'pro';
       monthlyCredits: number;
       monthlyPriceCents: number;
+      autoTopUpThresholdCredits: number;
+      autoTopUpToCredits: number;
     };
 const RESERVED_PROPERTY_KEYS = new Set([
   'quantity',
@@ -62,7 +64,7 @@ function packageSummary(pkg: StarterPackage): string {
   }
   return `${pkg.monthlyCredits.toLocaleString()} credits/month · $${(
     pkg.monthlyPriceCents / 100
-  ).toLocaleString()}/month`;
+  ).toLocaleString()}/month · auto top-up below ${pkg.autoTopUpThresholdCredits} to ${pkg.autoTopUpToCredits}`;
 }
 
 export default function MetronomeStarterPage() {

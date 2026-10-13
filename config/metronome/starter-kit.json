@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "namespace": "metronome-starter",
   "eventType": "generation.completed",
   "fiatCurrency": "USD",
@@ -94,7 +94,9 @@
       "key": "pro",
       "name": "Generate Pro",
       "monthlyCredits": 1000,
-      "monthlyPriceCents": 2000
+      "monthlyPriceCents": 2000,
+      "autoTopUpThresholdCredits": 50,
+      "autoTopUpToCredits": 500
     }
   ],
   "powerUser": {

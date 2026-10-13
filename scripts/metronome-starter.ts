@@ -51,6 +51,8 @@ type StarterConfig = {
         name: string;
         monthlyCredits: number;
         monthlyPriceCents: number;
+        autoTopUpThresholdCredits: number;
+        autoTopUpToCredits: number;
       }
   >;
   powerUser: {
@@ -995,6 +997,20 @@ async function ensureCatalog(
             },
           },
         ],
+        prepaid_balance_threshold_configuration: {
+          is_enabled: true,
+          threshold_amount: definition.autoTopUpThresholdCredits,
+          recharge_to_amount: definition.autoTopUpToCredits,
+          custom_credit_type_id: pricingUnitId,
+          payment_gate_config: {
+            payment_gate_type: 'NONE',
+          },
+          commit: {
+            product_id: productIds.creditGrant,
+            name: 'Pro Auto Top-Up',
+            applicable_product_ids: usageProductIds,
+          },
+        },
       };
     }
     console.log(`Creating package: ${definition.name}`);

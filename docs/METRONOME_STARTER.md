@@ -105,7 +105,7 @@ minor units; `0.01` would mean one-hundredth of a cent.
 - Enterprise Quickstart: a 12-month, $1,000 prepaid commitment for 100,000
   Generation Credits.
 - Pro: a $20 monthly subscription with 1,000 recurring monthly Generation
-  Credits.
+  Credits, plus a native threshold recharge below 50 credits back to 500.
 - B2B Power User: 1,000,000-credit / $10,000 annual prepaid commitment,
   five assigned seats at $1,000 per month, 10,000 monthly credits per seat,
   a 0.85 usage multiplier, and a seat-rate override.
@@ -118,6 +118,10 @@ double-count usage.
 Because this starter intentionally creates no billing-provider configuration,
 its invoices stay in Metronome. Connect and configure a billing provider
 separately if the target account should collect payment externally.
+
+The Pro threshold recharge uses `payment_gate_type: NONE`, so it can create the
+top-up commit without Stripe. Its invoice remains internal to Metronome and is
+not externally collected until a billing provider flow is added.
 
 ## Ownership and state
 
