@@ -212,12 +212,34 @@ function storedPackageKey(config: StarterConfig, key: string): string {
   return `package:${packageUniquenessKey(config, key)}`;
 }
 
+function packageCreationKey(
+  config: StarterConfig,
+  key: string,
+  runId: string,
+): string {
+  return `${packageUniquenessKey(config, key)}:run-${runId}`;
+}
+
+function packageKeyMatches(
+  config: StarterConfig,
+  key: string,
+  value: string | null | undefined,
+): boolean {
+  const normalized = (value ?? '').replace(/^package:/, '');
+  const base = packageUniquenessKey(config, key);
+  return normalized === base || normalized.startsWith(`${base}:run-`);
+}
+
 function contractKey(config: StarterConfig, personaKey: string): string {
   return `contract:${config.namespace}:${personaKey}:v${config.version}`;
 }
 
-function packageAlias(config: StarterConfig, key: string): string {
-  return `${config.namespace}-${key}-v${config.version}`;
+function packageAlias(
+  config: StarterConfig,
+  key: string,
+  runId: string,
+): string {
+  return `${config.namespace}-${key}-v${config.version}-${runId}`;
 }
 
 function assertSame(label: string, actual: unknown, expected: unknown) {
@@ -584,11 +606,14 @@ function definitions(config: StarterConfig) {
 async function printPlan(client: Metronome, config: StarterConfig) {
   const found = await discover(client, config);
   const wanted = definitions(config);
-  const ownedPackageKeys = new Set(
-    config.packages.map((definition) => storedPackageKey(config, definition.key)),
-  );
   const ownedPackages = found.packages.filter((pkg) =>
-    ownedPackageKeys.has(pkg.uniqueness_key ?? ''),
+    config.packages.some((definition) =>
+      packageKeyMatches(
+        config,
+        definition.key,
+        pkg.uniqueness_key,
+      ),
+    ),
   );
   const contractKeys = new Set<string>();
   for (const customer of found.customers) {
@@ -921,26 +946,32 @@ async function ensureCatalog(
   }
 
   const packageIds: Record<string, string> = {};
+  const packageRunId = Date.now().toString(36);
   const usageProductIds = config.metrics.map(
     (metric) => productIds[metric.key],
   );
   for (const definition of config.packages) {
-    const uniquenessKey = packageUniquenessKey(config, definition.key);
-    const storedUniquenessKey = storedPackageKey(config, definition.key);
     const existing = found.packages.find(
       (pkg) =>
         pkg.name === definition.name &&
-        pkg.uniqueness_key === storedUniquenessKey,
+        packageKeyMatches(config, definition.key, pkg.uniqueness_key),
     );
     if (existing) {
       packageIds[definition.key] = existing.id;
       continue;
     }
+    const uniquenessKey = packageCreationKey(
+      config,
+      definition.key,
+      packageRunId,
+    );
     const common = {
       name: definition.name,
       contract_name: definition.name,
       rate_card_id: rateCardId,
-      aliases: [{ name: packageAlias(config, definition.key) }],
+      aliases: [
+        { name: packageAlias(config, definition.key, packageRunId) },
+      ],
       uniqueness_key: uniquenessKey,
       billing_anchor_date: 'contract_start_date' as const,
       usage_statement_schedule: {
@@ -951,7 +982,10 @@ async function ensureCatalog(
     const sameName = found.packages.find(
       (pkg) => pkg.name === definition.name,
     );
-    if (sameName && sameName.uniqueness_key !== storedUniquenessKey) {
+    if (
+      sameName &&
+      !packageKeyMatches(config, definition.key, sameName.uniqueness_key)
+    ) {
       throw new Error(
         `Package name "${definition.name}" is already in use with a different uniqueness key; refusing to replace it.`,
       );
