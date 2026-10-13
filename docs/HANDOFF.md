@@ -1,4 +1,4 @@
-# Handoff — 2026-10-12
+# Handoff — 2026-10-13
 
 ## Completed
 
@@ -22,13 +22,23 @@
 - Future Pro contracts left by the old fallback are archived and safely replaced on retry.
 - Generation Quickstart seeding scales to the active credit pool: healthy targets 42%, burst 65%, and at-risk 82%, with an optional `spendCap` override.
 - A single bulk batch that exhausts the Free balance now opens the Pro upgrade prompt.
+- The left Settings panel now links to the shared admin cleanup and power-user wizard.
+- Admin cleanup safely lists demo customers from both modes while excluding unrelated customers.
+- Power-user creation has an explicit Lora Generate / AI Builder selector; it does not depend on the currently selected demo mode.
+- AI Builder power users retain the original B2B contract structure.
+- Generation power users now use the same B2B structure with Generation-specific primitives: a 12-month 100,000 Generation Credit prepaid commitment (`$1,000` invoice), five seats, 2,000 recurring monthly credits per seat, a 0.85 usage multiplier, and deterministic multi-user/project Generation usage.
+- Added and seeded the `Lora Generate - Enterprise Seat` subscription product and its monthly rate. Existing packages and rate card IDs were retained.
 - TypeScript and focused lint checks pass.
+- The production build passes with only the existing repository warnings.
+- Clean local checkpoints: `41c0716` (shared mode-aware admin flow) and `5f69075` (correct Generation B2B power-user contract).
 
 ## Next task
 
+- Run one Generation power-user creation from `/en/admin/cleanup-environment` and verify its Metronome contract, Stripe invoice delivery, five seats, recurring seat credits, 0.85 override, and seeded usage. This was not run automatically because it creates real test customers/contracts/invoices.
 - Visually verify the Generation pricing page shows Free, Pro, and Enterprise correctly.
 - Test a fresh Generation customer through Free → Pro; existing legacy customers retain their old 8,000-credit contracts.
 - Consider blocking auto top-up for legacy Generation contracts because their old rate card used the incorrect conversion.
+- GitHub push is still pending: the local repository has no remote because GitHub authentication was not completed. Intended destination: `https://github.com/linashen-stripe/Lora-met.git`.
 
 ## Current catalog
 
@@ -37,6 +47,7 @@
 - Pro package: `5957532b-016f-466e-9c16-2835dfe5a469`
 - Enterprise package: `5ce33189-876c-4251-bb36-011ed45e023a`
 - Generation credit type: `7178a268-9978-4714-b56c-fd239e4d978b`
+- Generation Enterprise Seat product: `0d9d1f08-d26d-487f-9043-cae89f030ab3`
 
 Do not automatically migrate the existing legacy customer or pay its old prorated Stripe draft invoice.
 
@@ -50,3 +61,6 @@ npm run dev
 ```
 
 Do not overwrite `.env`; it contains the user's restored credentials.
+
+The working tree was clean before this handoff update. Commit `docs/HANDOFF.md`
+after restart if a fully clean checkpoint is desired.
