@@ -129,7 +129,7 @@
       "name": "B2B Power User",
       "directContract": "power-user",
       "ingestAlias": "metronome-starter:b2b-power-user",
-      "usageScale": 200
+      "usageScale": 30
     }
   ]
 }

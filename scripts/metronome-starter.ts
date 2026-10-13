@@ -1347,7 +1347,15 @@ async function seedUsage(
   const now = new Date();
   const events: any[] = [];
   for (const persona of config.personas) {
-    const userCount = persona.key === 'b2b-power-user' ? 5 : 2;
+    const isPowerUser = persona.key === 'b2b-power-user';
+    const userCount = isPowerUser ? config.powerUser.seatCount : 2;
+    const powerUserSeatPool = [8, 6, 4, 2, 1].flatMap((weight, index) =>
+      Array.from({ length: weight }, () => index),
+    );
+    const powerUserTargets = [1.15, 0.7, 0.45, 0.25, 0.1].map(
+      (fraction) => config.powerUser.seatMonthlyCredits * fraction,
+    );
+    const powerUserSpend = Array.from({ length: userCount }, () => 0);
     for (let day = 1; day <= 21; day += 1) {
       for (let slot = 0; slot < persona.usageScale; slot += 1) {
         const timestamp = new Date(now);
@@ -1370,38 +1378,60 @@ async function seedUsage(
               config.rates.length,
             )
           ];
-        const userIndex = slot % userCount;
         const customerId = customerIds[persona.key];
         const seed = `${config.namespace}:${customerId}:${persona.key}:${dateKey}:${slot}:${rate.metric}:${rate.operation}:${rate.quality}:${rate.model}`;
+        const userIndex = isPowerUser
+          ? powerUserSeatPool[
+              stableIndex(`${seed}:seat`, powerUserSeatPool.length)
+            ]
+          : slot % userCount;
+        const quantity =
+          rate.metric === 'video'
+            ? 5 + stableIndex(`${seed}:quantity`, 20)
+            : 1;
+        const selectedPricingValue =
+          pricingDimension?.metrics.includes(rate.metric)
+            ? pricingDimension.values[
+                stableIndex(
+                  `${seed}:${pricingDimension.propertyKey}`,
+                  pricingDimension.values.length,
+                )
+              ]
+            : null;
+        if (isPowerUser) {
+          const estimatedCredits =
+            quantity *
+            rate.creditsPerUnit *
+            (selectedPricingValue?.multiplier ?? 1) *
+            config.powerUser.usageMultiplier;
+          if (
+            powerUserSpend[userIndex] + estimatedCredits >
+            powerUserTargets[userIndex]
+          ) {
+            continue;
+          }
+          powerUserSpend[userIndex] += estimatedCredits;
+        }
         events.push({
           transaction_id: `${config.namespace}-${fingerprint(seed)}`,
           customer_id: customerId,
           event_type: config.eventType,
           timestamp: timestamp.toISOString(),
           properties: {
-            quantity:
-              rate.metric === 'video'
-                ? 5 + stableIndex(`${seed}:quantity`, 20)
-                : 1,
+            quantity,
             modality: rate.metric,
             operation: rate.operation,
             quality: rate.quality,
             model: rate.model,
             workspace_id: `${persona.key}-workspace`,
             project_id: `${persona.key}-project-${(slot % 3) + 1}`,
-            user_id:
-              persona.key === 'b2b-power-user'
-                ? `power-user-seat-${userIndex + 1}`
-                : `${persona.key}-user-${userIndex + 1}`,
-            ...(pricingDimension?.metrics.includes(rate.metric)
+            user_id: isPowerUser
+              ? `power-user-seat-${userIndex + 1}`
+              : `${persona.key}-user-${userIndex + 1}`,
+            ...(selectedPricingValue && pricingDimension
               ? {
                   [pricingDimension.propertyKey]:
-                    pricingDimension.values[
-                      stableIndex(
-                        `${seed}:${pricingDimension.propertyKey}`,
-                        pricingDimension.values.length,
-                      )
-                    ].value,
+                    selectedPricingValue.value,
                 }
               : {}),
           },
