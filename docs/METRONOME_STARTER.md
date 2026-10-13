@@ -155,6 +155,8 @@ contract-name/rate-card identity because package-provisioned contracts do not
 always expose the supplied uniqueness key consistently in list responses.
 Seeding stops with a reset instruction if duplicate active starter contracts
 are detected; it never guesses which contract to archive.
+Reset archives every active contract on a customer carrying a starter ingest
+alias, so contracts that omit their uniqueness key are still cleaned up.
 
 After a successful seed, IDs are written under
 `.metronome/starter/<account-scope>/state.json`. `.metronome/` is ignored by

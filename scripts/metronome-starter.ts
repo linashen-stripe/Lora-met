@@ -1484,13 +1484,11 @@ async function resetStarter(client: Metronome, config: StarterConfig) {
     } as any);
     for (const contract of contracts.data ?? []) {
       const uniquenessKey = String((contract as any).uniqueness_key ?? '');
-      if (uniquenessKey.startsWith(`contract:${config.namespace}:`)) {
-        contractRows.push({
-          customerId: customer.id,
-          contractId: contract.id,
-          uniquenessKey,
-        });
-      }
+      contractRows.push({
+        customerId: customer.id,
+        contractId: contract.id,
+        uniquenessKey,
+      });
     }
   }
   const summary = {
