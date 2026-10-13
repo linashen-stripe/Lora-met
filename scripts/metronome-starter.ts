@@ -1005,7 +1005,6 @@ async function ensureCatalog(
               billing_frequency: 'MONTHLY',
               product_id: productIds.enterpriseSeat,
             },
-            initial_quantity: definition.seatCount,
             quantity_management_mode: 'SEAT_BASED',
             seat_config: {
               initial_seat_ids: Array.from(
