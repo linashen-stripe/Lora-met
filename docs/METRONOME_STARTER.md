@@ -78,6 +78,10 @@ Billable metric and product dimensions cannot be safely repurposed in place.
 To change or remove a property after seeding, preview and run Starter Reset
 with the same resource prefix, then seed the new definition.
 
+If a seed stops after creating billable metrics but before creating products,
+use the same reset flow before retrying. Reset archives the partial metrics;
+the shared custom pricing unit is intentionally retained and reused.
+
 ## Seeded personas
 
 - Enterprise Quickstart: a one-month, $1,000 prepaid commitment for 100,000

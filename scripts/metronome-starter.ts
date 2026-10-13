@@ -291,6 +291,22 @@ function pricingGroupKeyFor(metric: MetricKey): string[] {
   ];
 }
 
+function presentationGroupKeyForProduct(): string[] {
+  return ['project_id', 'user_id'];
+}
+
+function metricGroupKeysFor(metric: MetricKey): string[][] {
+  const pricing = pricingGroupKeyFor(metric);
+  const presentation = presentationGroupKeyForProduct();
+  return [
+    pricing,
+    [...pricing, ...presentation],
+    ['workspace_id'],
+    ['project_id'],
+    ['user_id'],
+  ];
+}
+
 function pricingDimensionPreview(config: StarterConfig) {
   return {
     pricingDimension,
@@ -299,6 +315,8 @@ function pricingDimensionPreview(config: StarterConfig) {
         metric.key,
         {
           pricingGroupKey: pricingGroupKeyFor(metric.key),
+          presentationGroupKey: presentationGroupKeyForProduct(),
+          metricGroupKeys: metricGroupKeysFor(metric.key),
           propertyValues:
             appliesPricingDimension(metric.key) && pricingDimension
               ? pricingDimension.values.map((entry) => entry.value)
@@ -594,13 +612,7 @@ async function ensureCatalog(
 
   const metricIds: Record<string, string> = {};
   for (const definition of config.metrics) {
-    const pricingGroupKey = pricingGroupKeyFor(definition.key);
-    const groupKeys = [
-      pricingGroupKey,
-      ['workspace_id'],
-      ['project_id'],
-      ['user_id'],
-    ];
+    const groupKeys = metricGroupKeysFor(definition.key);
     const propertyFilters = [
       { name: 'quantity', exists: true },
       {
@@ -656,12 +668,18 @@ async function ensureCatalog(
   const productIds: Record<string, string> = {};
   for (const definition of config.metrics) {
     const pricingGroupKey = pricingGroupKeyFor(definition.key);
+    const presentationGroupKey = presentationGroupKeyForProduct();
     const existing = productsByName.get(definition.name);
     if (existing) {
       assertSame(
         `${definition.name} pricing_group_key`,
         existing.current.pricing_group_key,
         pricingGroupKey,
+      );
+      assertSame(
+        `${definition.name} presentation_group_key`,
+        existing.current.presentation_group_key,
+        presentationGroupKey,
       );
       productIds[definition.key] = existing.id;
       continue;
@@ -672,7 +690,7 @@ async function ensureCatalog(
       type: 'USAGE',
       billable_metric_id: metricIds[definition.key],
       pricing_group_key: pricingGroupKey,
-      presentation_group_key: ['project_id', 'user_id'],
+      presentation_group_key: presentationGroupKey,
       tags: [config.namespace, 'usage'],
     });
     productIds[definition.key] = response.data.id;
