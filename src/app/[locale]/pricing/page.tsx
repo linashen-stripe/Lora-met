@@ -382,9 +382,12 @@ function PricingPageContent() {
   // Build package cards from Metronome packages
   const packageCards: Plan[] = sortedPackages.map((pkg, idx) => {
     const packageName = normPackageName(pkg.name);
-    const catalogPlan = GENERATION_PLANS.find((plan) =>
-      packageName.endsWith(plan.name.toLowerCase()),
-    );
+    const catalogPlan =
+      demoMode === 'generation'
+        ? GENERATION_PLANS.find((plan) =>
+            packageName.endsWith(plan.name.toLowerCase()),
+          )
+        : undefined;
     const aiBuilderIncludedCents =
       demoMode === 'ai-builder'
         ? normPackageName(pkg.name).includes('free')
