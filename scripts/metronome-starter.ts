@@ -1352,7 +1352,7 @@ async function seedUsage(
     const powerUserSeatPool = [8, 6, 4, 2, 1].flatMap((weight, index) =>
       Array.from({ length: weight }, () => index),
     );
-    const powerUserTargets = [1.15, 0.7, 0.45, 0.25, 0.1].map(
+    const powerUserTargets = [1.5, 0.7, 0.45, 0.25, 0.1].map(
       (fraction) => config.powerUser.seatMonthlyCredits * fraction,
     );
     const powerUserSpend = Array.from({ length: userCount }, () => 0);

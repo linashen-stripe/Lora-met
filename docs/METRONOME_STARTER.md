@@ -109,9 +109,10 @@ minor units; `0.01` would mean one-hundredth of a cent.
 - B2B Power User: 1,000,000-credit / $10,000 annual prepaid commitment,
   five assigned seats at $1,000 per month, 10,000 monthly credits per seat,
   a 0.85 usage multiplier, and a seat-rate override. Seeded utilization targets
-  approximately 115%, 70%, 45%, 25%, and 10% of each seat allocation. The
-  busiest seat exhausts its monthly credits and spills into the shared annual
-  commitment; the other seats retain clearly different balances.
+  approximately 150%, 70%, 45%, 25%, and 10% of each seat allocation. The
+  busiest seat has enough headroom beyond the 15% discount to exhaust its
+  monthly credits and spill into the shared annual commitment; the other seats
+  retain clearly different balances.
 
 The per-seat recurring credits use priority `50`, matching the Admin power-user
 flow. The annual commitment keeps Metronome's default priority so usage is
