@@ -33,6 +33,7 @@ type CompletedJob = {
 type WalletState = {
   balance: number;
   jobs: CompletedJob[];
+  contractId?: string;
   pendingUsageCredits?: number;
   pendingUsageAt?: string;
   lastReconciledAt?: string;
@@ -184,6 +185,7 @@ export default function GenerationPlayground() {
 
   useEffect(() => {
     const metronomeBalance = metronomeContract?.creditBalance?.totalAvailable;
+    const metronomeContractId = metronomeContract?.id;
     if (
       !hydrated ||
       metronomeBalance == null ||
@@ -192,11 +194,15 @@ export default function GenerationPlayground() {
       return;
     }
     setWallet((current) => {
+      const contractChanged =
+        Boolean(metronomeContractId) &&
+        current.contractId !== metronomeContractId;
       const hasUnreconciledUsage = (current.pendingUsageCredits ?? 0) > 0;
       const pendingAgeMs = current.pendingUsageAt
         ? Date.now() - new Date(current.pendingUsageAt).getTime()
         : 0;
       if (
+        !contractChanged &&
         hasUnreconciledUsage &&
         pendingAgeMs < 120_000 &&
         metronomeBalance > current.balance
@@ -206,6 +212,7 @@ export default function GenerationPlayground() {
       return {
         ...current,
         balance: metronomeBalance,
+        contractId: metronomeContractId,
         pendingUsageCredits: 0,
         pendingUsageAt: undefined,
         lastReconciledAt: new Date().toISOString(),
@@ -436,9 +443,11 @@ export default function GenerationPlayground() {
                       ? 'Local demo usage'
                       : 'Charged only when the job succeeds'}
                 </span>
-                <button onClick={resetTrial} className='font-medium text-purple hover:underline'>
-                  Reset trial
-                </button>
+                {isFreePlan && (
+                  <button onClick={resetTrial} className='font-medium text-purple hover:underline'>
+                    Reset trial
+                  </button>
+                )}
               </div>
             </div>
 
