@@ -183,7 +183,12 @@ export async function createGenerationPowerUser(
       },
       {
         starting_at: startingAt.toISOString(),
-        product_id: products.enterpriseSubscription,
+        override_specifiers: [
+          {
+            product_id: products.enterpriseSubscription,
+            billing_frequency: 'MONTHLY',
+          },
+        ],
         type: 'OVERWRITE',
         overwrite_rate: {
           rate_type: 'FLAT',
