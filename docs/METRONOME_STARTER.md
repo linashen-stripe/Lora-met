@@ -98,6 +98,10 @@ The reusable package catalog contains Free (100 one-time credits), Pro, and
 Enterprise Quickstart. The B2B Power User is intentionally not a package; it is
 created as a negotiated direct contract.
 
+One Generation Credit converts to one USD cent. Metronome's
+`fiat_per_custom_credit` value is therefore `1` because fiat pricing units use
+minor units; `0.01` would mean one-hundredth of a cent.
+
 - Enterprise Quickstart: a 12-month, $1,000 prepaid commitment for 100,000
   Generation Credits.
 - Pro: a $20 monthly subscription with 1,000 recurring monthly Generation

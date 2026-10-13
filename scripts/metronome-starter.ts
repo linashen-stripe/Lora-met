@@ -18,7 +18,7 @@ type StarterConfig = {
   namespace: string;
   eventType: string;
   fiatCurrency: string;
-  pricingUnit: { name: string; fiatPerCustomCredit: number };
+  pricingUnit: { name: string; fiatMinorUnitsPerCustomCredit: number };
   rateCard: { name: string; alias: string };
   metrics: Array<{ key: MetricKey; name: string; modality: string }>;
   rates: Array<{
@@ -316,6 +316,13 @@ function metricGroupKeysFor(metric: MetricKey): string[][] {
 function pricingDimensionPreview(config: StarterConfig) {
   return {
     pricingDimension,
+    pricingConversion: {
+      fiatCurrency: config.fiatCurrency,
+      fiatMinorUnitsPerCustomCredit:
+        config.pricingUnit.fiatMinorUnitsPerCustomCredit,
+      fiatAmountPerCustomCredit:
+        config.pricingUnit.fiatMinorUnitsPerCustomCredit / 100,
+    },
     usageProducts: Object.fromEntries(
       config.metrics.map((metric) => [
         metric.key,
@@ -741,7 +748,8 @@ async function ensureCatalog(
       credit_type_conversions: [
         {
           custom_credit_type_id: pricingUnitId,
-          fiat_per_custom_credit: config.pricingUnit.fiatPerCustomCredit,
+          fiat_per_custom_credit:
+            config.pricingUnit.fiatMinorUnitsPerCustomCredit,
         },
       ],
     });

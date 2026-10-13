@@ -488,7 +488,10 @@ export default function MetronomeStarterPage() {
                   </h3>
                   <p className='mt-2 text-sm text-gray-800'>
                     {METRONOME_STARTER_KIT.pricingUnit.name}: 1 credit = $
-                    {METRONOME_STARTER_KIT.pricingUnit.fiatPerCustomCredit}
+                    {(
+                      METRONOME_STARTER_KIT.pricingUnit
+                        .fiatMinorUnitsPerCustomCredit / 100
+                    ).toFixed(2)}
                   </p>
                 </section>
 

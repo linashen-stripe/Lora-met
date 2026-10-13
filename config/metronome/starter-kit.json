@@ -1,11 +1,11 @@
 {
-  "version": 4,
+  "version": 5,
   "namespace": "metronome-starter",
   "eventType": "generation.completed",
   "fiatCurrency": "USD",
   "pricingUnit": {
     "name": "Starter Generation Credits",
-    "fiatPerCustomCredit": 0.01
+    "fiatMinorUnitsPerCustomCredit": 1
   },
   "rateCard": {
     "name": "Generate - Standard Rate Card",
