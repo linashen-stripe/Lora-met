@@ -28,6 +28,7 @@ type StarterPackage =
       key: 'quickstart';
       includedCredits: number;
       prepaidInvoiceCents: number;
+      durationMonths: number;
     }
   | {
       key: 'pro';
@@ -56,7 +57,7 @@ function packageSummary(pkg: StarterPackage): string {
   if (pkg.key === 'quickstart') {
     return `${pkg.includedCredits.toLocaleString()} credits · $${(
       pkg.prepaidInvoiceCents / 100
-    ).toLocaleString()} prepaid`;
+    ).toLocaleString()} prepaid · ${pkg.durationMonths} months`;
   }
   if (pkg.key === 'pro') {
     return `${pkg.monthlyCredits.toLocaleString()} credits/month · $${(

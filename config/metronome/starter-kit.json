@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "namespace": "metronome-starter",
   "eventType": "generation.completed",
   "fiatCurrency": "USD",
@@ -82,7 +82,8 @@
       "key": "quickstart",
       "name": "Generate Enterprise Quickstart",
       "includedCredits": 100000,
-      "prepaidInvoiceCents": 100000
+      "prepaidInvoiceCents": 100000,
+      "durationMonths": 12
     },
     {
       "key": "pro",

@@ -94,7 +94,7 @@ the shared custom pricing unit is intentionally retained and reused.
 
 ## Seeded personas
 
-- Enterprise Quickstart: a one-month, $1,000 prepaid commitment for 100,000
+- Enterprise Quickstart: a 12-month, $1,000 prepaid commitment for 100,000
   Generation Credits.
 - Pro: a $20 monthly subscription with 1,000 recurring monthly Generation
   Credits.

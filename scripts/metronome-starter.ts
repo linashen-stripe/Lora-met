@@ -39,6 +39,7 @@ type StarterConfig = {
         name: string;
         includedCredits: number;
         prepaidInvoiceCents: number;
+        durationMonths: number;
       }
     | {
         key: 'pro';
@@ -881,7 +882,7 @@ async function ensureCatalog(
     if (definition.key === 'quickstart') {
       body = {
         ...common,
-        duration: { value: 1, unit: 'MONTHS' },
+        duration: { value: definition.durationMonths, unit: 'MONTHS' },
         commits: [
           {
             type: 'PREPAID',
@@ -896,7 +897,10 @@ async function ensureCatalog(
                 {
                   amount: definition.includedCredits,
                   starting_at_offset: { value: 0, unit: 'DAYS' },
-                  duration: { value: 1, unit: 'MONTHS' },
+                  duration: {
+                    value: definition.durationMonths,
+                    unit: 'MONTHS',
+                  },
                 },
               ],
             },
