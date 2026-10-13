@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
+import { tracedServerFetch } from '@/utils/tracedServerFetch';
 
 export async function POST(
   request: NextRequest,
@@ -59,7 +60,7 @@ export async function POST(
       const url = new URL('https://api.metronome.com/v1/usage/groups');
       if (nextPage) url.searchParams.set('next_page', nextPage);
 
-      const response = await fetch(url.toString(), {
+      const response = await tracedServerFetch(request.headers, 'metronome', url.toString(), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,

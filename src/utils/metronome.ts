@@ -1,13 +1,70 @@
 import Metronome from '@metronome/sdk';
 import { withFallbackHeaders } from './withFallbackHeaders';
 import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
+import {
+  API_INSPECTOR_SESSION_HEADER,
+  API_INSPECTOR_TRACE_HEADER,
+  createTraceId,
+  safeJsonParse,
+} from '@/utils/apiInspector';
+import { publishApiTrace } from '@/utils/apiInspectorServer';
 
 export function initializeMetronome(headers: Headers): Metronome | null {
   const apiKey = withFallbackHeaders(headers).metronomeApiKey;
   if (!apiKey) {
     return null;
   }
-  return new Metronome({ bearerToken: apiKey });
+  const sessionId = headers.get(API_INSPECTOR_SESSION_HEADER);
+  const parentId = headers.get(API_INSPECTOR_TRACE_HEADER) ?? undefined;
+  const tracedFetch =
+    sessionId &&
+    (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const id = createTraceId('metronome');
+      const startedAt = new Date().toISOString();
+      const startedAtMs = Date.now();
+      const url = typeof input === 'string' ? input : input.toString();
+      const method = String(init?.method ?? 'GET').toUpperCase();
+      try {
+        const response = await fetch(input, init);
+        const body = await response
+          .clone()
+          .text()
+          .then(safeJsonParse)
+          .catch(() => undefined);
+        publishApiTrace(sessionId, {
+          id,
+          parentId,
+          source: 'metronome',
+          method,
+          url,
+          startedAt,
+          durationMs: Date.now() - startedAtMs,
+          status: response.status,
+          state: response.ok ? 'success' : 'error',
+          request: safeJsonParse(init?.body),
+          response: body,
+        });
+        return response;
+      } catch (error) {
+        publishApiTrace(sessionId, {
+          id,
+          parentId,
+          source: 'metronome',
+          method,
+          url,
+          startedAt,
+          durationMs: Date.now() - startedAtMs,
+          state: 'error',
+          request: safeJsonParse(init?.body),
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
+      }
+    });
+  return new Metronome({
+    bearerToken: apiKey,
+    ...(tracedFetch ? { fetch: tracedFetch } : {}),
+  });
 }
 
 /** Legacy-account fallback when exact-time package starts are rejected. */

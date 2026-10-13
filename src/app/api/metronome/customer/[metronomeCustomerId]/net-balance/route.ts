@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
+import { tracedServerFetch } from '@/utils/tracedServerFetch';
 
 /**
  * Proxies Metronome POST /v1/contracts/customerBalances/getNetBalance
@@ -34,7 +35,9 @@ export async function POST(
     if (creditTypeId) payload.credit_type_id = creditTypeId;
     if (filters && Array.isArray(filters)) payload.filters = filters;
 
-    const response = await fetch(
+    const response = await tracedServerFetch(
+      request.headers,
+      'metronome',
       'https://api.metronome.com/v1/contracts/customerBalances/getNetBalance',
       {
         method: 'POST',

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
+import { tracedServerFetch } from '@/utils/tracedServerFetch';
 
 // GET /api/metronome/billing-providers
 // Lists all configured billing providers and their delivery method configurations
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Metronome not configured' }, { status: 503 });
   }
 
-  const response = await fetch('https://api.metronome.com/v1/listConfiguredBillingProviders', {
+  const response = await tracedServerFetch(request.headers, 'metronome', 'https://api.metronome.com/v1/listConfiguredBillingProviders', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${metronomeApiKey}`,

@@ -21,6 +21,7 @@ export default function ToolsPanel() {
     toggleToolsPanel,
     isLoading,
     resetSettings,
+    updateSetting,
   } = useConfigContext();
   const { clearCart } = useCart();
   const [activeTab, setActiveTab] = useState('Demo');
@@ -77,6 +78,29 @@ export default function ToolsPanel() {
                   Admin: cleanup &amp; power users
                 </Link>
               </div>
+              <details className='mt-4 rounded-md border border-gray-200 bg-gray-50'>
+                <summary className='cursor-pointer px-3 py-2 text-sm font-medium text-gray-700'>
+                  Advanced options
+                </summary>
+                <label className='flex cursor-pointer items-start gap-3 border-t border-gray-200 px-3 py-3'>
+                  <input
+                    type='checkbox'
+                    checked={Boolean(settings.apiInspectorEnabled)}
+                    onChange={(event) =>
+                      updateSetting('apiInspectorEnabled', event.target.checked)
+                    }
+                    className='mt-0.5'
+                  />
+                  <span>
+                    <span className='block text-sm font-medium text-gray-800'>
+                      {t('api_inspector.setting_title')}
+                    </span>
+                    <span className='mt-1 block text-xs text-gray-500'>
+                      {t('api_inspector.setting_description')}
+                    </span>
+                  </span>
+                </label>
+              </details>
             </>
           )}
           {activeTab === 'Appearance' && <AppearanceTab />}

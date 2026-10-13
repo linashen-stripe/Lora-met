@@ -1097,6 +1097,14 @@
     "not_found": "Impossible de charger les détails de ce forfait.",
     "unknown_name": "Forfait sélectionné"
   },
+  "api_inspector": {
+    "title": "Inspecteur API",
+    "setting_title": "Inspecteur API",
+    "setting_description": "Afficher l’activité API assainie de l’application, de Metronome et de Stripe.",
+    "live_activity": "Activité en direct assainie",
+    "search_placeholder": "Rechercher un chemin, une requête ou une réponse…",
+    "empty": "Les appels API apparaîtront ici pendant l’utilisation de la démo."
+  },
   "modals": {
     "auto_top_up": {
       "title": "Configurer le Rechargement Automatique",

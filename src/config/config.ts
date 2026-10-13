@@ -26,6 +26,7 @@ export const defaultDemoSettings = {
   eceEnabled: true,
   addressEnabled: true,
   metronomeDeliveryMethodId: '',
+  apiInspectorEnabled: false,
 };
 
 export const defaultCartSettings = {

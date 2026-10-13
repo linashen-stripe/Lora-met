@@ -1097,6 +1097,14 @@
     "not_found": "We could not load details for this package.",
     "unknown_name": "Selected package"
   },
+  "api_inspector": {
+    "title": "API inspector",
+    "setting_title": "API inspector",
+    "setting_description": "View sanitized app, Metronome, and Stripe API activity.",
+    "live_activity": "Sanitized live activity",
+    "search_placeholder": "Search path, payload, response…",
+    "empty": "API calls will appear here as you use the demo."
+  },
   "modals": {
     "auto_top_up": {
       "title": "Set up auto top-up",

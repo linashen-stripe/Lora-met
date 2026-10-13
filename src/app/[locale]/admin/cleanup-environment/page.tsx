@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { buildDemoRequestHeaders } from '@/utils/demoRequestHeaders';
+import { inspectedFetch } from '@/utils/inspectedFetch';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 import TerminalPanel from '@/components/admin/TerminalPanel';
@@ -93,7 +94,7 @@ export default function CleanupEnvironmentPage() {
   const loadMetronomeCustomers = useCallback(async () => {
     setLoadingMetronome(true);
     try {
-      const res = await fetch(metronomeCustomersUrl, {
+      const res = await inspectedFetch(metronomeCustomersUrl, {
         headers: buildDemoRequestHeaders(),
       });
       const data = await res.json();
@@ -111,7 +112,7 @@ export default function CleanupEnvironmentPage() {
   const loadStripeCustomers = useCallback(async () => {
     setLoadingStripe(true);
     try {
-      const res = await fetch(stripeCustomersUrl, {
+      const res = await inspectedFetch(stripeCustomersUrl, {
         headers: buildDemoRequestHeaders(),
       });
       const data = await res.json();
@@ -149,7 +150,7 @@ export default function CleanupEnvironmentPage() {
     const ids = Array.from(selectedMetronomeIds);
     appendLines(['', `$ archive ${ids.length} Metronome customer(s)`]);
     try {
-      const res = await fetch('/api/metronome/demo/customers', {
+      const res = await inspectedFetch('/api/metronome/demo/customers', {
         method: 'POST',
         headers: buildDemoRequestHeaders(),
         body: JSON.stringify({ customerIds: ids }),
@@ -175,7 +176,7 @@ export default function CleanupEnvironmentPage() {
   // Refresh the list after archiving, without re-triggering the initial-load effect noise.
   const loadMetronomeCustomersSilently = async () => {
     try {
-      const res = await fetch(metronomeCustomersUrl, { headers: buildDemoRequestHeaders() });
+      const res = await inspectedFetch(metronomeCustomersUrl, { headers: buildDemoRequestHeaders() });
       const data = await res.json();
       if (res.ok) setMetronomeCustomers(data.customers);
     } catch {
@@ -194,7 +195,7 @@ export default function CleanupEnvironmentPage() {
     const ids = Array.from(selectedStripeIds);
     appendLines(['', `$ delete ${ids.length} Stripe customer(s)`]);
     try {
-      const res = await fetch('/api/stripe/demo/customers', {
+      const res = await inspectedFetch('/api/stripe/demo/customers', {
         method: 'DELETE',
         headers: buildDemoRequestHeaders(),
         body: JSON.stringify({ customerIds: ids }),
@@ -219,7 +220,7 @@ export default function CleanupEnvironmentPage() {
 
   const loadStripeCustomersSilently = async () => {
     try {
-      const res = await fetch(stripeCustomersUrl, { headers: buildDemoRequestHeaders() });
+      const res = await inspectedFetch(stripeCustomersUrl, { headers: buildDemoRequestHeaders() });
       const data = await res.json();
       if (res.ok) setStripeCustomers(data.customers);
     } catch {
@@ -236,7 +237,7 @@ export default function CleanupEnvironmentPage() {
       `$ create ${powerUserDemoMode} power user "${name}"`,
     ]);
     try {
-      const res = await fetch('/api/metronome/demo/power-user', {
+      const res = await inspectedFetch('/api/metronome/demo/power-user', {
         method: 'POST',
         headers: buildDemoRequestHeaders(),
         body: JSON.stringify({

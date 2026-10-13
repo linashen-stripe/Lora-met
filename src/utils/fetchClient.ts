@@ -7,6 +7,15 @@ import {
   customerStorageKey,
   normalizeDemoMode,
 } from '@/config/demoModes';
+import {
+  API_INSPECTOR_SESSION_HEADER,
+  API_INSPECTOR_TRACE_HEADER,
+  createTraceId,
+  emitClientApiTrace,
+  getApiInspectorSessionId,
+  safeJsonParse,
+  sanitizeApiValue,
+} from '@/utils/apiInspector';
 
 const APP_ORIGIN_HEADER = 'x-app-origin';
 
@@ -58,7 +67,69 @@ fetchClient.interceptors.request.use(function (config) {
     config.headers[APP_ORIGIN_HEADER] = window.location.origin;
   }
 
+  const inspectorSessionId = getApiInspectorSessionId();
+  if (inspectorSessionId) {
+    const traceId = createTraceId('app');
+    config.headers[API_INSPECTOR_SESSION_HEADER] = inspectorSessionId;
+    config.headers[API_INSPECTOR_TRACE_HEADER] = traceId;
+    (config as any).__apiInspector = {
+      id: traceId,
+      startedAtMs: performance.now(),
+      startedAt: new Date().toISOString(),
+    };
+    emitClientApiTrace({
+      id: traceId,
+      source: 'app',
+      method: String(config.method ?? 'GET').toUpperCase(),
+      url: String(config.url ?? ''),
+      startedAt: new Date().toISOString(),
+      state: 'pending',
+      request: sanitizeApiValue(safeJsonParse(config.data)),
+    });
+  }
+
   return config;
 });
+
+fetchClient.interceptors.response.use(
+  (response) => {
+    const trace = (response.config as any).__apiInspector;
+    if (trace) {
+      emitClientApiTrace({
+        id: trace.id,
+        source: 'app',
+        method: String(response.config.method ?? 'GET').toUpperCase(),
+        url: String(response.config.url ?? ''),
+        startedAt: trace.startedAt,
+        durationMs: Math.round(performance.now() - trace.startedAtMs),
+        status: response.status,
+        state: 'success',
+        request: sanitizeApiValue(safeJsonParse(response.config.data)),
+        response: sanitizeApiValue(response.data),
+      });
+    }
+    return response;
+  },
+  (error) => {
+    const config = error?.config;
+    const trace = config?.__apiInspector;
+    if (trace) {
+      emitClientApiTrace({
+        id: trace.id,
+        source: 'app',
+        method: String(config.method ?? 'GET').toUpperCase(),
+        url: String(config.url ?? ''),
+        startedAt: trace.startedAt,
+        durationMs: Math.round(performance.now() - trace.startedAtMs),
+        status: error?.response?.status,
+        state: 'error',
+        request: sanitizeApiValue(safeJsonParse(config.data)),
+        response: sanitizeApiValue(error?.response?.data),
+        error: String(error?.message ?? 'Request failed'),
+      });
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default fetchClient;

@@ -27,6 +27,7 @@ import { getEnv } from '@/config/customizationConfig';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { debounceTrack } from '@/utils/tracking';
 import fetchClient from '@/utils/fetchClient';
+import { inspectedFetch } from '@/utils/inspectedFetch';
 import {
   metronomeContractPoolCapCents,
   metronomeContractScheduleAndBalanceSums,
@@ -631,7 +632,7 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     }
 
     console.log('[delivery-method] fetching billing providers from Metronome…');
-    fetch('/api/metronome/billing-providers', {
+    inspectedFetch('/api/metronome/billing-providers', {
       headers: {
         'demo-metronomeapikey': apiKey,
         'Content-Type': 'application/json',

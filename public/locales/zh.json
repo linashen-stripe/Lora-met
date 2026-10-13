@@ -1097,6 +1097,14 @@
     "not_found": "无法加载此套餐的详情。",
     "unknown_name": "所选套餐"
   },
+  "api_inspector": {
+    "title": "API 检查器",
+    "setting_title": "API 检查器",
+    "setting_description": "查看已脱敏的应用、Metronome 和 Stripe API 活动。",
+    "live_activity": "已脱敏的实时活动",
+    "search_placeholder": "搜索路径、请求或响应…",
+    "empty": "使用演示时，API 调用将显示在此处。"
+  },
   "modals": {
     "auto_top_up": {
       "title": "设置自动充值",

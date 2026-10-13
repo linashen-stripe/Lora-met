@@ -2,6 +2,7 @@ import { defaultDemoSettings } from '@/config/config';
 import { getEnv } from '@/config/customizationConfig';
 import { useCart } from '@/contexts/CartContext';
 import { useConfigContext } from '@/contexts/ConfigContext';
+import { inspectedFetch } from '@/utils/inspectedFetch';
 import { useEffect, useState } from 'react';
 
 const AccountTab = () => {
@@ -29,7 +30,7 @@ const AccountTab = () => {
     }
 
     setLoadingProviders(true);
-    fetch('/api/metronome/billing-providers', {
+    inspectedFetch('/api/metronome/billing-providers', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

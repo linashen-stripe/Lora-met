@@ -1097,6 +1097,14 @@
     "not_found": "Details zu diesem Paket konnten nicht geladen werden.",
     "unknown_name": "Ausgewähltes Paket"
   },
+  "api_inspector": {
+    "title": "API-Inspektor",
+    "setting_title": "API-Inspektor",
+    "setting_description": "Bereinigte API-Aktivität von App, Metronome und Stripe anzeigen.",
+    "live_activity": "Bereinigte Live-Aktivität",
+    "search_placeholder": "Pfad, Anfrage oder Antwort suchen…",
+    "empty": "API-Aufrufe erscheinen hier, während du die Demo verwendest."
+  },
   "modals": {
     "auto_top_up": {
       "title": "Automatisches Aufladen einrichten",

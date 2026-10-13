@@ -9,6 +9,10 @@ import ToolsPanel from './config/ToolsPanel';
 import { Footer, NavBar } from '@/components';
 import ThemeOverrides from './ThemeOverrides';
 import UmamiTracker from './UmamiTracker';
+import {
+  ApiInspectorProvider,
+} from '@/contexts/ApiInspectorContext';
+import ApiInspectorPanel from '@/components/ApiInspectorPanel';
 
 interface AppContentProps {
   children: React.ReactNode;
@@ -52,6 +56,7 @@ function AppContent({ children }: AppContentProps) {
       } bg-pattern`}
     >
       <ToolsPanel />
+      <ApiInspectorPanel />
       <UmamiTracker />
       <div
         id='app-container'
@@ -81,12 +86,14 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <QueryProvider>
       <ConfigProvider>
-        <CartProvider>
-          <UsageChartRefreshProvider>
-            <ThemeOverrides />
-            <AppContent>{children}</AppContent>
-          </UsageChartRefreshProvider>
-        </CartProvider>
+        <ApiInspectorProvider>
+          <CartProvider>
+            <UsageChartRefreshProvider>
+              <ThemeOverrides />
+              <AppContent>{children}</AppContent>
+            </UsageChartRefreshProvider>
+          </CartProvider>
+        </ApiInspectorProvider>
       </ConfigProvider>
     </QueryProvider>
   );

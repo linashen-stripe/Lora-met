@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
+import { tracedServerFetch } from '@/utils/tracedServerFetch';
 
 export async function GET(
   request: NextRequest,
@@ -40,7 +41,7 @@ export async function GET(
       if (status) url.searchParams.set('status', status);
       if (nextPage) url.searchParams.set('next_page', nextPage);
 
-      const response = await fetch(url.toString(), {
+      const response = await tracedServerFetch(request.headers, 'metronome', url.toString(), {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',

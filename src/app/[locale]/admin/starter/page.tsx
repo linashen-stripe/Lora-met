@@ -18,6 +18,7 @@ import {
 } from '@/config/metronomeStarterKit';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
+import { inspectedFetch } from '@/utils/inspectedFetch';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 
 type StarterMode = 'plan' | 'seed' | 'reset';
@@ -222,7 +223,7 @@ export default function MetronomeStarterPage() {
       }`,
     ]);
     try {
-      const response = await fetch('/api/metronome/starter', {
+      const response = await inspectedFetch('/api/metronome/starter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

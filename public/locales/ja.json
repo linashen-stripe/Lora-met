@@ -1097,6 +1097,14 @@
     "not_found": "このパッケージの詳細を読み込めませんでした。",
     "unknown_name": "選択したパッケージ"
   },
+  "api_inspector": {
+    "title": "API インスペクター",
+    "setting_title": "API インスペクター",
+    "setting_description": "サニタイズされたアプリ、Metronome、Stripe の API アクティビティを表示します。",
+    "live_activity": "サニタイズ済みライブアクティビティ",
+    "search_placeholder": "パス、リクエスト、レスポンスを検索…",
+    "empty": "デモを使用すると、API 呼び出しがここに表示されます。"
+  },
   "modals": {
     "auto_top_up": {
       "title": "自動チャージを設定",

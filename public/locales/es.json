@@ -1097,6 +1097,14 @@
     "not_found": "No pudimos cargar los detalles de este paquete.",
     "unknown_name": "Paquete seleccionado"
   },
+  "api_inspector": {
+    "title": "Inspector de API",
+    "setting_title": "Inspector de API",
+    "setting_description": "Consulta la actividad API saneada de la aplicación, Metronome y Stripe.",
+    "live_activity": "Actividad en vivo saneada",
+    "search_placeholder": "Buscar ruta, solicitud o respuesta…",
+    "empty": "Las llamadas API aparecerán aquí al usar la demo."
+  },
   "modals": {
     "auto_top_up": {
       "title": "Configurar Recarga Automática",
