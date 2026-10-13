@@ -113,11 +113,16 @@ separately if the target account should collect payment externally.
 
 ## Ownership and state
 
-Resource names, ingest aliases, package uniqueness keys, and contract
-uniqueness keys are namespaced with `metronome-starter`. Reset discovers only
-those exact resources and archives only starter-created contracts and
-customers before archiving the starter catalog. Custom pricing units are
+Ingest aliases, package uniqueness keys, and contract uniqueness keys are
+namespaced with `metronome-starter`; catalog resources are matched by the
+configured resource prefix and exact names. Reset archives matching contracts
+and customers before archiving the starter catalog. Custom pricing units are
 retained because they are shared account resources.
+
+Customer ingest aliases include the starter catalog version. Before archiving
+a customer, reset removes all `metronome-starter:` aliases so Metronome releases
+them for future seeds. This removal happens before customer archival because
+aliases on archived customers remain reserved.
 
 After a successful seed, IDs are written under
 `.metronome/starter/<account-scope>/state.json`. `.metronome/` is ignored by

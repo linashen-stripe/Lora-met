@@ -380,6 +380,7 @@ function applyStarterOverrides(config: StarterConfig): StarterConfig {
     personas: config.personas.map((persona) => ({
       ...persona,
       name: personaNames[persona.key] || persona.name,
+      ingestAlias: `${persona.ingestAlias}:v${config.version}`,
     })),
   };
 }
@@ -483,7 +484,8 @@ async function discover(client: Metronome, config: StarterConfig) {
         !customer.archived_at &&
         (personaNames.has(customer.name) ||
           (customer.ingest_aliases ?? []).some((alias) =>
-            personaAliases.has(alias),
+            personaAliases.has(alias) ||
+            alias.startsWith(`${config.namespace}:`),
           )),
     ),
   };
@@ -1215,11 +1217,10 @@ async function resetStarter(client: Metronome, config: StarterConfig) {
   const ownedPackages = found.packages.filter((pkg) =>
     ownedPackageKeys.has(pkg.uniqueness_key ?? ''),
   );
-  const ownedAliases = new Set(
-    config.personas.map((persona) => persona.ingestAlias),
-  );
+  const ownsStarterAlias = (alias: string) =>
+    alias.startsWith(`${config.namespace}:`);
   const ownedCustomers = found.customers.filter((customer) =>
-    (customer.ingest_aliases ?? []).some((alias) => ownedAliases.has(alias)),
+    (customer.ingest_aliases ?? []).some(ownsStarterAlias),
   );
   const contractRows: Array<{
     customerId: string;
@@ -1292,6 +1293,13 @@ async function resetStarter(client: Metronome, config: StarterConfig) {
     });
   }
   for (const customer of ownedCustomers) {
+    const remainingAliases = (customer.ingest_aliases ?? []).filter(
+      (alias) => !ownsStarterAlias(alias),
+    );
+    await client.v1.customers.setIngestAliases({
+      customer_id: customer.id,
+      ingest_aliases: remainingAliases,
+    });
     await client.v1.customers.archive({ id: customer.id });
   }
   for (const pkg of ownedPackages) {
