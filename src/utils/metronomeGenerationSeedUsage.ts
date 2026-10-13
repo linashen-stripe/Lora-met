@@ -36,6 +36,8 @@ export interface SeedGenerationUsageParams {
   lookbackDays?: number;
   trailingUnseededDays?: number;
   commitmentSpendCapFraction?: number;
+  /** Optional relative per-user weights for uneven enterprise seat usage. */
+  userWeights?: readonly number[];
 }
 
 export interface SeedGenerationUsageResult {
@@ -61,6 +63,7 @@ export async function seedGenerationUsage({
   lookbackDays = 30,
   trailingUnseededDays = 1,
   commitmentSpendCapFraction,
+  userWeights,
 }: SeedGenerationUsageParams): Promise<SeedGenerationUsageResult> {
   const safeLookback = Math.min(32, Math.max(1, Math.floor(lookbackDays)));
   const safeTrailing = Math.min(
@@ -71,6 +74,17 @@ export async function seedGenerationUsage({
     DEMO_METRONOME_USAGE_USER_IDS.length > 0
       ? DEMO_METRONOME_USAGE_USER_IDS
       : ['creator@example.com'];
+  const weightedUsers = users.flatMap((user, index) =>
+    Array.from(
+      {
+        length: Math.max(
+          1,
+          Math.round(Number(userWeights?.[index] ?? 1)),
+        ),
+      },
+      () => user,
+    ),
+  );
   const now = new Date();
   const events: ReturnType<typeof buildGenerationUsageEvent>[] = [];
   const contracts = await metronome.v2.contracts.list({
@@ -116,7 +130,10 @@ export async function seedGenerationUsage({
       if (targetCredits > 0 && dailyCredits >= dailyTarget) break;
       const seed = `${customerId}:${story}:${dayOffset}:${slot}`;
       const sku = GENERATION_SKUS[stableIndex(`${seed}:sku`, GENERATION_SKUS.length)];
-      const userId = users[stableIndex(`${seed}:user`, users.length)];
+      const userId =
+        weightedUsers[
+          stableIndex(`${seed}:user`, weightedUsers.length)
+        ];
       const projectId = PROJECTS[stableIndex(`${seed}:project`, PROJECTS.length)];
       const timestamp = new Date(
         now.getTime() -

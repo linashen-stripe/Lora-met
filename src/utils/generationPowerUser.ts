@@ -181,6 +181,16 @@ export async function createGenerationPowerUser(
         type: 'MULTIPLIER',
         multiplier: generationCatalog.powerUser.usageMultiplier,
       },
+      {
+        starting_at: startingAt.toISOString(),
+        product_id: products.enterpriseSubscription,
+        type: 'OVERWRITE',
+        overwrite_rate: {
+          rate_type: 'FLAT',
+          credit_type_id: fiatCreditTypeId,
+          price: generationCatalog.powerUser.seatMonthlyPriceCents,
+        },
+      },
     ],
     subscriptions: [
       {
@@ -240,6 +250,8 @@ export async function createGenerationPowerUser(
     story: 'healthy',
     lookbackDays: GENERATION_HISTORY_DAYS - 1,
     trailingUnseededDays: 1,
+    commitmentSpendCapFraction: 0.05,
+    userWeights: [8, 6, 4, 3, 1],
   });
   onLog(
     `    ✓ ingested ${usage.eventsIngested} events consuming ${usage.creditsConsumed.toLocaleString()} Generation Credits`,

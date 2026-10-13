@@ -85,12 +85,12 @@
     "enterpriseSubscription": "Lora Generate - Enterprise Seat"
   },
   "powerUser": {
-    "prepaidCommitCredits": 100000,
-    "prepaidInvoiceCents": 100000,
+    "prepaidCommitCredits": 1000000,
+    "prepaidInvoiceCents": 1000000,
     "termMonths": 12,
     "seatCount": 5,
-    "seatMonthlyCredits": 2000,
-    "seatMonthlyPriceCents": 250000,
+    "seatMonthlyCredits": 10000,
+    "seatMonthlyPriceCents": 100000,
     "usageMultiplier": 0.85
   },
   "rateCard": {

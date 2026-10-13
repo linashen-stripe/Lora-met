@@ -68,9 +68,9 @@ Usage before that boundary remains on Free.
 8. Demonstrate low-balance alerting and auto top-up.
 9. Open the Stripe customer delivered through Metronome.
 10. Open the Metronome contract and explain:
-    - 100,000 Generation Credit prepaid commitment ($1,000) over 12 months
+    - 1,000,000 Generation Credit prepaid commitment ($10,000) over 12 months
     - Five seats
-    - $2,000 monthly credits per seat
+    - $1,000 monthly seat price with 10,000 Generation Credits per seat
     - Monthly credits burn before the prepaid commitment
     - 15% negotiated generation-rate discount
 

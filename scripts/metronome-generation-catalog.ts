@@ -473,12 +473,17 @@ async function seed(
       entitled: true,
     });
   }
+  const enterpriseSeatRate = currentRates.find(
+    (current) =>
+      current.product_id === productIds.enterpriseSubscription &&
+      current.billing_frequency === 'MONTHLY',
+  );
+  const enterpriseSeatRateStartingAt = new Date();
+  enterpriseSeatRateStartingAt.setUTCMinutes(0, 0, 0);
   if (
-    !currentRates.some(
-      (current) =>
-        current.product_id === productIds.enterpriseSubscription &&
-        current.billing_frequency === 'MONTHLY',
-    )
+    !enterpriseSeatRate ||
+    Number(enterpriseSeatRate.rate?.price) !==
+      manifest.powerUser.seatMonthlyPriceCents
   ) {
     ratesToAdd.push({
       product_id: productIds.enterpriseSubscription,
@@ -486,7 +491,9 @@ async function seed(
       price: manifest.powerUser.seatMonthlyPriceCents,
       credit_type_id: USD_CREDIT_TYPE_ID,
       billing_frequency: 'MONTHLY',
-      starting_at: '2020-01-01T00:00:00.000Z',
+      starting_at: enterpriseSeatRate
+        ? enterpriseSeatRateStartingAt.toISOString()
+        : '2020-01-01T00:00:00.000Z',
       entitled: true,
     });
   }

@@ -26,7 +26,8 @@
 - Admin cleanup safely lists demo customers from both modes while excluding unrelated customers.
 - Power-user creation has an explicit Lora Generate / AI Builder selector; it does not depend on the currently selected demo mode.
 - AI Builder power users retain the original B2B contract structure.
-- Generation power users now use the same B2B structure with Generation-specific primitives: a 12-month 100,000 Generation Credit prepaid commitment (`$1,000` invoice), five seats, 2,000 recurring monthly credits per seat, a 0.85 usage multiplier, and deterministic multi-user/project Generation usage.
+- Generation power users use the same B2B structure with Generation-specific primitives: a 12-month 1,000,000 Generation Credit prepaid commitment (`$10,000` invoice), five `$1,000/month` seats, 10,000 recurring monthly credits per seat, a 0.85 usage multiplier, and deterministic multi-user/project Generation usage.
+- Power-user usage is intentionally uneven across seats and targets 5% of the total pool so high-usage seats can reach pooled commitment while lower-usage seats retain visible balances.
 - Added and seeded the `Lora Generate - Enterprise Seat` subscription product and its monthly rate. Existing packages and rate card IDs were retained.
 - TypeScript and focused lint checks pass.
 - The production build passes with only the existing repository warnings.
@@ -34,7 +35,7 @@
 
 ## Next task
 
-- Run one Generation power-user creation from `/en/admin/cleanup-environment` and verify its Metronome contract, Stripe invoice delivery, five seats, recurring seat credits, 0.85 override, and seeded usage. This was not run automatically because it creates real test customers/contracts/invoices.
+- Create a fresh Generation power user from `/en/admin/cleanup-environment` and verify its Metronome contract, Stripe invoice delivery, five seats, recurring seat credits, 0.85 override, and seeded usage. A customer created before the 2026-10-13 pricing correction retains its original contract and should be cleaned up rather than treated as the expected result.
 - Visually verify the Generation pricing page shows Free, Pro, and Enterprise correctly.
 - Test a fresh Generation customer through Free → Pro; existing legacy customers retain their old 8,000-credit contracts.
 - Consider blocking auto top-up for legacy Generation contracts because their old rate card used the incorrect conversion.

@@ -76,9 +76,9 @@ The Enterprise example is a 12-month, $100,000 prepaid commitment with five seat
 - Fix the upgrade defect by ending Free and starting Premium at the same exact timestamp. Never archive Free and backdate Premium; usage before the boundary must remain on Free.
 - Seed deterministic generation usage within Metronome's ingestion window for healthy, at-risk, burst, multi-user, and multi-project stories.
 - Configure Enterprise with:
-  - 100,000 Generation Credit prepaid commitment ($1,000) over 12 months
+  - 1,000,000 Generation Credit prepaid commitment ($10,000) over 12 months
   - Five seats
-  - $2,000 recurring monthly credits per seat
+  - $1,000 monthly seat price with 10,000 recurring Generation Credits per seat
   - Monthly credits at a lower burn priority than the prepaid commitment
   - A 0.85 usage multiplier
 
