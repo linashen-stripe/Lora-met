@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 type StarterMode = 'plan' | 'seed' | 'reset';
-type PricingMetric = 'image' | 'video';
+type PricingMetric = 'image' | 'video' | '3d';
 type PricingDimension = {
   propertyKey: string;
   values: Array<{ value: string; multiplier: number }>;
@@ -87,14 +87,14 @@ function normalizePricingDimension(value: unknown): PricingDimension | null {
   const rawMetrics = Array.isArray(candidate.metrics) ? candidate.metrics : [];
   const metrics = rawMetrics.filter(
     (metric): metric is PricingMetric =>
-      metric === 'image' || metric === 'video',
+      metric === 'image' || metric === 'video' || metric === '3d',
   );
   if (
     metrics.length === 0 ||
     metrics.length !== rawMetrics.length ||
     new Set(metrics).size !== metrics.length
   ) {
-    throw new Error('Select Image, Video, or both for custom pricing.');
+    throw new Error('Select Image, Video, 3D, or a combination for custom pricing.');
   }
   return { propertyKey, values, metrics };
 }

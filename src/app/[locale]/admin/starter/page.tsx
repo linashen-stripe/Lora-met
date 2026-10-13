@@ -12,13 +12,34 @@ import {
   Trash2,
 } from 'lucide-react';
 import TerminalPanel from '@/components/admin/TerminalPanel';
+import {
+  METRONOME_STARTER_KIT,
+  StarterMetricKey,
+} from '@/config/metronomeStarterKit';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 
 type StarterMode = 'plan' | 'seed' | 'reset';
-type PricingMetric = 'image' | 'video';
+type PricingMetric = 'image' | 'video' | '3d';
 type PricingValue = { value: string; multiplier: string };
+type StarterPackage =
+  | {
+      key: 'quickstart';
+      includedCredits: number;
+      prepaidInvoiceCents: number;
+    }
+  | {
+      key: 'pro';
+      monthlyCredits: number;
+      monthlyPriceCents: number;
+    }
+  | {
+      key: 'power-user';
+      annualCommitCredits: number;
+      annualCommitCents: number;
+      seatCount: number;
+    };
 const RESERVED_PROPERTY_KEYS = new Set([
   'quantity',
   'modality',
@@ -29,6 +50,22 @@ const RESERVED_PROPERTY_KEYS = new Set([
   'user_id',
   'customer_id',
 ]);
+
+function packageSummary(pkg: StarterPackage): string {
+  if (pkg.key === 'quickstart') {
+    return `${pkg.includedCredits.toLocaleString()} credits · $${(
+      pkg.prepaidInvoiceCents / 100
+    ).toLocaleString()} prepaid`;
+  }
+  if (pkg.key === 'pro') {
+    return `${pkg.monthlyCredits.toLocaleString()} credits/month · $${(
+      pkg.monthlyPriceCents / 100
+    ).toLocaleString()}/month`;
+  }
+  return `${pkg.annualCommitCredits.toLocaleString()} credits · $${(
+    pkg.annualCommitCents / 100
+  ).toLocaleString()} annual commit · ${pkg.seatCount} seats`;
+}
 
 export default function MetronomeStarterPage() {
   const { settings } = useConfigContext();
@@ -49,6 +86,7 @@ export default function MetronomeStarterPage() {
   const [pricingMetrics, setPricingMetrics] = useState<PricingMetric[]>([
     'image',
     'video',
+    '3d',
   ]);
   const [running, setRunning] = useState<StarterMode | null>(null);
   const [resetConfirming, setResetConfirming] = useState(false);
@@ -82,7 +120,7 @@ export default function MetronomeStarterPage() {
       return 'Every rate multiplier must be greater than zero.';
     }
     if (pricingMetrics.length === 0) {
-      return 'Select Image, Video, or both.';
+      return 'Select Image, Video, 3D, or a combination.';
     }
     return null;
   })();
@@ -98,6 +136,50 @@ export default function MetronomeStarterPage() {
           metrics: pricingMetrics,
         }
       : null;
+
+  const resolvedPrefix = resourcePrefix.trim() || 'Generate';
+  const reviewConfig = {
+    ...METRONOME_STARTER_KIT,
+    rateCard: {
+      ...METRONOME_STARTER_KIT.rateCard,
+      name: `${resolvedPrefix} - Standard Rate Card`,
+    },
+    metrics: METRONOME_STARTER_KIT.metrics.map((metric) => ({
+      ...metric,
+      name: `${resolvedPrefix} - ${
+        metric.key === 'image'
+          ? 'Image Generations'
+          : metric.key === 'video'
+            ? 'Video Seconds'
+            : '3D Generations'
+      }`,
+    })),
+    products: {
+      creditGrant: `${resolvedPrefix} - Credit Grant`,
+      proSubscription: `${resolvedPrefix} - Pro Subscription`,
+      enterpriseSeat: `${resolvedPrefix} - Enterprise Seat`,
+    },
+    packages: METRONOME_STARTER_KIT.packages.map((pkg) => ({
+      ...pkg,
+      name: `${resolvedPrefix} ${
+        pkg.key === 'quickstart'
+          ? 'Enterprise Quickstart'
+          : pkg.key === 'pro'
+            ? 'Pro'
+            : 'B2B Power User'
+      }`,
+    })),
+    personas: METRONOME_STARTER_KIT.personas.map((persona) => ({
+      ...persona,
+      name:
+        persona.key === 'enterprise-quickstart'
+          ? quickstartName
+          : persona.key === 'pro'
+            ? proName
+            : powerUserName,
+    })),
+    pricingDimension,
+  };
 
   const togglePricingMetric = (metric: PricingMetric) => {
     setPricingMetrics((current) =>
@@ -351,6 +433,7 @@ export default function MetronomeStarterPage() {
                       {[
                         ['image', 'Image Generations'],
                         ['video', 'Video Seconds'],
+                        ['3d', '3D Generations'],
                       ].map(([metric, label]) => (
                         <label
                           key={metric}
@@ -383,6 +466,138 @@ export default function MetronomeStarterPage() {
                 </div>
               )}
             </div>
+
+            <details className='group mt-5 rounded-xl border border-gray-200 bg-gray-50'>
+              <summary className='cursor-pointer list-none px-4 py-3 text-sm font-semibold text-gray-800 marker:hidden'>
+                <span className='flex items-center justify-between'>
+                  Review starter configuration
+                  <span className='text-xs font-normal text-gray-500 group-open:hidden'>
+                    Expand
+                  </span>
+                  <span className='hidden text-xs font-normal text-gray-500 group-open:inline'>
+                    Collapse
+                  </span>
+                </span>
+              </summary>
+              <div className='space-y-5 border-t border-gray-200 px-4 py-4'>
+                <section>
+                  <h3 className='text-xs font-bold uppercase tracking-wide text-gray-500'>
+                    Pricing unit
+                  </h3>
+                  <p className='mt-2 text-sm text-gray-800'>
+                    {METRONOME_STARTER_KIT.pricingUnit.name}: 1 credit = $
+                    {METRONOME_STARTER_KIT.pricingUnit.fiatPerCustomCredit}
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className='text-xs font-bold uppercase tracking-wide text-gray-500'>
+                    Usage metrics and base rates
+                  </h3>
+                  <div className='mt-2 space-y-3'>
+                    {METRONOME_STARTER_KIT.metrics.map((metric) => {
+                      const metricKey = metric.key as StarterMetricKey;
+                      const displayName = `${resolvedPrefix} - ${
+                        metricKey === 'image'
+                          ? 'Image Generations'
+                          : metricKey === 'video'
+                            ? 'Video Seconds'
+                            : '3D Generations'
+                      }`;
+                      return (
+                        <div
+                          key={metric.key}
+                          className='rounded-lg border border-gray-200 bg-white p-3'
+                        >
+                          <p className='text-sm font-semibold text-gray-900'>
+                            {displayName}
+                          </p>
+                          <div className='mt-1 space-y-1 text-xs text-gray-600'>
+                            {METRONOME_STARTER_KIT.rates
+                              .filter((rate) => rate.metric === metric.key)
+                              .map((rate) => (
+                                <p
+                                  key={`${rate.operation}:${rate.model}`}
+                                  className='font-mono'
+                                >
+                                  {rate.operation} · {rate.model} ·{' '}
+                                  {rate.creditsPerUnit} credits/unit
+                                </p>
+                              ))}
+                          </div>
+                          <p className='mt-2 text-xs text-violet-700'>
+                            {pricingDimension?.metrics.includes(metricKey)
+                              ? `${pricingDimension.propertyKey}: ${pricingDimension.values
+                                  .map(
+                                    (entry) =>
+                                      `${entry.value} ×${entry.multiplier}`,
+                                  )
+                                  .join(', ')}`
+                              : 'No custom pricing property'}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className='text-xs font-bold uppercase tracking-wide text-gray-500'>
+                    Packages
+                  </h3>
+                  <div className='mt-2 space-y-2'>
+                    {METRONOME_STARTER_KIT.packages.map((pkg) => (
+                      <div key={pkg.key} className='text-sm'>
+                        <p className='font-semibold text-gray-900'>
+                          {resolvedPrefix}{' '}
+                          {pkg.key === 'quickstart'
+                            ? 'Enterprise Quickstart'
+                            : pkg.key === 'pro'
+                              ? 'Pro'
+                              : 'B2B Power User'}
+                        </p>
+                        <p className='text-xs text-gray-600'>
+                          {packageSummary(pkg as StarterPackage)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className='text-xs font-bold uppercase tracking-wide text-gray-500'>
+                    Example customers and usage
+                  </h3>
+                  <div className='mt-2 space-y-1 text-sm text-gray-700'>
+                    {METRONOME_STARTER_KIT.personas.map((persona) => {
+                      const displayName =
+                        persona.key === 'enterprise-quickstart'
+                          ? quickstartName
+                          : persona.key === 'pro'
+                            ? proName
+                            : powerUserName;
+                      return (
+                        <p key={persona.key}>
+                          <span className='font-semibold'>{displayName}</span>
+                          {' · '}
+                          {(persona.usageScale * 21).toLocaleString()} sample
+                          events
+                        </p>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <details className='rounded-lg border border-gray-200 bg-white'>
+                  <summary className='cursor-pointer px-3 py-2 text-xs font-semibold text-gray-700'>
+                    View resolved JSON
+                  </summary>
+                  <pre className='max-h-80 overflow-auto border-t border-gray-200 p-3 text-[11px] leading-5 text-gray-700'>
+                    {JSON.stringify(reviewConfig, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            </details>
 
             <div className='mt-5 grid grid-cols-2 gap-3'>
               <button

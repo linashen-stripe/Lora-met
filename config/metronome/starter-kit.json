@@ -21,6 +21,11 @@
       "key": "video",
       "name": "Generate - Video Seconds",
       "modality": "video"
+    },
+    {
+      "key": "3d",
+      "name": "Generate - 3D Generations",
+      "modality": "3d"
     }
   ],
   "rates": [
@@ -41,6 +46,18 @@
       "operation": "text_to_video",
       "model": "video-standard-v1",
       "creditsPerUnit": 5
+    },
+    {
+      "metric": "3d",
+      "operation": "image_to_3d",
+      "model": "mesh-standard-v1",
+      "creditsPerUnit": 20
+    },
+    {
+      "metric": "3d",
+      "operation": "image_to_3d_with_texture",
+      "model": "mesh-premium-v1",
+      "creditsPerUnit": 50
     }
   ],
   "products": {

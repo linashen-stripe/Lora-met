@@ -6,7 +6,7 @@ import Metronome from '@metronome/sdk';
 const ROOT = process.cwd();
 const CONFIG_PATH = resolve(ROOT, 'config/metronome/starter-kit.json');
 
-type MetricKey = 'image' | 'video';
+type MetricKey = 'image' | 'video' | '3d';
 type PackageKey = 'quickstart' | 'pro' | 'power-user';
 type PricingDimension = {
   propertyKey: string;
@@ -103,7 +103,7 @@ Usage:
 Optional custom pricing property:
   --pricing-property=service_tier
   --pricing-values=standard:1,priority:1.25
-  --pricing-metrics=image,video
+  --pricing-metrics=image,video,3d
   --validate-config
 
 Modes:
@@ -228,13 +228,14 @@ function validatePricingDimension(value: unknown): PricingDimension | null {
     throw new Error('Pricing property values must be unique.');
   }
   if (!Array.isArray(candidate.metrics)) {
-    throw new Error('Pricing property must select Image, Video, or both.');
+    throw new Error('Pricing property must select Image, Video, 3D, or a combination.');
   }
   const metrics = [...new Set(candidate.metrics)].filter(
-    (metric): metric is MetricKey => metric === 'image' || metric === 'video',
+    (metric): metric is MetricKey =>
+      metric === 'image' || metric === 'video' || metric === '3d',
   );
   if (metrics.length === 0 || metrics.length !== candidate.metrics.length) {
-    throw new Error('Pricing metrics must contain Image, Video, or both.');
+    throw new Error('Pricing metrics must contain Image, Video, 3D, or a combination.');
   }
   return { propertyKey, values, metrics };
 }
@@ -332,6 +333,7 @@ function applyStarterOverrides(config: StarterConfig): StarterConfig {
   const metricNames: Record<MetricKey, string> = {
     image: `${prefix} - Image Generations`,
     video: `${prefix} - Video Seconds`,
+    '3d': `${prefix} - 3D Generations`,
   };
   return {
     ...config,

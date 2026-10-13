@@ -39,19 +39,19 @@ page includes an optional custom pricing-property editor.
 ## Custom pricing property
 
 A starter catalog can include one custom event property with two to four
-values, rate multipliers, and an Image/Video scope. For example, this creates
-`service_tier: standard | priority` on both usage products:
+values, rate multipliers, and an Image/Video/3D scope. For example, this creates
+`service_tier: standard | priority` on all three usage products:
 
 ```bash
 npm run starter:plan -- \
   --pricing-property=service_tier \
   --pricing-values=standard:1,priority:1.25 \
-  --pricing-metrics=image,video
+  --pricing-metrics=image,video,3d
 
 npm run starter:seed -- \
   --pricing-property=service_tier \
   --pricing-values=standard:1,priority:1.25 \
-  --pricing-metrics=image,video
+  --pricing-metrics=image,video,3d
 ```
 
 The property is added only to the selected billable metrics, usage products,
@@ -88,7 +88,7 @@ with the same resource prefix, then seed the new definition.
   five seats at $1,000 per month, 10,000 monthly credits per seat, and a 0.85
   usage multiplier.
 
-All personas receive deterministic image and video Generation usage with
+All personas receive deterministic image, video, and 3D Generation usage with
 model, operation, workspace, project, and user dimensions. Transaction IDs
 are deterministic, so reruns within Metronome's deduplication window do not
 double-count usage.
@@ -109,3 +109,7 @@ After a successful seed, IDs are written under
 `.metronome/starter/<account-scope>/state.json`. `.metronome/` is ignored by
 git, and the account scope is a one-way API-key fingerprint; credentials are
 never written to state.
+
+The admin page includes a collapsed **Review starter configuration** section
+with the resolved metrics, base rates, package terms, customer names, usage
+volume, custom-property variants, and optional JSON.
