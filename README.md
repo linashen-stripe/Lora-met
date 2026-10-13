@@ -58,6 +58,16 @@ npm run metronome:generation:cleanup -- --apply --confirm=lora-generate
 Add `--include-customers` to preview or archive customers whose name starts with
 `[Lora Generate]` or whose ingest alias starts with `generate:`.
 
+## Metronome Starter Kit
+
+To prepare a separate Metronome account as a generic starting point, use the
+Starter Seed page under Settings or the isolated CLI workflow. It creates a
+Metronome-only Generation catalog, Quickstart, Pro, and B2B example customers,
+contracts, and representative usage without requiring Stripe.
+
+See [the Starter Kit guide](docs/METRONOME_STARTER.md) for credentials, preview,
+seed, optional peak/off-peak pricing, and namespace-scoped reset commands.
+
 ## Demo paths
 
 - Switch modes from the Demo tab in the left Tools panel.

@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "namespace": "metronome-starter",
+  "eventType": "generation.completed",
+  "timezone": "America/Los_Angeles",
+  "fiatCurrency": "USD",
+  "peakWindow": {
+    "weekdays": [1, 2, 3, 4, 5],
+    "startHour": 9,
+    "endHour": 17
+  },
+  "pricingUnit": {
+    "name": "Starter Generation Credits",
+    "fiatPerCustomCredit": 0.01
+  },
+  "rateCard": {
+    "name": "Generate - Standard Rate Card",
+    "alias": "metronome-starter-generation-v1"
+  },
+  "metrics": [
+    {
+      "key": "image",
+      "name": "Generate - Image Generations",
+      "modality": "image"
+    },
+    {
+      "key": "video",
+      "name": "Generate - Video Seconds",
+      "modality": "video"
+    }
+  ],
+  "rates": [
+    {
+      "metric": "image",
+      "operation": "text_to_image",
+      "model": "image-standard-v1",
+      "creditsPerUnit": 10
+    },
+    {
+      "metric": "image",
+      "operation": "text_to_image",
+      "model": "image-premium-v1",
+      "creditsPerUnit": 40
+    },
+    {
+      "metric": "video",
+      "operation": "text_to_video",
+      "model": "video-standard-v1",
+      "creditsPerUnit": 5
+    }
+  ],
+  "products": {
+    "creditGrant": "Generate - Credit Grant",
+    "proSubscription": "Generate - Pro Subscription",
+    "enterpriseSeat": "Generate - Enterprise Seat"
+  },
+  "packages": [
+    {
+      "key": "quickstart",
+      "name": "Generate Enterprise Quickstart",
+      "includedCredits": 100000,
+      "prepaidInvoiceCents": 100000
+    },
+    {
+      "key": "pro",
+      "name": "Generate Pro",
+      "monthlyCredits": 1000,
+      "monthlyPriceCents": 2000
+    },
+    {
+      "key": "power-user",
+      "name": "Generate B2B Power User",
+      "annualCommitCredits": 1000000,
+      "annualCommitCents": 1000000,
+      "seatCount": 5,
+      "seatMonthlyCents": 100000,
+      "seatMonthlyCredits": 10000,
+      "usageMultiplier": 0.85
+    }
+  ],
+  "personas": [
+    {
+      "key": "enterprise-quickstart",
+      "name": "Enterprise Quickstart",
+      "package": "quickstart",
+      "ingestAlias": "metronome-starter:enterprise-quickstart",
+      "usageScale": 20
+    },
+    {
+      "key": "pro",
+      "name": "Pro",
+      "package": "pro",
+      "ingestAlias": "metronome-starter:pro",
+      "usageScale": 1
+    },
+    {
+      "key": "b2b-power-user",
+      "name": "B2B Power User",
+      "package": "power-user",
+      "ingestAlias": "metronome-starter:b2b-power-user",
+      "usageScale": 200
+    }
+  ]
+}

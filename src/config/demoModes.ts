@@ -26,7 +26,12 @@ export const DEMO_MODES: Record<DemoMode, DemoModeDefinition> = {
         'Generate Premium',
         'Lora Generate Premium',
       ],
-      enterprise: ['Generate Enterprise', 'Lora Generate Enterprise'],
+      enterprise: [
+        'Generate Enterprise',
+        'Lora Generate Enterprise',
+        'Generate Enterprise Quickstart',
+        'Generate B2B Power User',
+      ],
     },
   },
   'ai-builder': {

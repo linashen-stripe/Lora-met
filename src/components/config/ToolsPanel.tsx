@@ -61,13 +61,22 @@ export default function ToolsPanel() {
           {activeTab === 'Demo' && (
             <>
               <DemoModeSwitcher locale={settings.language || 'en'} />
-              <Link
-                href={`/${settings.language || 'en'}/admin/cleanup-environment`}
-                className='mt-4 block w-full rounded-md border border-gray-300 px-4 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
-                onClick={() => toggleToolsPanel('isToolsPanelOpen')}
-              >
-                Admin: clean &amp; seed data
-              </Link>
+              <div className='mt-4 space-y-2'>
+                <Link
+                  href={`/${settings.language || 'en'}/admin/starter`}
+                  className='block w-full rounded-md border border-purple/30 bg-purple/5 px-4 py-2 text-center text-sm font-medium text-purple transition-colors hover:bg-purple/10'
+                  onClick={() => toggleToolsPanel('isToolsPanelOpen')}
+                >
+                  Admin: seed a new account
+                </Link>
+                <Link
+                  href={`/${settings.language || 'en'}/admin/cleanup-environment`}
+                  className='block w-full rounded-md border border-gray-300 px-4 py-2 text-center text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50'
+                  onClick={() => toggleToolsPanel('isToolsPanelOpen')}
+                >
+                  Admin: cleanup &amp; power users
+                </Link>
+              </div>
             </>
           )}
           {activeTab === 'Appearance' && <AppearanceTab />}
