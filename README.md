@@ -38,32 +38,30 @@ Store secrets in the ignored `.env` or `.env.local`; never commit them.
 
 ## Generation catalog
 
-The desired Metronome catalog is declared in
-`config/metronome/generation-catalog.json`. Commands are dry-run by default:
+The Generation app and account starter share one canonical manifest:
+`config/metronome/starter-kit.json`. Commands are dry-run by default:
 
 ```bash
-npm run metronome:generation:plan
-npm run metronome:generation:seed
-npm run metronome:generation:cleanup
+npm run starter:plan
+npm run starter:seed
+npm run starter:reset
 ```
 
-Seeding is idempotent and writes account-specific IDs to the ignored
-`.metronome/generation-state.json`. Cleanup only targets namespaced Lora Generate
-resources. To apply cleanup after reviewing the preview:
+Seeding writes account-specific IDs to the ignored
+`.metronome/starter/<account-scope>/state.json`. Reset targets only
+starter-owned aliases and namespaced resources. Apply it after reviewing the
+preview:
 
 ```bash
-npm run metronome:generation:cleanup -- --apply --confirm=lora-generate
+npm run starter:reset -- --confirm=metronome-starter
 ```
-
-Add `--include-customers` to preview or archive customers whose name starts with
-`[Lora Generate]` or whose ingest alias starts with `generate:`.
 
 ## Metronome Starter Kit
 
-To prepare a separate Metronome account as a generic starting point, use the
-Starter Seed page under Settings or the isolated CLI workflow. It creates a
-Metronome-only Generation catalog, Quickstart, Pro, and B2B example customers,
-contracts, and representative usage without requiring Stripe.
+Use the Starter Seed page under Settings or the CLI workflow. Metronome-only is
+the default. The admin page can optionally use a matching `sk_test_` key to
+create linked Stripe test customers, payment methods, invoice routing, and
+payment while keeping credentials memory-only.
 
 See [the Starter Kit guide](docs/METRONOME_STARTER.md) for credentials, preview,
 seed, optional custom pricing properties, and namespace-scoped reset commands.

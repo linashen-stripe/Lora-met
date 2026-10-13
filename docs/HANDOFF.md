@@ -1,5 +1,29 @@
 # Handoff — 2026-10-13
 
+## Latest unified starter update
+
+- `config/metronome/starter-kit.json` is now the single canonical Generation
+  manifest used by both the app and account starter; the duplicate generation
+  manifest/script were removed.
+- Resource names use a configurable prefix that defaults to `Lora Generate`.
+- The starter CLI and admin route share the in-process engine in
+  `src/server/metronomeStarter/`.
+- Metronome-only remains the default. The admin page optionally accepts a
+  memory-only `sk_test_` key and delivery method ID for linked Stripe test
+  customers, payment methods, billing configurations, Pro invoice-gated
+  auto-top-up, invoice settlement, tracing, and state-owned cleanup.
+- State now records billing mode, prefix, Stripe account/delivery method,
+  Stripe customer IDs, billing configurations, and recovery checkpoints—never
+  credentials.
+- Canonical migration checkpoint: `5b43c82`.
+- Configuration validation, TypeScript, focused ESLint, IDE diagnostics, and
+  production build pass. Browser verification was blocked by the workspace MCP
+  allowlist; no target-account seed was run automatically.
+- Next: use the temporary account from **Settings → Admin: seed a new account**
+  to preview, reset its prior starter seed if needed, then exercise fresh
+  Metronome-only and optional Stripe-assisted seed/reset before seeding the
+  account intended for sharing.
+
 ## Completed
 
 - Unified AI Builder and Generation demo flows.

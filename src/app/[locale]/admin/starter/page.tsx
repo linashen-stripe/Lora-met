@@ -76,6 +76,9 @@ export default function MetronomeStarterPage() {
   const [resourcePrefix, setResourcePrefix] = useState(
     METRONOME_STARTER_KIT.resourcePrefix,
   );
+  const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [stripeSecretKey, setStripeSecretKey] = useState('');
+  const [deliveryMethodId, setDeliveryMethodId] = useState('');
   const [quickstartName, setQuickstartName] = useState('Enterprise Quickstart');
   const [proName, setProName] = useState('Pro');
   const [powerUserName, setPowerUserName] = useState('B2B Power User');
@@ -187,6 +190,17 @@ export default function MetronomeStarterPage() {
             : powerUserName,
     })),
     pricingDimension,
+    billing: {
+      mode: stripeEnabled ? 'Stripe-assisted test billing' : 'Metronome-only',
+      deliveryMethodId: deliveryMethodId.trim() || 'Auto-select when unique',
+      paymentGate: stripeEnabled ? 'Stripe invoice' : 'None',
+      customerSetup: stripeEnabled
+        ? 'Stripe test customer + test card + Metronome billing link'
+        : 'Metronome customer only',
+      cleanup: stripeEnabled
+        ? 'Archive starter Metronome resources and delete state-owned Stripe customers when the same test key is supplied'
+        : 'Archive starter Metronome resources',
+    },
   };
 
   const togglePricingMetric = (metric: PricingMetric) => {
@@ -211,6 +225,10 @@ export default function MetronomeStarterPage() {
 
   const run = async (mode: StarterMode, confirmReset = false) => {
     if (!apiKey.trim() || running) return;
+    if (stripeEnabled && !stripeSecretKey.trim()) {
+      appendLine('✗ Enter a Stripe test secret key or turn off Stripe billing.');
+      return;
+    }
     if (mode !== 'reset' && pricingPropertyError) {
       appendLine(`✗ ${pricingPropertyError}`);
       return;
@@ -238,6 +256,10 @@ export default function MetronomeStarterPage() {
           quickstartName,
           proName,
           powerUserName,
+          stripeSecretKey: stripeEnabled ? stripeSecretKey.trim() : undefined,
+          deliveryMethodId: stripeEnabled
+            ? deliveryMethodId.trim()
+            : undefined,
         }),
       });
       await consumeNdjsonStream(response, (message) => {
@@ -266,9 +288,9 @@ export default function MetronomeStarterPage() {
               Metronome Starter Seed
             </h1>
             <p className='mt-3 max-w-3xl text-sm text-muted-foreground'>
-              Prepare a new Metronome-only account with a generic Generation
-              catalog and three example customers. The target key is used only
-              for this job and is not saved.
+              Prepare a new account with the canonical Generation catalog and
+              three example customers. Keys are used only for this job and are
+              never saved in the browser or environment files.
             </p>
           </div>
           <Link
@@ -306,6 +328,53 @@ export default function MetronomeStarterPage() {
               onChange={(event) => setResourcePrefix(event.target.value)}
               className='mt-2 w-full rounded-lg border border-gray-300 px-3 py-2'
             />
+
+            <div className='mt-5 rounded-xl border border-gray-200 p-4'>
+              <label className='flex items-start gap-3'>
+                <input
+                  type='checkbox'
+                  checked={stripeEnabled}
+                  onChange={(event) => setStripeEnabled(event.target.checked)}
+                  className='mt-1'
+                />
+                <span>
+                  <span className='block text-sm font-semibold text-gray-900'>
+                    Stripe-assisted test billing
+                  </span>
+                  <span className='mt-1 block text-xs text-gray-600'>
+                    Optional. Requires a connected matching Stripe test account.
+                  </span>
+                </span>
+              </label>
+              {stripeEnabled && (
+                <div className='mt-4 space-y-3 border-t pt-4'>
+                  <label className='block text-sm font-medium text-gray-700'>
+                    Stripe test secret key
+                    <input
+                      type='password'
+                      value={stripeSecretKey}
+                      onChange={(event) =>
+                        setStripeSecretKey(event.target.value)
+                      }
+                      autoComplete='off'
+                      placeholder='sk_test_…'
+                      className='mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm'
+                    />
+                  </label>
+                  <label className='block text-sm font-medium text-gray-700'>
+                    Delivery method ID
+                    <input
+                      value={deliveryMethodId}
+                      onChange={(event) =>
+                        setDeliveryMethodId(event.target.value)
+                      }
+                      placeholder='Optional when exactly one is connected'
+                      className='mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm'
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
 
             <div className='mt-4 grid gap-3 sm:grid-cols-3'>
               {[
@@ -643,6 +712,7 @@ export default function MetronomeStarterPage() {
                 onClick={() => run('plan')}
                 disabled={
                   !apiKey.trim() ||
+                  (stripeEnabled && !stripeSecretKey.trim()) ||
                   running !== null ||
                   Boolean(pricingPropertyError)
                 }
@@ -655,6 +725,7 @@ export default function MetronomeStarterPage() {
                 onClick={() => run('seed')}
                 disabled={
                   !apiKey.trim() ||
+                  (stripeEnabled && !stripeSecretKey.trim()) ||
                   running !== null ||
                   Boolean(pricingPropertyError)
                 }
@@ -676,7 +747,11 @@ export default function MetronomeStarterPage() {
                     : setResetConfirming(true)
                 }
                 onBlur={() => setResetConfirming(false)}
-                disabled={!apiKey.trim() || running !== null}
+                disabled={
+                  !apiKey.trim() ||
+                  (stripeEnabled && !stripeSecretKey.trim()) ||
+                  running !== null
+                }
                 className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 ${
                   resetConfirming ? 'bg-red-600' : 'bg-gray-700'
                 }`}
@@ -687,7 +762,9 @@ export default function MetronomeStarterPage() {
                   : 'Reset starter resources'}
               </button>
               <p className='mt-2 text-xs text-gray-500'>
-                Reset only archives resources carrying the starter namespace.
+                Reset archives namespaced Metronome resources. With Stripe
+                enabled, it also deletes only customer IDs recorded by this
+                starter; finalized test invoices remain historical.
               </p>
             </div>
           </section>

@@ -1,9 +1,9 @@
 # Metronome Starter Kit CLI
 
-This is an isolated, Metronome-only starter flow. It does not modify or reuse
-the existing Lora-named catalog, and it does not create Stripe customers,
-billing-provider configurations, delivery methods, or Stripe-delivered
-invoices.
+This starter and the Generation app use the same canonical manifest,
+`config/metronome/starter-kit.json`. The configurable resource prefix defaults
+to `Lora Generate`. Metronome-only remains the default; Stripe test billing is
+optional.
 
 ## Credentials
 
@@ -11,6 +11,9 @@ Create the ignored file `.env.metronome-target.local`:
 
 ```dotenv
 METRONOME_API_KEY=...
+# Optional full billing seed:
+STRIPE_SECRET_KEY=sk_test_...
+METRONOME_DELIVERY_METHOD_ID=...
 ```
 
 The starter npm scripts only load this file. They do not read or modify `.env`.
@@ -34,7 +37,9 @@ npm run starter:reset -- --confirm=metronome-starter
 The same workflow is available in the app under **Settings → Admin: seed a
 new account**. The API key entered there is kept only in page memory for the
 current job and is never written to local storage or an environment file. The
-page includes an optional custom pricing-property editor.
+page includes an optional custom pricing-property editor, resource prefix, and
+Stripe-assisted test-billing controls. Keys remain in page memory and are never
+written to browser storage or `.env`.
 
 ## Custom pricing property
 
@@ -124,13 +129,23 @@ model, quality, operation, workspace, project, and user dimensions. Transaction 
 are deterministic, so reruns within Metronome's deduplication window do not
 double-count usage.
 
-Because this starter intentionally creates no billing-provider configuration,
-its invoices stay in Metronome. Connect and configure a billing provider
-separately if the target account should collect payment externally.
+In Metronome-only mode, invoices stay in Metronome and the Pro threshold
+recharge uses `payment_gate_type: NONE`.
 
-The Pro threshold recharge uses `payment_gate_type: NONE`, so it can create the
-top-up commit without Stripe. Its invoice remains internal to Metronome and is
-not externally collected until a billing provider flow is added.
+With a Stripe test key, the starter first verifies the key is test mode and
+that its Stripe account ID matches the selected Metronome delivery method. If
+several Stripe methods are connected, explicitly provide
+`METRONOME_DELIVERY_METHOD_ID` or select it in the admin page. The starter then:
+
+- creates one state-owned Stripe test customer and default test card per persona;
+- links each Metronome customer with the existing tax-provider fallback;
+- routes package and direct contracts through the linked billing configuration;
+- creates Pro with a Stripe invoice payment gate; and
+- finalizes and pays generated test invoices when they become available.
+
+Do not put a live Stripe key in this flow; only `sk_test_` keys are accepted.
+Switching an existing seed between billing modes requires reset and reseed
+because the package payment gate is part of the package definition.
 
 ## Ownership and state
 
@@ -161,7 +176,14 @@ alias, so contracts that omit their uniqueness key are still cleaned up.
 After a successful seed, IDs are written under
 `.metronome/starter/<account-scope>/state.json`. `.metronome/` is ignored by
 git, and the account scope is a one-way API-key fingerprint; credentials are
-never written to state.
+never written to state. Stripe-assisted runs journal the Stripe account,
+delivery method, owned customer IDs, billing configurations, and completion
+checkpoints after each cross-system step so a partial run can resume.
+
+Reset always previews both systems. Confirmed reset archives starter-owned
+Metronome contracts/customers/catalog resources. When the matching Stripe test
+key is supplied, it also deletes only Stripe customer IDs recorded in state.
+Finalized Stripe test invoices remain historical and cannot be made unpaid.
 
 The admin page includes a collapsed **Review starter configuration** section
 with the resolved metrics, base rates, package terms, customer names, usage
