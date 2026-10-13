@@ -7,7 +7,7 @@ const ROOT = process.cwd();
 const CONFIG_PATH = resolve(ROOT, 'config/metronome/starter-kit.json');
 
 type MetricKey = 'image' | 'video' | '3d';
-type PackageKey = 'quickstart' | 'pro' | 'power-user';
+type PackageKey = 'free' | 'quickstart' | 'pro';
 type PricingDimension = {
   propertyKey: string;
   values: Array<{ value: string; multiplier: number }>;
@@ -35,6 +35,11 @@ type StarterConfig = {
   };
   packages: Array<
     | {
+        key: 'free';
+        name: string;
+        includedCredits: number;
+      }
+    | {
         key: 'quickstart';
         name: string;
         includedCredits: number;
@@ -47,21 +52,22 @@ type StarterConfig = {
         monthlyCredits: number;
         monthlyPriceCents: number;
       }
-    | {
-        key: 'power-user';
-        name: string;
-        annualCommitCredits: number;
-        annualCommitCents: number;
-        seatCount: number;
-        seatMonthlyCents: number;
-        seatMonthlyCredits: number;
-        usageMultiplier: number;
-      }
   >;
+  powerUser: {
+    contractName: string;
+    annualCommitCredits: number;
+    annualCommitCents: number;
+    durationMonths: number;
+    seatCount: number;
+    seatMonthlyCents: number;
+    seatMonthlyCredits: number;
+    usageMultiplier: number;
+  };
   personas: Array<{
     key: string;
     name: string;
-    package: PackageKey;
+    package?: PackageKey;
+    directContract?: 'power-user';
     ingestAlias: string;
     usageScale: number;
   }>;
@@ -371,12 +377,16 @@ function applyStarterOverrides(config: StarterConfig): StarterConfig {
     packages: config.packages.map((pkg) => ({
       ...pkg,
       name:
-        pkg.key === 'quickstart'
-          ? `${prefix} Enterprise Quickstart`
-          : pkg.key === 'pro'
-            ? `${prefix} Pro`
-            : `${prefix} B2B Power User`,
+        pkg.key === 'free'
+          ? `${prefix} Free`
+          : pkg.key === 'quickstart'
+            ? `${prefix} Enterprise Quickstart`
+            : `${prefix} Pro`,
     })) as StarterConfig['packages'],
+    powerUser: {
+      ...config.powerUser,
+      contractName: `${prefix} B2B Power User`,
+    },
     personas: config.personas.map((persona) => ({
       ...persona,
       name: personaNames[persona.key] || persona.name,
@@ -477,6 +487,7 @@ async function discover(client: Metronome, config: StarterConfig) {
       (pkg) =>
         !pkg.archived_at &&
         (packageKeys.has(pkg.uniqueness_key ?? '') ||
+          pkg.uniqueness_key?.startsWith(`package:${config.namespace}:`) ||
           config.packages.some((wanted) => wanted.name === pkg.name)),
     ),
     customers: customers.filter(
@@ -784,10 +795,7 @@ async function ensureCatalog(
     }
   }
 
-  const powerUser = config.packages.find(
-    (pkg): pkg is Extract<(typeof config.packages)[number], { key: 'power-user' }> =>
-      pkg.key === 'power-user',
-  )!;
+  const powerUser = config.powerUser;
   const pro = config.packages.find(
     (pkg): pkg is Extract<(typeof config.packages)[number], { key: 'pro' }> =>
       pkg.key === 'pro',
@@ -881,7 +889,30 @@ async function ensureCatalog(
       );
     }
     let body: any;
-    if (definition.key === 'quickstart') {
+    if (definition.key === 'free') {
+      body = {
+        ...common,
+        credits: [
+          {
+            product_id: productIds.creditGrant,
+            name: 'Free generation credits',
+            priority: 1,
+            rate_type: 'LIST_RATE',
+            applicable_product_ids: usageProductIds,
+            access_schedule: {
+              credit_type_id: pricingUnitId,
+              schedule_items: [
+                {
+                  amount: definition.includedCredits,
+                  starting_at_offset: { value: 0, unit: 'DAYS' },
+                  duration: { value: 10, unit: 'YEARS' },
+                },
+              ],
+            },
+          },
+        ],
+      };
+    } else if (definition.key === 'quickstart') {
       body = {
         ...common,
         duration: { value: definition.durationMonths, unit: 'MONTHS' },
@@ -957,91 +988,6 @@ async function ensureCatalog(
           },
         ],
       };
-    } else {
-      body = {
-        ...common,
-        duration: { value: 12, unit: 'MONTHS' },
-        commits: [
-          {
-            type: 'PREPAID',
-            product_id: productIds.creditGrant,
-            name: 'B2B annual commitment',
-            priority: 1,
-            rate_type: 'LIST_RATE',
-            applicable_product_ids: usageProductIds,
-            access_schedule: {
-              credit_type_id: pricingUnitId,
-              schedule_items: [
-                {
-                  amount: definition.annualCommitCredits,
-                  starting_at_offset: { value: 0, unit: 'DAYS' },
-                  duration: { value: 12, unit: 'MONTHS' },
-                },
-              ],
-            },
-            invoice_schedule: {
-              credit_type_id: fiatCreditTypeId,
-              schedule_items: [
-                {
-                  unit_price: definition.annualCommitCents,
-                  quantity: 1,
-                  date_offset: { value: 0, unit: 'DAYS' },
-                },
-              ],
-            },
-          },
-        ],
-        overrides: [
-          {
-            starting_at_offset: { value: 0, unit: 'DAYS' },
-            override_specifiers: [{ product_tags: ['usage'] }],
-            type: 'MULTIPLIER',
-            multiplier: definition.usageMultiplier,
-          },
-        ],
-        subscriptions: [
-          {
-            name: 'B2B power user seats',
-            collection_schedule: 'ADVANCE',
-            proration: {
-              is_prorated: false,
-              invoice_behavior: 'BILL_ON_NEXT_COLLECTION_DATE',
-            },
-            subscription_rate: {
-              billing_frequency: 'MONTHLY',
-              product_id: productIds.enterpriseSeat,
-            },
-            quantity_management_mode: 'SEAT_BASED',
-            seat_config: {
-              initial_unassigned_seats: definition.seatCount,
-              seat_group_key: 'user_id',
-            },
-            temporary_id: 'power_user_seats',
-          },
-        ],
-        recurring_credits: [
-          {
-            product_id: productIds.creditGrant,
-            name: 'Monthly credits per seat',
-            priority: 2,
-            rate_type: 'LIST_RATE',
-            applicable_product_ids: usageProductIds,
-            recurrence_frequency: 'MONTHLY',
-            starting_at_offset: { value: 0, unit: 'DAYS' },
-            commit_duration: { value: 1, unit: 'PERIODS' },
-            proration: 'NONE',
-            access_amount: {
-              credit_type_id: pricingUnitId,
-              unit_price: definition.seatMonthlyCredits,
-            },
-            subscription_config: {
-              subscription_id: 'power_user_seats',
-              allocation: 'INDIVIDUAL',
-              apply_seat_increase_config: { is_prorated: false },
-            },
-          },
-        ],
-      };
     }
     console.log(`Creating package: ${definition.name}`);
     const response = await client.v1.packages.create(body);
@@ -1050,6 +996,7 @@ async function ensureCatalog(
 
   return {
     pricingUnitId,
+    fiatCreditTypeId,
     metricIds,
     productIds,
     rateCardId,
@@ -1067,7 +1014,7 @@ function hourBoundary(): string {
 async function ensurePersonas(
   client: Metronome,
   config: StarterConfig,
-  packageIds: Record<string, string>,
+  catalog: Awaited<ReturnType<typeof ensureCatalog>>,
 ) {
   const found = await discover(client, config);
   const customerIds: Record<string, string> = {};
@@ -1112,12 +1059,137 @@ async function ensurePersonas(
       continue;
     }
     console.log(`Creating contract: ${persona.name}`);
-    const response = await client.v1.contracts.create({
-      customer_id: customerId,
-      package_id: packageIds[persona.package],
-      starting_at: startingAt,
-      uniqueness_key: uniquenessKey,
-    });
+    let response;
+    if (persona.directContract !== 'power-user') {
+      if (!persona.package) {
+        throw new Error(`Persona "${persona.key}" has no package configured.`);
+      }
+      response = await client.v1.contracts.create({
+        customer_id: customerId,
+        package_id: catalog.packageIds[persona.package],
+        starting_at: startingAt,
+        uniqueness_key: uniquenessKey,
+      });
+    } else {
+      const powerUser = config.powerUser;
+      const endingBeforeDate = new Date(startingAt);
+      endingBeforeDate.setUTCMonth(
+        endingBeforeDate.getUTCMonth() + powerUser.durationMonths,
+      );
+      const endingBefore = endingBeforeDate.toISOString();
+      const usageProductIds = config.metrics.map(
+        (metric) => catalog.productIds[metric.key],
+      );
+      const seatIds = Array.from(
+        { length: powerUser.seatCount },
+        (_, index) => `power-user-seat-${index + 1}`,
+      );
+      response = await client.v1.contracts.create({
+        customer_id: customerId,
+        starting_at: startingAt,
+        ending_before: endingBefore,
+        rate_card_id: catalog.rateCardId,
+        name: powerUser.contractName,
+        uniqueness_key: uniquenessKey,
+        commits: [
+          {
+            type: 'PREPAID',
+            product_id: catalog.productIds.creditGrant,
+            name: 'B2B annual commitment',
+            priority: 1,
+            rate_type: 'LIST_RATE',
+            applicable_product_ids: usageProductIds,
+            access_schedule: {
+              credit_type_id: catalog.pricingUnitId,
+              schedule_items: [
+                {
+                  amount: powerUser.annualCommitCredits,
+                  starting_at: startingAt,
+                  ending_before: endingBefore,
+                },
+              ],
+            },
+            invoice_schedule: {
+              credit_type_id: catalog.fiatCreditTypeId,
+              schedule_items: [
+                {
+                  timestamp: startingAt,
+                  unit_price: powerUser.annualCommitCents,
+                  quantity: 1,
+                },
+              ],
+            },
+          },
+        ],
+        overrides: [
+          {
+            starting_at: startingAt,
+            applicable_product_tags: ['usage'],
+            type: 'MULTIPLIER',
+            multiplier: powerUser.usageMultiplier,
+          },
+          {
+            starting_at: startingAt,
+            override_specifiers: [
+              {
+                product_id: catalog.productIds.enterpriseSeat,
+                billing_frequency: 'MONTHLY',
+              },
+            ],
+            type: 'OVERWRITE',
+            overwrite_rate: {
+              rate_type: 'FLAT',
+              credit_type_id: catalog.fiatCreditTypeId,
+              price: powerUser.seatMonthlyCents,
+            },
+          },
+        ],
+        subscriptions: [
+          {
+            name: 'B2B power user seats',
+            collection_schedule: 'advance',
+            proration: {
+              is_prorated: false,
+              invoice_behavior: 'bill_on_next_collection_date',
+            },
+            subscription_rate: {
+              billing_frequency: 'monthly',
+              product_id: catalog.productIds.enterpriseSeat,
+            },
+            quantity_management_mode: 'SEAT_BASED',
+            seat_config: {
+              initial_seat_ids: seatIds,
+              seat_group_key: 'user_id',
+            },
+            temporary_id: 'power_user_seats',
+          },
+        ],
+        recurring_credits: [
+          {
+            product_id: catalog.productIds.creditGrant,
+            name: 'Monthly credits per seat',
+            priority: 2,
+            rate_type: 'LIST_RATE',
+            applicable_product_ids: usageProductIds,
+            starting_at: startingAt,
+            ending_before: endingBefore,
+            recurrence_frequency: 'MONTHLY',
+            commit_duration: { value: 1, unit: 'PERIODS' },
+            proration: 'NONE',
+            rollover_fraction: 0,
+            access_amount: {
+              credit_type_id: catalog.pricingUnitId,
+              unit_price: powerUser.seatMonthlyCredits,
+            },
+            subscription_config: {
+              subscription_id: 'power_user_seats',
+              allocation: 'INDIVIDUAL',
+              apply_seat_increase_config: { is_prorated: false },
+            },
+          },
+        ],
+      } as any);
+    }
     contractIds[persona.key] = response.data.id;
   }
   return { customerIds, contractIds };
@@ -1358,7 +1430,7 @@ async function main() {
   }
 
   const catalog = await ensureCatalog(client, apiKey, config);
-  const personas = await ensurePersonas(client, config, catalog.packageIds);
+  const personas = await ensurePersonas(client, config, catalog);
   const eventsIngested = await seedUsage(client, config, personas.customerIds);
   const accountScope = fingerprint(apiKey);
   const state: StarterState = {

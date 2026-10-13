@@ -25,6 +25,10 @@ type PricingMetric = 'image' | 'video' | '3d';
 type PricingValue = { value: string; multiplier: string };
 type StarterPackage =
   | {
+      key: 'free';
+      includedCredits: number;
+    }
+  | {
       key: 'quickstart';
       includedCredits: number;
       prepaidInvoiceCents: number;
@@ -34,12 +38,6 @@ type StarterPackage =
       key: 'pro';
       monthlyCredits: number;
       monthlyPriceCents: number;
-    }
-  | {
-      key: 'power-user';
-      annualCommitCredits: number;
-      annualCommitCents: number;
-      seatCount: number;
     };
 const RESERVED_PROPERTY_KEYS = new Set([
   'quantity',
@@ -54,19 +52,17 @@ const RESERVED_PROPERTY_KEYS = new Set([
 ]);
 
 function packageSummary(pkg: StarterPackage): string {
+  if (pkg.key === 'free') {
+    return `${pkg.includedCredits.toLocaleString()} one-time credits`;
+  }
   if (pkg.key === 'quickstart') {
     return `${pkg.includedCredits.toLocaleString()} credits · $${(
       pkg.prepaidInvoiceCents / 100
     ).toLocaleString()} prepaid · ${pkg.durationMonths} months`;
   }
-  if (pkg.key === 'pro') {
-    return `${pkg.monthlyCredits.toLocaleString()} credits/month · $${(
-      pkg.monthlyPriceCents / 100
-    ).toLocaleString()}/month`;
-  }
-  return `${pkg.annualCommitCredits.toLocaleString()} credits · $${(
-    pkg.annualCommitCents / 100
-  ).toLocaleString()} annual commit · ${pkg.seatCount} seats`;
+  return `${pkg.monthlyCredits.toLocaleString()} credits/month · $${(
+    pkg.monthlyPriceCents / 100
+  ).toLocaleString()}/month`;
 }
 
 export default function MetronomeStarterPage() {
@@ -164,13 +160,17 @@ export default function MetronomeStarterPage() {
     packages: METRONOME_STARTER_KIT.packages.map((pkg) => ({
       ...pkg,
       name: `${resolvedPrefix} ${
-        pkg.key === 'quickstart'
-          ? 'Enterprise Quickstart'
-          : pkg.key === 'pro'
-            ? 'Pro'
-            : 'B2B Power User'
+        pkg.key === 'free'
+          ? 'Free'
+          : pkg.key === 'quickstart'
+            ? 'Enterprise Quickstart'
+            : 'Pro'
       }`,
     })),
+    powerUser: {
+      ...METRONOME_STARTER_KIT.powerUser,
+      contractName: `${resolvedPrefix} B2B Power User`,
+    },
     personas: METRONOME_STARTER_KIT.personas.map((persona) => ({
       ...persona,
       name:
@@ -553,11 +553,11 @@ export default function MetronomeStarterPage() {
                       <div key={pkg.key} className='text-sm'>
                         <p className='font-semibold text-gray-900'>
                           {resolvedPrefix}{' '}
-                          {pkg.key === 'quickstart'
-                            ? 'Enterprise Quickstart'
-                            : pkg.key === 'pro'
-                              ? 'Pro'
-                              : 'B2B Power User'}
+                          {pkg.key === 'free'
+                            ? 'Free'
+                            : pkg.key === 'quickstart'
+                              ? 'Enterprise Quickstart'
+                              : 'Pro'}
                         </p>
                         <p className='text-xs text-gray-600'>
                           {packageSummary(pkg as StarterPackage)}
@@ -565,6 +565,32 @@ export default function MetronomeStarterPage() {
                       </div>
                     ))}
                   </div>
+                </section>
+
+                <section>
+                  <h3 className='text-xs font-bold uppercase tracking-wide text-gray-500'>
+                    Direct B2B contract
+                  </h3>
+                  <p className='mt-2 text-sm font-semibold text-gray-900'>
+                    {resolvedPrefix} B2B Power User
+                  </p>
+                  <p className='text-xs text-gray-600'>
+                    {METRONOME_STARTER_KIT.powerUser.annualCommitCredits.toLocaleString()}{' '}
+                    credits · $
+                    {(
+                      METRONOME_STARTER_KIT.powerUser.annualCommitCents / 100
+                    ).toLocaleString()}{' '}
+                    annual commit ·{' '}
+                    {METRONOME_STARTER_KIT.powerUser.seatCount} assigned seats ·{' '}
+                    {METRONOME_STARTER_KIT.powerUser.seatMonthlyCredits.toLocaleString()}{' '}
+                    credits/seat/month ·{' '}
+                    {Math.round(
+                      (1 -
+                        METRONOME_STARTER_KIT.powerUser.usageMultiplier) *
+                        100,
+                    )}
+                    % usage discount
+                  </p>
                 </section>
 
                 <section>

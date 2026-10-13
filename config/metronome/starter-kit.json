@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "namespace": "metronome-starter",
   "eventType": "generation.completed",
   "fiatCurrency": "USD",
@@ -79,6 +79,11 @@
   },
   "packages": [
     {
+      "key": "free",
+      "name": "Generate Free",
+      "includedCredits": 100
+    },
+    {
       "key": "quickstart",
       "name": "Generate Enterprise Quickstart",
       "includedCredits": 100000,
@@ -90,18 +95,18 @@
       "name": "Generate Pro",
       "monthlyCredits": 1000,
       "monthlyPriceCents": 2000
-    },
-    {
-      "key": "power-user",
-      "name": "Generate B2B Power User",
-      "annualCommitCredits": 1000000,
-      "annualCommitCents": 1000000,
-      "seatCount": 5,
-      "seatMonthlyCents": 100000,
-      "seatMonthlyCredits": 10000,
-      "usageMultiplier": 0.85
     }
   ],
+  "powerUser": {
+    "contractName": "Generate B2B Power User",
+    "annualCommitCredits": 1000000,
+    "annualCommitCents": 1000000,
+    "durationMonths": 12,
+    "seatCount": 5,
+    "seatMonthlyCents": 100000,
+    "seatMonthlyCredits": 10000,
+    "usageMultiplier": 0.85
+  },
   "personas": [
     {
       "key": "enterprise-quickstart",
@@ -120,7 +125,7 @@
     {
       "key": "b2b-power-user",
       "name": "B2B Power User",
-      "package": "power-user",
+      "directContract": "power-user",
       "ingestAlias": "metronome-starter:b2b-power-user",
       "usageScale": 200
     }

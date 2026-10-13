@@ -92,22 +92,22 @@ If a seed stops after creating billable metrics but before creating products,
 use the same reset flow before retrying. Reset archives the partial metrics;
 the shared custom pricing unit is intentionally retained and reused.
 
-## Seeded personas
+## Packages and seeded personas
+
+The reusable package catalog contains Free (100 one-time credits), Pro, and
+Enterprise Quickstart. The B2B Power User is intentionally not a package; it is
+created as a negotiated direct contract.
 
 - Enterprise Quickstart: a 12-month, $1,000 prepaid commitment for 100,000
   Generation Credits.
 - Pro: a $20 monthly subscription with 1,000 recurring monthly Generation
   Credits.
 - B2B Power User: 1,000,000-credit / $10,000 annual prepaid commitment,
-  five seats at $1,000 per month, 10,000 monthly credits per seat, and a 0.85
-  usage multiplier.
-
-The reusable B2B package starts with five unassigned seats, which is the
-package API's supported way to establish an initial `SEAT_BASED` quantity.
-Seeded `user_id` values still provide per-user usage breakdowns.
+  five assigned seats at $1,000 per month, 10,000 monthly credits per seat,
+  a 0.85 usage multiplier, and a seat-rate override.
 
 All personas receive deterministic image, video, and 3D Generation usage with
-model, operation, workspace, project, and user dimensions. Transaction IDs
+model, quality, operation, workspace, project, and user dimensions. Transaction IDs
 are deterministic, so reruns within Metronome's deduplication window do not
 double-count usage.
 
