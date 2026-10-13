@@ -102,6 +102,10 @@ the shared custom pricing unit is intentionally retained and reused.
   five seats at $1,000 per month, 10,000 monthly credits per seat, and a 0.85
   usage multiplier.
 
+The reusable B2B package starts with five unassigned seats, which is the
+package API's supported way to establish an initial `SEAT_BASED` quantity.
+Seeded `user_id` values still provide per-user usage breakdowns.
+
 All personas receive deterministic image, video, and 3D Generation usage with
 model, operation, workspace, project, and user dimensions. Transaction IDs
 are deterministic, so reruns within Metronome's deduplication window do not

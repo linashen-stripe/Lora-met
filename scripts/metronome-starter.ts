@@ -1013,10 +1013,7 @@ async function ensureCatalog(
             },
             quantity_management_mode: 'SEAT_BASED',
             seat_config: {
-              initial_seat_ids: Array.from(
-                { length: definition.seatCount },
-                (_, index) => `power-user-seat-${index + 1}`,
-              ),
+              initial_unassigned_seats: definition.seatCount,
               seat_group_key: 'user_id',
             },
             temporary_id: 'power_user_seats',
