@@ -141,10 +141,10 @@ a customer, reset removes all `metronome-starter:` aliases so Metronome releases
 them for future seeds. This removal happens before customer archival because
 aliases on archived customers remain reserved.
 
-Metronome keeps archived package uniqueness keys reserved. New packages
-therefore receive a run-scoped suffix while active packages from a partial seed
-are reused. This allows reset and reseed to work repeatedly without colliding
-with archived package keys.
+Metronome keeps archived package and contract uniqueness keys reserved. New
+packages and contracts therefore receive run-scoped suffixes while active
+resources from a partial seed are reused. This allows reset and reseed to work
+repeatedly without colliding with archived keys.
 
 After a successful seed, IDs are written under
 `.metronome/starter/<account-scope>/state.json`. `.metronome/` is ignored by

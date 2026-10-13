@@ -234,6 +234,23 @@ function contractKey(config: StarterConfig, personaKey: string): string {
   return `contract:${config.namespace}:${personaKey}:v${config.version}`;
 }
 
+function contractCreationKey(
+  config: StarterConfig,
+  personaKey: string,
+  runId: string,
+): string {
+  return `${contractKey(config, personaKey)}:run-${runId}`;
+}
+
+function contractKeyMatches(
+  config: StarterConfig,
+  personaKey: string,
+  value: string | null | undefined,
+): boolean {
+  const base = contractKey(config, personaKey);
+  return value === base || value?.startsWith(`${base}:run-`) === true;
+}
+
 function packageAlias(
   config: StarterConfig,
   key: string,
@@ -665,7 +682,9 @@ async function printPlan(client: Metronome, config: StarterConfig) {
           customers: [...existingNames.customers],
           contracts: config.personas
             .filter((persona) =>
-              contractKeys.has(contractKey(config, persona.key)),
+              Array.from(contractKeys).some((key) =>
+                contractKeyMatches(config, persona.key, key),
+              ),
             )
             .map((persona) => persona.name),
         },
@@ -1136,6 +1155,7 @@ async function ensurePersonas(
   const customerIds: Record<string, string> = {};
   const contractIds: Record<string, string> = {};
   const startingAt = hourBoundary();
+  const contractRunId = Date.now().toString(36);
 
   for (const persona of config.personas) {
     const existingCustomer = found.customers.find((candidate) =>
@@ -1166,15 +1186,20 @@ async function ensurePersonas(
       customer_id: customerId,
       include_archived: false,
     } as any);
-    const uniquenessKey = contractKey(config, persona.key);
     const existing = (contracts.data ?? []).find(
-      (contract: any) => contract.uniqueness_key === uniquenessKey,
+      (contract: any) =>
+        contractKeyMatches(config, persona.key, contract.uniqueness_key),
     );
     if (existing) {
       contractIds[persona.key] = existing.id;
       continue;
     }
     console.log(`Creating contract: ${persona.name}`);
+    const uniquenessKey = contractCreationKey(
+      config,
+      persona.key,
+      contractRunId,
+    );
     let response;
     if (persona.directContract !== 'power-user') {
       if (!persona.package) {
