@@ -110,6 +110,11 @@ minor units; `0.01` would mean one-hundredth of a cent.
   five assigned seats at $1,000 per month, 10,000 monthly credits per seat,
   a 0.85 usage multiplier, and a seat-rate override.
 
+The per-seat recurring credits use priority `50`, matching the Admin power-user
+flow. The annual commitment keeps Metronome's default priority so usage is
+attributed to and consumes each individual seat allocation before the shared
+annual pool.
+
 All personas receive deterministic image, video, and 3D Generation usage with
 model, quality, operation, workspace, project, and user dimensions. Transaction IDs
 are deterministic, so reruns within Metronome's deduplication window do not

@@ -1120,7 +1120,6 @@ async function ensurePersonas(
             type: 'PREPAID',
             product_id: catalog.productIds.creditGrant,
             name: 'B2B annual commitment',
-            priority: 1,
             rate_type: 'LIST_RATE',
             applicable_product_ids: usageProductIds,
             access_schedule: {
@@ -1192,7 +1191,7 @@ async function ensurePersonas(
           {
             product_id: catalog.productIds.creditGrant,
             name: 'Monthly credits per seat',
-            priority: 2,
+            priority: 50,
             rate_type: 'LIST_RATE',
             applicable_product_ids: usageProductIds,
             starting_at: startingAt,
