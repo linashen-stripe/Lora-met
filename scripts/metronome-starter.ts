@@ -1091,10 +1091,6 @@ async function ensurePersonas(
       const response = await client.v1.customers.create({
         name: persona.name,
         ingest_aliases: [persona.ingestAlias],
-        custom_fields: {
-          starter_namespace: config.namespace,
-          starter_persona: persona.key,
-        },
       });
       customerId = response.data.id;
     }
