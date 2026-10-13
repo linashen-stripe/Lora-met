@@ -73,7 +73,9 @@ export default function MetronomeStarterPage() {
   const language = settings?.language || 'en';
   const { lines, outputRef, appendLine, appendLines } = useTerminalLines();
   const [apiKey, setApiKey] = useState('');
-  const [resourcePrefix, setResourcePrefix] = useState('Generate');
+  const [resourcePrefix, setResourcePrefix] = useState(
+    METRONOME_STARTER_KIT.resourcePrefix,
+  );
   const [quickstartName, setQuickstartName] = useState('Enterprise Quickstart');
   const [proName, setProName] = useState('Pro');
   const [powerUserName, setPowerUserName] = useState('B2B Power User');
@@ -138,7 +140,8 @@ export default function MetronomeStarterPage() {
         }
       : null;
 
-  const resolvedPrefix = resourcePrefix.trim() || 'Generate';
+  const resolvedPrefix =
+    resourcePrefix.trim() || METRONOME_STARTER_KIT.resourcePrefix;
   const reviewConfig = {
     ...METRONOME_STARTER_KIT,
     rateCard: {

@@ -384,9 +384,7 @@ function PricingPageContent() {
     const packageName = normPackageName(pkg.name);
     const catalogPlan =
       demoMode === 'generation'
-        ? GENERATION_PLANS.find((plan) =>
-            packageName.endsWith(plan.name.toLowerCase()),
-          )
+        ? GENERATION_PLANS.find((plan) => packageName.includes(plan.id))
         : undefined;
     const aiBuilderIncludedCents =
       demoMode === 'ai-builder'
@@ -549,9 +547,7 @@ function PricingPageContent() {
 
   const staticPlanCatalog =
     demoMode === 'generation'
-      ? GENERATION_PLANS.filter((plan) =>
-          ['free', 'pro', 'premium', 'enterprise'].includes(plan.id),
-        )
+      ? GENERATION_PLANS
       : [
           {
             id: 'free' as const,
@@ -647,7 +643,7 @@ function PricingPageContent() {
       className:
         'w-full mt-8 text-base py-3 bg-accent text-accent-foreground hover:bg-purple-hover transition-colors duration-200',
     },
-    isPopular: plan.id === 'premium',
+    isPopular: plan.id === 'premium' || plan.id === 'pro',
   }));
 
   // Prefer live Metronome packages; show the selected mode catalog without credentials.

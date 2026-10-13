@@ -1,31 +1,35 @@
 {
-  "version": 7,
+  "version": 8,
   "namespace": "metronome-starter",
+  "resourcePrefix": "Lora Generate",
   "eventType": "generation.completed",
   "fiatCurrency": "USD",
   "pricingUnit": {
-    "name": "Starter Generation Credits",
+    "name": "Generation Credits",
     "fiatMinorUnitsPerCustomCredit": 1
   },
   "rateCard": {
-    "name": "Generate - Standard Rate Card",
-    "alias": "metronome-starter-generation-v1"
+    "name": "Lora Generate - Standard Rate Card",
+    "alias": "metronome-starter-generation-v2"
   },
   "metrics": [
     {
       "key": "image",
-      "name": "Generate - Image Generations",
-      "modality": "image"
+      "name": "Lora Generate - Image Generations",
+      "modality": "image",
+      "unit": "jobs"
     },
     {
       "key": "video",
-      "name": "Generate - Video Seconds",
-      "modality": "video"
+      "name": "Lora Generate - Video Seconds",
+      "modality": "video",
+      "unit": "seconds"
     },
     {
       "key": "3d",
-      "name": "Generate - 3D Generations",
-      "modality": "3d"
+      "name": "Lora Generate - 3D Generations",
+      "modality": "3d",
+      "unit": "jobs"
     }
   ],
   "rates": [
@@ -33,66 +37,66 @@
       "metric": "image",
       "operation": "text_to_image",
       "quality": "standard",
-      "model": "vision-v1",
+      "model": "lora-vision-2",
       "creditsPerUnit": 10
     },
     {
       "metric": "image",
       "operation": "text_to_image",
       "quality": "ultra",
-      "model": "vision-v1",
+      "model": "lora-vision-2",
       "creditsPerUnit": 50
     },
     {
       "metric": "video",
       "operation": "text_to_video",
       "quality": "standard",
-      "model": "motion-v1",
+      "model": "lora-motion-1",
       "creditsPerUnit": 5
     },
     {
       "metric": "video",
       "operation": "image_to_video",
       "quality": "ultra",
-      "model": "motion-v1",
+      "model": "lora-motion-1",
       "creditsPerUnit": 10
     },
     {
       "metric": "3d",
       "operation": "image_to_3d",
       "quality": "standard",
-      "model": "mesh-v1",
+      "model": "lora-mesh-3",
       "creditsPerUnit": 20
     },
     {
       "metric": "3d",
       "operation": "image_to_3d_with_texture",
       "quality": "ultra",
-      "model": "mesh-v1",
+      "model": "lora-mesh-3",
       "creditsPerUnit": 50
     }
   ],
   "products": {
-    "creditGrant": "Generate - Credit Grant",
-    "proSubscription": "Generate - Pro Subscription",
-    "enterpriseSeat": "Generate - Enterprise Seat"
+    "creditGrant": "Lora Generate - Credit Grant",
+    "proSubscription": "Lora Generate - Pro Subscription",
+    "enterpriseSeat": "Lora Generate - Enterprise Seat"
   },
   "packages": [
     {
       "key": "free",
-      "name": "Generate Free",
+      "name": "Lora Generate Free",
       "includedCredits": 100
     },
     {
       "key": "quickstart",
-      "name": "Generate Enterprise Quickstart",
+      "name": "Lora Generate Enterprise Quickstart",
       "includedCredits": 100000,
       "prepaidInvoiceCents": 100000,
       "durationMonths": 12
     },
     {
       "key": "pro",
-      "name": "Generate Pro",
+      "name": "Lora Generate Pro",
       "monthlyCredits": 1000,
       "monthlyPriceCents": 2000,
       "autoTopUpThresholdCredits": 50,
@@ -100,7 +104,7 @@
     }
   ],
   "powerUser": {
-    "contractName": "Generate B2B Power User",
+    "contractName": "Lora Generate B2B Power User",
     "annualCommitCredits": 1000000,
     "annualCommitCents": 1000000,
     "durationMonths": 12,

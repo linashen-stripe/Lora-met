@@ -2,7 +2,7 @@ import Metronome from '@metronome/sdk';
 import Stripe from 'stripe';
 import { DEMO_MODES } from '@/config/demoModes';
 import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
-import generationCatalog from '../../config/metronome/generation-catalog.json';
+import { METRONOME_CATALOG } from '@/config/metronomeCatalog';
 import {
   createStripeCustomerForDemo,
   resolveRateCardByName,
@@ -16,10 +16,10 @@ import { seedGenerationUsage } from '@/utils/metronomeGenerationSeedUsage';
 
 const GENERATION_HISTORY_DAYS = 27;
 const GENERATION_PRODUCT_NAMES = {
-  prepaidCommit: generationCatalog.products.creditGrant,
-  seatCredit: generationCatalog.products.creditGrant,
+  prepaidCommit: METRONOME_CATALOG.products.creditGrant,
+  seatCredit: METRONOME_CATALOG.products.creditGrant,
   enterpriseSubscription:
-    generationCatalog.products.enterpriseSubscription,
+    METRONOME_CATALOG.products.enterpriseSeat,
 } as const;
 
 async function resolveGenerationCreditTypeId(
@@ -29,13 +29,13 @@ async function resolveGenerationCreditTypeId(
     if (
       unit.id &&
       !unit.is_currency &&
-      unit.name === generationCatalog.pricingUnit.name
+      unit.name === METRONOME_CATALOG.pricingUnit.name
     ) {
       return unit.id;
     }
   }
   throw new Error(
-    `${generationCatalog.pricingUnit.name} pricing unit was not found. Seed the Generation catalog first.`,
+    `${METRONOME_CATALOG.pricingUnit.name} pricing unit was not found. Seed the Generation catalog first.`,
   );
 }
 
@@ -82,7 +82,7 @@ export async function createGenerationPowerUser(
   const { rateCardId, creditTypeId: fiatCreditTypeId, currencyCode } =
     await resolveRateCardByName(
       metronome,
-      generationCatalog.rateCard.name,
+      METRONOME_CATALOG.rateCard.name,
     );
   const generationCreditTypeId =
     await resolveGenerationCreditTypeId(metronome);
@@ -91,7 +91,7 @@ export async function createGenerationPowerUser(
     GENERATION_PRODUCT_NAMES,
   );
   onLog(
-    `    ✓ rate card → ${rateCardId} (${generationCatalog.pricingUnit.name})`,
+    `    ✓ rate card → ${rateCardId} (${METRONOME_CATALOG.pricingUnit.name})`,
   );
 
   onLog('\n[2/5] Resolving the Stripe delivery method...');
@@ -129,11 +129,11 @@ export async function createGenerationPowerUser(
   );
   const endingBefore = new Date(startingAt);
   endingBefore.setUTCMonth(
-    endingBefore.getUTCMonth() + generationCatalog.powerUser.termMonths,
+    endingBefore.getUTCMonth() + METRONOME_CATALOG.powerUser.durationMonths,
   );
   const seats = [...DEMO_METRONOME_USAGE_USER_IDS].slice(
     0,
-    generationCatalog.powerUser.seatCount,
+    METRONOME_CATALOG.powerUser.seatCount,
   );
 
   const contractPayload: any = {
@@ -150,13 +150,13 @@ export async function createGenerationPowerUser(
       {
         type: 'PREPAID',
         product_id: products.prepaidCommit,
-        name: `${generationCatalog.powerUser.prepaidCommitCredits.toLocaleString()} Generation Credit Commit`,
+        name: `${METRONOME_CATALOG.powerUser.annualCommitCredits.toLocaleString()} Generation Credit Commit`,
         applicable_product_tags: ['usage'],
         access_schedule: {
           credit_type_id: generationCreditTypeId,
           schedule_items: [
             {
-              amount: generationCatalog.powerUser.prepaidCommitCredits,
+              amount: METRONOME_CATALOG.powerUser.annualCommitCredits,
               starting_at: startingAt.toISOString(),
               ending_before: endingBefore.toISOString(),
             },
@@ -167,7 +167,7 @@ export async function createGenerationPowerUser(
           schedule_items: [
             {
               timestamp: startingAt.toISOString(),
-              unit_price: generationCatalog.powerUser.prepaidInvoiceCents,
+              unit_price: METRONOME_CATALOG.powerUser.annualCommitCents,
               quantity: 1,
             },
           ],
@@ -179,7 +179,7 @@ export async function createGenerationPowerUser(
         starting_at: startingAt.toISOString(),
         applicable_product_tags: ['usage'],
         type: 'MULTIPLIER',
-        multiplier: generationCatalog.powerUser.usageMultiplier,
+        multiplier: METRONOME_CATALOG.powerUser.usageMultiplier,
       },
       {
         starting_at: startingAt.toISOString(),
@@ -193,7 +193,7 @@ export async function createGenerationPowerUser(
         overwrite_rate: {
           rate_type: 'FLAT',
           credit_type_id: fiatCreditTypeId,
-          price: generationCatalog.powerUser.seatMonthlyPriceCents,
+          price: METRONOME_CATALOG.powerUser.seatMonthlyCents,
         },
       },
     ],
@@ -225,7 +225,7 @@ export async function createGenerationPowerUser(
         ending_before: endingBefore.toISOString(),
         access_amount: {
           credit_type_id: generationCreditTypeId,
-          unit_price: generationCatalog.powerUser.seatMonthlyCredits,
+          unit_price: METRONOME_CATALOG.powerUser.seatMonthlyCredits,
         },
         commit_duration: { value: 1, unit: 'PERIODS' },
         recurrence_frequency: 'MONTHLY',
@@ -245,7 +245,7 @@ export async function createGenerationPowerUser(
   const contractId = contract.data.id;
   onLog(`    ✓ contract → ${contractId}`);
   onLog(
-    `    ✓ ${seats.length} seats, ${generationCatalog.powerUser.seatMonthlyCredits.toLocaleString()} monthly credits/seat, ${Math.round((1 - generationCatalog.powerUser.usageMultiplier) * 100)}% usage discount`,
+    `    ✓ ${seats.length} seats, ${METRONOME_CATALOG.powerUser.seatMonthlyCredits.toLocaleString()} monthly credits/seat, ${Math.round((1 - METRONOME_CATALOG.powerUser.usageMultiplier) * 100)}% usage discount`,
   );
 
   onLog('\n[5/5] Seeding Generation usage by user and project...');
@@ -268,8 +268,8 @@ export async function createGenerationPowerUser(
     customerId,
     contractId,
     currencyCode,
-    commitAmount: generationCatalog.powerUser.prepaidCommitCredits,
-    seatMonthlyAmount: generationCatalog.powerUser.seatMonthlyCredits,
+    commitAmount: METRONOME_CATALOG.powerUser.annualCommitCredits,
+    seatMonthlyAmount: METRONOME_CATALOG.powerUser.seatMonthlyCredits,
     eventsIngested: usage.eventsIngested,
     creditsConsumed: usage.creditsConsumed,
   };

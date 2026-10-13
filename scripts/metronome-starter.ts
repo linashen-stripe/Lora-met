@@ -74,11 +74,17 @@ type PricingDimension = {
 type StarterConfig = {
   version: number;
   namespace: string;
+  resourcePrefix: string;
   eventType: string;
   fiatCurrency: string;
   pricingUnit: { name: string; fiatMinorUnitsPerCustomCredit: number };
   rateCard: { name: string; alias: string };
-  metrics: Array<{ key: MetricKey; name: string; modality: string }>;
+  metrics: Array<{
+    key: MetricKey;
+    name: string;
+    modality: string;
+    unit: 'jobs' | 'seconds';
+  }>;
   rates: Array<{
     metric: MetricKey;
     operation: string;
@@ -452,7 +458,8 @@ function pricingDimensionPreview(config: StarterConfig) {
 
 function applyStarterOverrides(config: StarterConfig): StarterConfig {
   const prefix =
-    process.env.METRONOME_STARTER_RESOURCE_PREFIX?.trim() || 'Generate';
+    process.env.METRONOME_STARTER_RESOURCE_PREFIX?.trim() ||
+    config.resourcePrefix;
   const personaNames: Record<string, string | undefined> = {
     'enterprise-quickstart':
       process.env.METRONOME_STARTER_QUICKSTART_NAME?.trim(),
@@ -1434,6 +1441,7 @@ async function seedUsage(
             operation: rate.operation,
             quality: rate.quality,
             model: rate.model,
+            unit: rate.metric === 'video' ? 'second' : 'job',
             workspace_id: `${persona.key}-workspace`,
             project_id: `${persona.key}-project-${(slot % 3) + 1}`,
             user_id: isPowerUser

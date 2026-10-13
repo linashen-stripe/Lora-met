@@ -1,3 +1,5 @@
+import { METRONOME_PACKAGE_NAMES } from '@/config/metronomeCatalog';
+
 export type DemoMode = 'generation' | 'ai-builder';
 
 export interface DemoModeDefinition {
@@ -19,14 +21,15 @@ export const DEMO_MODES: Record<DemoMode, DemoModeDefinition> = {
     route: '/demos/generation',
     customerPrefix: 'generate',
     packageNames: {
-      free: ['Generate Free', 'Lora Generate Free'],
+      free: [...METRONOME_PACKAGE_NAMES.free, 'Generate Free'],
       premium: [
+        ...METRONOME_PACKAGE_NAMES.premium,
         'Generate Pro',
-        'Lora Generate Pro',
         'Generate Premium',
         'Lora Generate Premium',
       ],
       enterprise: [
+        ...METRONOME_PACKAGE_NAMES.enterprise,
         'Generate Enterprise',
         'Lora Generate Enterprise',
         'Generate Enterprise Quickstart',

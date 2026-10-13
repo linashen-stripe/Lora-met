@@ -12,9 +12,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "metronome:generation:plan": "tsx --env-file=.env scripts/metronome-generation-catalog.ts",
-    "metronome:generation:seed": "tsx --env-file=.env scripts/metronome-generation-catalog.ts --apply",
-    "metronome:generation:cleanup": "tsx --env-file=.env scripts/metronome-generation-catalog.ts --cleanup",
     "starter:plan": "tsx --env-file=.env.metronome-target.local scripts/metronome-starter.ts",
     "starter:seed": "tsx --env-file=.env.metronome-target.local scripts/metronome-starter.ts --apply",
     "starter:reset": "tsx --env-file=.env.metronome-target.local scripts/metronome-starter.ts --reset"

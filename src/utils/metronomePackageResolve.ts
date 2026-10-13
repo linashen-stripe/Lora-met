@@ -16,7 +16,7 @@ function normName(name: string | undefined | null): string {
   return (name ?? '').trim().toLowerCase();
 }
 
-/** Exact names (Hub spelling) that count as the Enterprise package for contracts. */
+/** Legacy Hub spellings retained for AI Builder compatibility. */
 const ENTERPRISE_PACKAGE_NAMES = new Set(['enterprise', 'enterpise']);
 
 export function pickMetronomePackageForTier(
@@ -37,8 +37,15 @@ export function pickMetronomePackageForTier(
     return packages.find((p) => ENTERPRISE_PACKAGE_NAMES.has(normName(p.name)));
   }
 
-  const exactPremium = packages.find((p) => normName(p.name) === 'premium');
-  if (exactPremium) return exactPremium;
+  const legacyPaidTier = mode === 'generation' ? 'pro' : 'premium';
+  const exactPaidTier = packages.find(
+    (p) => normName(p.name) === legacyPaidTier,
+  );
+  if (exactPaidTier) return exactPaidTier;
 
-  return packages.find((p) => /\bpremium\b/i.test(p.name ?? ''));
+  return packages.find((p) =>
+    mode === 'generation'
+      ? /\bpro\b/i.test(p.name ?? '')
+      : /\bpremium\b/i.test(p.name ?? ''),
+  );
 }

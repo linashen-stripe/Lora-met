@@ -5,7 +5,7 @@ import { pickPrimaryMetronomeContract } from '@/utils/metronomeContractPool';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
 import { finalizeAndPayMetronomeInvoice } from '@/utils/stripeInvoiceFinalize';
 import { normalizeDemoMode, type DemoMode } from '@/config/demoModes';
-import generationCatalog from '../../../../../config/metronome/generation-catalog.json';
+import { METRONOME_CATALOG } from '@/config/metronomeCatalog';
 
 const USD_CREDIT_TYPE_ID = '2714e483-4ff1-48e4-9e25-ac732e8f24f2';
 
@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
     const invoiceAmountCents =
       demoMode === 'generation'
         ? Math.round(
-            amount * generationCatalog.pricingUnit.fiatPerCustomCredit,
+            amount *
+              METRONOME_CATALOG.pricingUnit
+                .fiatMinorUnitsPerCustomCredit,
           )
         : Math.round(amount * 100);
 

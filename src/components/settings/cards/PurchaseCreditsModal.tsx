@@ -29,7 +29,7 @@ import {
   metronomeNetBalanceToCents,
 } from '@/utils/metronomeNetBalance';
 import { formatMetronomeAmount } from '@/utils/metronomeAmount';
-import generationCatalog from '../../../../config/metronome/generation-catalog.json';
+import { METRONOME_CATALOG } from '@/config/metronomeCatalog';
 
 interface PurchaseCreditsModalProps {
   open: boolean;
@@ -61,7 +61,8 @@ export default function PurchaseCreditsModal({
     );
   const formatGenerationCreditPrice = (credits: number) =>
     formatPrice(
-      credits * generationCatalog.pricingUnit.fiatPerCustomCredit,
+      credits *
+        METRONOME_CATALOG.pricingUnit.fiatMinorUnitsPerCustomCredit,
       settings?.language || 'en',
       settings?.currency || 'usd',
     );
