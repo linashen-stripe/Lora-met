@@ -16,6 +16,7 @@ const RESERVED_PROPERTY_KEYS = new Set([
   'quantity',
   'modality',
   'operation',
+  'quality',
   'model',
   'workspace_id',
   'project_id',

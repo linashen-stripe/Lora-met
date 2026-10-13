@@ -24,6 +24,7 @@ type StarterConfig = {
   rates: Array<{
     metric: MetricKey;
     operation: string;
+    quality: string;
     model: string;
     creditsPerUnit: number;
   }>;
@@ -164,6 +165,7 @@ const RESERVED_PROPERTY_KEYS = new Set([
   'quantity',
   'modality',
   'operation',
+  'quality',
   'model',
   'workspace_id',
   'project_id',
@@ -284,6 +286,7 @@ function appliesPricingDimension(metric: MetricKey): boolean {
 function pricingGroupKeyFor(metric: MetricKey): string[] {
   return [
     'operation',
+    'quality',
     'model',
     ...(appliesPricingDimension(metric) && pricingDimension
       ? [pricingDimension.propertyKey]
@@ -299,11 +302,7 @@ function metricGroupKeysFor(metric: MetricKey): string[][] {
   const pricing = pricingGroupKeyFor(metric);
   const presentation = presentationGroupKeyForProduct();
   return [
-    pricing,
-    [...pricing, ...presentation],
-    ['workspace_id'],
-    ['project_id'],
-    ['user_id'],
+    [...pricing, 'workspace_id', ...presentation],
   ];
 }
 
@@ -326,7 +325,7 @@ function pricingDimensionPreview(config: StarterConfig) {
     ),
     rateVariants: Object.fromEntries(
       config.rates.map((rate) => [
-        `${rate.metric}:${rate.operation}:${rate.model}`,
+        `${rate.metric}:${rate.operation}:${rate.quality}:${rate.model}`,
         appliesPricingDimension(rate.metric) && pricingDimension
           ? pricingDimension.values.map((entry) => ({
               value: entry.value,
@@ -621,6 +620,7 @@ async function ensureCatalog(
         in_values: [definition.modality],
       },
       { name: 'operation', exists: true },
+      { name: 'quality', exists: true },
       { name: 'model', exists: true },
       { name: 'workspace_id', exists: true },
       { name: 'project_id', exists: true },
@@ -749,6 +749,7 @@ async function ensureCatalog(
     for (const dimensionValue of dimensionValues) {
       const values: Record<string, string> = {
         operation: definition.operation,
+        quality: definition.quality,
         model: definition.model,
         ...(dimensionValue.value && pricingDimension
           ? { [pricingDimension.propertyKey]: dimensionValue.value }
@@ -1161,7 +1162,7 @@ async function seedUsage(
           ];
         const userIndex = slot % userCount;
         const customerId = customerIds[persona.key];
-        const seed = `${config.namespace}:${customerId}:${persona.key}:${dateKey}:${slot}:${rate.metric}:${rate.model}`;
+        const seed = `${config.namespace}:${customerId}:${persona.key}:${dateKey}:${slot}:${rate.metric}:${rate.operation}:${rate.quality}:${rate.model}`;
         events.push({
           transaction_id: `${config.namespace}-${fingerprint(seed)}`,
           customer_id: customerId,
@@ -1174,6 +1175,7 @@ async function seedUsage(
                 : 1,
             modality: rate.metric,
             operation: rate.operation,
+            quality: rate.quality,
             model: rate.model,
             workspace_id: `${persona.key}-workspace`,
             project_id: `${persona.key}-project-${(slot % 3) + 1}`,

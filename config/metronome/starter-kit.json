@@ -32,31 +32,43 @@
     {
       "metric": "image",
       "operation": "text_to_image",
-      "model": "image-standard-v1",
+      "quality": "standard",
+      "model": "vision-v1",
       "creditsPerUnit": 10
     },
     {
       "metric": "image",
       "operation": "text_to_image",
-      "model": "image-premium-v1",
-      "creditsPerUnit": 40
+      "quality": "ultra",
+      "model": "vision-v1",
+      "creditsPerUnit": 50
     },
     {
       "metric": "video",
       "operation": "text_to_video",
-      "model": "video-standard-v1",
+      "quality": "standard",
+      "model": "motion-v1",
       "creditsPerUnit": 5
+    },
+    {
+      "metric": "video",
+      "operation": "image_to_video",
+      "quality": "ultra",
+      "model": "motion-v1",
+      "creditsPerUnit": 10
     },
     {
       "metric": "3d",
       "operation": "image_to_3d",
-      "model": "mesh-standard-v1",
+      "quality": "standard",
+      "model": "mesh-v1",
       "creditsPerUnit": 20
     },
     {
       "metric": "3d",
       "operation": "image_to_3d_with_texture",
-      "model": "mesh-premium-v1",
+      "quality": "ultra",
+      "model": "mesh-v1",
       "creditsPerUnit": 50
     }
   ],

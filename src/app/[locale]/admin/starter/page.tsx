@@ -44,6 +44,7 @@ const RESERVED_PROPERTY_KEYS = new Set([
   'quantity',
   'modality',
   'operation',
+  'quality',
   'model',
   'workspace_id',
   'project_id',
@@ -520,7 +521,8 @@ export default function MetronomeStarterPage() {
                                   key={`${rate.operation}:${rate.model}`}
                                   className='font-mono'
                                 >
-                                  {rate.operation} · {rate.model} ·{' '}
+                                  {rate.operation} · {rate.quality} ·{' '}
+                                  {rate.model} ·{' '}
                                   {rate.creditsPerUnit} credits/unit
                                 </p>
                               ))}

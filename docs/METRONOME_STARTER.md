@@ -42,6 +42,10 @@ A starter catalog can include one custom event property with two to four
 values, rate multipliers, and an Image/Video/3D scope. For example, this creates
 `service_tier: standard | priority` on all three usage products:
 
+The base pricing dimensions remain separate: `operation`, `quality`, and
+`model`. The custom property is appended as an additional dimension; it does
+not encode quality into model names.
+
 ```bash
 npm run starter:plan -- \
   --pricing-property=service_tier \
@@ -57,6 +61,12 @@ npm run starter:seed -- \
 The property is added only to the selected billable metrics, usage products,
 rates, and seeded events. It does not change packages, contracts, customers,
 subscriptions, credits, or commitments.
+
+Each starter billable metric uses one combined group key containing its pricing
+dimensions plus `workspace_id`, `project_id`, and `user_id`. This keeps the
+starter easy to inspect while satisfying both product pricing and presentation
+keys. Add alternate group keys later only when the account needs additional
+aggregation paths.
 
 Add `--validate-config` to the same arguments to print the resolved product
 group keys and rate variants without credentials or API calls.
