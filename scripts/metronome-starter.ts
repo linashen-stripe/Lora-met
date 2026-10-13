@@ -1186,12 +1186,23 @@ async function ensurePersonas(
       customer_id: customerId,
       include_archived: false,
     } as any);
-    const existing = (contracts.data ?? []).find(
+    const expectedContractName =
+      persona.directContract === 'power-user'
+        ? config.powerUser.contractName
+        : config.packages.find((pkg) => pkg.key === persona.package)?.name;
+    const matchingContracts = (contracts.data ?? []).filter(
       (contract: any) =>
-        contractKeyMatches(config, persona.key, contract.uniqueness_key),
+        contractKeyMatches(config, persona.key, contract.uniqueness_key) ||
+        (contract.name === expectedContractName &&
+          contract.rate_card_id === catalog.rateCardId),
     );
-    if (existing) {
-      contractIds[persona.key] = existing.id;
+    if (matchingContracts.length > 1) {
+      throw new Error(
+        `Customer "${persona.name}" has ${matchingContracts.length} active starter contracts. Run Starter Reset once to remove the duplicate contracts before reseeding.`,
+      );
+    }
+    if (matchingContracts.length === 1) {
+      contractIds[persona.key] = matchingContracts[0].id;
       continue;
     }
     console.log(`Creating contract: ${persona.name}`);

@@ -150,6 +150,12 @@ packages and contracts therefore receive run-scoped suffixes while active
 resources from a partial seed are reused. This allows reset and reseed to work
 repeatedly without colliding with archived keys.
 
+Active contracts are matched by both uniqueness key and their expected
+contract-name/rate-card identity because package-provisioned contracts do not
+always expose the supplied uniqueness key consistently in list responses.
+Seeding stops with a reset instruction if duplicate active starter contracts
+are detected; it never guesses which contract to archive.
+
 After a successful seed, IDs are written under
 `.metronome/starter/<account-scope>/state.json`. `.metronome/` is ignored by
 git, and the account scope is a one-way API-key fingerprint; credentials are
