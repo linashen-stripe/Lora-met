@@ -2,13 +2,7 @@
   "version": 1,
   "namespace": "metronome-starter",
   "eventType": "generation.completed",
-  "timezone": "America/Los_Angeles",
   "fiatCurrency": "USD",
-  "peakWindow": {
-    "weekdays": [1, 2, 3, 4, 5],
-    "startHour": 9,
-    "endHour": 17
-  },
   "pricingUnit": {
     "name": "Starter Generation Credits",
     "fiatPerCustomCredit": 0.01

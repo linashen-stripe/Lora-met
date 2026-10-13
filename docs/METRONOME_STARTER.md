@@ -33,25 +33,50 @@ npm run starter:reset -- --confirm=metronome-starter
 
 The same workflow is available in the app under **Settings → Admin: seed a
 new account**. The API key entered there is kept only in page memory for the
-current job and is never written to local storage or an environment file.
+current job and is never written to local storage or an environment file. The
+page includes an optional custom pricing-property editor.
 
-Add `-- --time-based-pricing` to plan or seed to include a `time_band`
-dimension and separate peak/off-peak rates:
+## Custom pricing property
+
+A starter catalog can include one custom event property with two to four
+values, rate multipliers, and an Image/Video scope. For example, this creates
+`service_tier: standard | priority` on both usage products:
 
 ```bash
-npm run starter:plan -- --time-based-pricing
-npm run starter:seed -- --time-based-pricing
+npm run starter:plan -- \
+  --pricing-property=service_tier \
+  --pricing-values=standard:1,priority:1.25 \
+  --pricing-metrics=image,video
+
+npm run starter:seed -- \
+  --pricing-property=service_tier \
+  --pricing-values=standard:1,priority:1.25 \
+  --pricing-metrics=image,video
 ```
 
-The defaults are `America/Los_Angeles`, with peak defined as weekdays from
-09:00 inclusive to 17:00 exclusive. Peak rates are 1.25 times the base rate;
-off-peak rates are 0.8 times the base rate. Seeded events calculate
-`time_band` from each event timestamp in that explicit timezone.
+The property is added only to the selected billable metrics, usage products,
+rates, and seeded events. It does not change packages, contracts, customers,
+subscriptions, credits, or commitments.
 
-Do not switch an existing starter namespace between standard and time-based
-pricing. Billable metric and product dimensions are immutable enough that the
-CLI intentionally reports the incompatible definition. Reset the starter
-namespace first, or use a fresh target account.
+Add `--validate-config` to the same arguments to print the resolved product
+group keys and rate variants without credentials or API calls.
+
+`time_band` can be modeled in the same way:
+
+```bash
+npm run starter:plan -- \
+  --pricing-property=time_band \
+  --pricing-values=off_peak:0.8,peak:1.25 \
+  --pricing-metrics=image
+```
+
+The starter distributes property values deterministically across example
+events. Metronome does not infer `peak`, `priority`, or other values: a
+production event producer must classify the event and send the property.
+
+Billable metric and product dimensions cannot be safely repurposed in place.
+To change or remove a property after seeding, preview and run Starter Reset
+with the same resource prefix, then seed the new definition.
 
 ## Seeded personas
 

@@ -3,13 +3,32 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Database, LoaderCircle, RotateCcw, Sprout } from 'lucide-react';
+import {
+  Database,
+  LoaderCircle,
+  Plus,
+  RotateCcw,
+  Sprout,
+  Trash2,
+} from 'lucide-react';
 import TerminalPanel from '@/components/admin/TerminalPanel';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 
 type StarterMode = 'plan' | 'seed' | 'reset';
+type PricingMetric = 'image' | 'video';
+type PricingValue = { value: string; multiplier: string };
+const RESERVED_PROPERTY_KEYS = new Set([
+  'quantity',
+  'modality',
+  'operation',
+  'model',
+  'workspace_id',
+  'project_id',
+  'user_id',
+  'customer_id',
+]);
 
 export default function MetronomeStarterPage() {
   const { settings } = useConfigContext();
@@ -20,17 +39,101 @@ export default function MetronomeStarterPage() {
   const [quickstartName, setQuickstartName] = useState('Enterprise Quickstart');
   const [proName, setProName] = useState('Pro');
   const [powerUserName, setPowerUserName] = useState('B2B Power User');
-  const [timeBasedPricing, setTimeBasedPricing] = useState(false);
+  const [pricingPropertyEnabled, setPricingPropertyEnabled] = useState(true);
+  const [pricingPropertyKey, setPricingPropertyKey] =
+    useState('service_tier');
+  const [pricingValues, setPricingValues] = useState<PricingValue[]>([
+    { value: 'standard', multiplier: '1' },
+    { value: 'priority', multiplier: '1.25' },
+  ]);
+  const [pricingMetrics, setPricingMetrics] = useState<PricingMetric[]>([
+    'image',
+    'video',
+  ]);
   const [running, setRunning] = useState<StarterMode | null>(null);
   const [resetConfirming, setResetConfirming] = useState(false);
 
+  const pricingPropertyError = (() => {
+    if (!pricingPropertyEnabled) return null;
+    if (!/^[a-z][a-z0-9_]{0,63}$/.test(pricingPropertyKey.trim())) {
+      return 'Use a lowercase property key with letters, numbers, and underscores.';
+    }
+    if (RESERVED_PROPERTY_KEYS.has(pricingPropertyKey.trim())) {
+      return 'Choose a property key that is not already used by the starter.';
+    }
+    const values = pricingValues.map((entry) => entry.value.trim());
+    if (
+      values.some(
+        (value) => !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(value),
+      )
+    ) {
+      return 'Property values may use letters, numbers, underscores, and hyphens.';
+    }
+    if (new Set(values).size !== values.length) {
+      return 'Property values must be unique.';
+    }
+    if (
+      pricingValues.some(
+        (entry) =>
+          !Number.isFinite(Number(entry.multiplier)) ||
+          Number(entry.multiplier) <= 0,
+      )
+    ) {
+      return 'Every rate multiplier must be greater than zero.';
+    }
+    if (pricingMetrics.length === 0) {
+      return 'Select Image, Video, or both.';
+    }
+    return null;
+  })();
+
+  const pricingDimension =
+    pricingPropertyEnabled && !pricingPropertyError
+      ? {
+          propertyKey: pricingPropertyKey.trim(),
+          values: pricingValues.map((entry) => ({
+            value: entry.value.trim(),
+            multiplier: Number(entry.multiplier),
+          })),
+          metrics: pricingMetrics,
+        }
+      : null;
+
+  const togglePricingMetric = (metric: PricingMetric) => {
+    setPricingMetrics((current) =>
+      current.includes(metric)
+        ? current.filter((candidate) => candidate !== metric)
+        : [...current, metric],
+    );
+  };
+
+  const updatePricingValue = (
+    index: number,
+    field: keyof PricingValue,
+    value: string,
+  ) => {
+    setPricingValues((current) =>
+      current.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: value } : entry,
+      ),
+    );
+  };
+
   const run = async (mode: StarterMode, confirmReset = false) => {
     if (!apiKey.trim() || running) return;
+    if (mode !== 'reset' && pricingPropertyError) {
+      appendLine(`✗ ${pricingPropertyError}`);
+      return;
+    }
     setRunning(mode);
     setResetConfirming(false);
     appendLines([
       '',
-      `$ starter:${mode}${timeBasedPricing ? ' --time-based-pricing' : ''}`,
+      `$ starter:${mode}${
+        mode !== 'reset' && pricingDimension
+          ? ` --pricing-property=${pricingDimension.propertyKey}`
+          : ''
+      }`,
     ]);
     try {
       const response = await fetch('/api/metronome/starter', {
@@ -40,7 +143,7 @@ export default function MetronomeStarterPage() {
           apiKey: apiKey.trim(),
           mode,
           confirmReset,
-          timeBasedPricing,
+          pricingDimension: mode === 'reset' ? null : pricingDimension,
           resourcePrefix,
           quickstartName,
           proName,
@@ -133,29 +236,163 @@ export default function MetronomeStarterPage() {
               ))}
             </div>
 
-            <label className='mt-5 flex items-start gap-3 rounded-xl border border-violet-200 bg-violet-50 p-4'>
-              <input
-                type='checkbox'
-                checked={timeBasedPricing}
-                onChange={(event) => setTimeBasedPricing(event.target.checked)}
-                className='mt-1'
-              />
-              <span>
-                <span className='block text-sm font-semibold text-violet-950'>
-                  Time-based pricing
+            <div className='mt-5 rounded-xl border border-violet-200 bg-violet-50 p-4'>
+              <label className='flex items-start gap-3'>
+                <input
+                  type='checkbox'
+                  checked={pricingPropertyEnabled}
+                  onChange={(event) =>
+                    setPricingPropertyEnabled(event.target.checked)
+                  }
+                  className='mt-1'
+                />
+                <span>
+                  <span className='block text-sm font-semibold text-violet-950'>
+                    Custom pricing property
+                  </span>
+                  <span className='mt-1 block text-xs text-violet-800'>
+                    Demonstrates how an event property flows through a billable
+                    metric, usage product, and dimensional rates.
+                  </span>
                 </span>
-                <span className='mt-1 block text-xs text-violet-800'>
-                  Adds peak/off-peak pricing. Peak is weekdays 09:00–17:00 in
-                  America/Los_Angeles.
-                </span>
-              </span>
-            </label>
+              </label>
+
+              {pricingPropertyEnabled && (
+                <div className='mt-4 space-y-4 border-t border-violet-200 pt-4'>
+                  <label className='block text-sm font-medium text-violet-950'>
+                    Event property key
+                    <input
+                      value={pricingPropertyKey}
+                      onChange={(event) =>
+                        setPricingPropertyKey(event.target.value)
+                      }
+                      placeholder='service_tier'
+                      className='mt-2 w-full rounded-lg border border-violet-200 bg-white px-3 py-2 font-mono font-normal'
+                    />
+                  </label>
+
+                  <div>
+                    <div className='mb-2 grid grid-cols-[1fr_7rem_2rem] gap-2 text-xs font-semibold uppercase tracking-wide text-violet-800'>
+                      <span>Value</span>
+                      <span>Rate multiplier</span>
+                      <span />
+                    </div>
+                    <div className='space-y-2'>
+                      {pricingValues.map((entry, index) => (
+                        <div
+                          key={index}
+                          className='grid grid-cols-[1fr_7rem_2rem] gap-2'
+                        >
+                          <input
+                            value={entry.value}
+                            onChange={(event) =>
+                              updatePricingValue(
+                                index,
+                                'value',
+                                event.target.value,
+                              )
+                            }
+                            placeholder={index === 0 ? 'standard' : 'priority'}
+                            className='min-w-0 rounded-lg border border-violet-200 bg-white px-3 py-2 font-mono text-sm'
+                          />
+                          <input
+                            type='number'
+                            min='0.01'
+                            step='0.05'
+                            value={entry.multiplier}
+                            onChange={(event) =>
+                              updatePricingValue(
+                                index,
+                                'multiplier',
+                                event.target.value,
+                              )
+                            }
+                            className='min-w-0 rounded-lg border border-violet-200 bg-white px-3 py-2 text-sm'
+                          />
+                          <button
+                            type='button'
+                            onClick={() =>
+                              setPricingValues((current) =>
+                                current.filter(
+                                  (_, entryIndex) => entryIndex !== index,
+                                ),
+                              )
+                            }
+                            disabled={pricingValues.length <= 2}
+                            aria-label={`Remove ${entry.value || `value ${index + 1}`}`}
+                            className='flex items-center justify-center text-violet-700 disabled:opacity-30'
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setPricingValues((current) => [
+                          ...current,
+                          { value: '', multiplier: '1' },
+                        ])
+                      }
+                      disabled={pricingValues.length >= 4}
+                      className='mt-2 flex items-center gap-1 text-xs font-semibold text-violet-800 disabled:opacity-40'
+                    >
+                      <Plus className='h-3.5 w-3.5' />
+                      Add value
+                    </button>
+                  </div>
+
+                  <fieldset>
+                    <legend className='text-sm font-medium text-violet-950'>
+                      Apply pricing property to
+                    </legend>
+                    <div className='mt-2 flex gap-5'>
+                      {[
+                        ['image', 'Image Generations'],
+                        ['video', 'Video Seconds'],
+                      ].map(([metric, label]) => (
+                        <label
+                          key={metric}
+                          className='flex items-center gap-2 text-sm text-violet-950'
+                        >
+                          <input
+                            type='checkbox'
+                            checked={pricingMetrics.includes(
+                              metric as PricingMetric,
+                            )}
+                            onChange={() =>
+                              togglePricingMetric(metric as PricingMetric)
+                            }
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <p className='text-xs text-violet-800'>
+                    Seeded events receive example values. In production, your
+                    event producer must supply this property.
+                  </p>
+                  {pricingPropertyError && (
+                    <p className='text-xs font-medium text-red-700'>
+                      {pricingPropertyError}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className='mt-5 grid grid-cols-2 gap-3'>
               <button
                 type='button'
                 onClick={() => run('plan')}
-                disabled={!apiKey.trim() || running !== null}
+                disabled={
+                  !apiKey.trim() ||
+                  running !== null ||
+                  Boolean(pricingPropertyError)
+                }
                 className='rounded-lg border border-purple px-4 py-2.5 font-semibold text-purple disabled:opacity-50'
               >
                 Preview
@@ -163,7 +400,11 @@ export default function MetronomeStarterPage() {
               <button
                 type='button'
                 onClick={() => run('seed')}
-                disabled={!apiKey.trim() || running !== null}
+                disabled={
+                  !apiKey.trim() ||
+                  running !== null ||
+                  Boolean(pricingPropertyError)
+                }
                 className='flex items-center justify-center gap-2 rounded-lg bg-purple px-4 py-2.5 font-semibold text-white disabled:opacity-50'
               >
                 {running === 'seed' && (
@@ -203,7 +444,11 @@ export default function MetronomeStarterPage() {
               <Database className='h-6 w-6 text-purple' />
               <h2 className='text-xl font-semibold'>Job output</h2>
             </div>
-            <TerminalPanel lines={lines} outputRef={outputRef} className='h-[42rem]' />
+            <TerminalPanel
+              lines={lines}
+              outputRef={outputRef}
+              className='h-[50rem]'
+            />
           </section>
         </div>
       </div>

@@ -8,13 +8,16 @@ const CONFIG_PATH = resolve(ROOT, 'config/metronome/starter-kit.json');
 
 type MetricKey = 'image' | 'video';
 type PackageKey = 'quickstart' | 'pro' | 'power-user';
+type PricingDimension = {
+  propertyKey: string;
+  values: Array<{ value: string; multiplier: number }>;
+  metrics: MetricKey[];
+};
 type StarterConfig = {
   version: number;
   namespace: string;
   eventType: string;
-  timezone: string;
   fiatCurrency: string;
-  peakWindow: { weekdays: number[]; startHour: number; endHour: number };
   pricingUnit: { name: string; fiatPerCustomCredit: number };
   rateCard: { name: string; alias: string };
   metrics: Array<{ key: MetricKey; name: string; modality: string }>;
@@ -66,8 +69,7 @@ type StarterState = {
   accountScope: string;
   namespace: string;
   configVersion: number;
-  timeBasedPricing: boolean;
-  timezone: string;
+  pricingDimension: PricingDimension | null;
   generatedAt: string;
   pricingUnit: { id: string; name: string };
   metrics: Record<string, string>;
@@ -83,19 +85,26 @@ const args = new Set(argv);
 const apply = args.has('--apply');
 const reset = args.has('--reset');
 const help = args.has('--help') || args.has('-h');
-const timeBasedPricing = args.has('--time-based-pricing');
+const validateOnly = args.has('--validate-config');
 const confirmation = argv
   .find((arg) => arg.startsWith('--confirm='))
   ?.slice('--confirm='.length);
+let pricingDimension: PricingDimension | null = null;
 
 function printHelp() {
   console.log(`Metronome Starter Kit
 
 Usage:
-  npm run starter:plan [-- --time-based-pricing]
-  npm run starter:seed [-- --time-based-pricing]
+  npm run starter:plan
+  npm run starter:seed
   npm run starter:reset
   npm run starter:reset -- --confirm=metronome-starter
+
+Optional custom pricing property:
+  --pricing-property=service_tier
+  --pricing-values=standard:1,priority:1.25
+  --pricing-metrics=image,video
+  --validate-config
 
 Modes:
   plan    Default. Reads the target account and prints a dry-run plan.
@@ -103,7 +112,7 @@ Modes:
   reset   --reset previews a namespace-scoped reset. --confirm=<namespace> applies it.
 
 Credentials are read only from .env.metronome-target.local by the npm scripts.
-Time-based pricing defaults to America/Los_Angeles, weekdays 09:00-17:00 peak.`);
+Pricing property values must be supplied by the event producer.`);
 }
 
 async function listAll<T>(page: AsyncIterable<T>): Promise<T[]> {
@@ -128,9 +137,7 @@ function fingerprint(value: string): string {
 }
 
 function packageUniquenessKey(config: StarterConfig, key: string): string {
-  return `${config.namespace}:${key}:v${config.version}${
-    timeBasedPricing ? ':time-based' : ''
-  }`;
+  return `${config.namespace}:${key}:v${config.version}`;
 }
 
 function storedPackageKey(config: StarterConfig, key: string): string {
@@ -138,23 +145,178 @@ function storedPackageKey(config: StarterConfig, key: string): string {
 }
 
 function contractKey(config: StarterConfig, personaKey: string): string {
-  return `contract:${config.namespace}:${personaKey}:v${config.version}${
-    timeBasedPricing ? ':time-based' : ''
-  }`;
+  return `contract:${config.namespace}:${personaKey}:v${config.version}`;
 }
 
 function packageAlias(config: StarterConfig, key: string): string {
-  return `${config.namespace}-${key}-v${config.version}${
-    timeBasedPricing ? '-time-based' : ''
-  }`;
+  return `${config.namespace}-${key}-v${config.version}`;
 }
 
 function assertSame(label: string, actual: unknown, expected: unknown) {
   if (stable(actual) !== stable(expected)) {
     throw new Error(
-      `${label} already exists with an incompatible definition.\nExpected: ${JSON.stringify(expected)}\nActual: ${JSON.stringify(actual)}`,
+      `${label} already exists with an incompatible definition.\nExpected: ${JSON.stringify(expected)}\nActual: ${JSON.stringify(actual)}\nPreview and run Starter Reset with the same resource prefix before reseeding with a different pricing property.`,
     );
   }
+}
+
+const RESERVED_PROPERTY_KEYS = new Set([
+  'quantity',
+  'modality',
+  'operation',
+  'model',
+  'workspace_id',
+  'project_id',
+  'user_id',
+  'customer_id',
+]);
+
+function option(name: string): string | undefined {
+  return argv
+    .find((arg) => arg.startsWith(`--${name}=`))
+    ?.slice(name.length + 3)
+    .trim();
+}
+
+function validatePricingDimension(value: unknown): PricingDimension | null {
+  if (value == null) return null;
+  if (!value || typeof value !== 'object') {
+    throw new Error('Pricing dimension must be an object.');
+  }
+  const candidate = value as {
+    propertyKey?: unknown;
+    values?: unknown;
+    metrics?: unknown;
+  };
+  const propertyKey =
+    typeof candidate.propertyKey === 'string'
+      ? candidate.propertyKey.trim()
+      : '';
+  if (!/^[a-z][a-z0-9_]{0,63}$/.test(propertyKey)) {
+    throw new Error(
+      'Pricing property must start with a lowercase letter and contain only lowercase letters, numbers, and underscores.',
+    );
+  }
+  if (RESERVED_PROPERTY_KEYS.has(propertyKey)) {
+    throw new Error(`Pricing property "${propertyKey}" is reserved.`);
+  }
+  if (
+    !Array.isArray(candidate.values) ||
+    candidate.values.length < 2 ||
+    candidate.values.length > 4
+  ) {
+    throw new Error('Pricing property requires 2–4 values.');
+  }
+  const values = candidate.values.map((entry, index) => {
+    if (!entry || typeof entry !== 'object') {
+      throw new Error(`Pricing value ${index + 1} is invalid.`);
+    }
+    const row = entry as { value?: unknown; multiplier?: unknown };
+    const item = typeof row.value === 'string' ? row.value.trim() : '';
+    const multiplier = Number(row.multiplier);
+    if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(item)) {
+      throw new Error(
+        `Pricing value ${index + 1} must contain only letters, numbers, underscores, or hyphens.`,
+      );
+    }
+    if (!Number.isFinite(multiplier) || multiplier <= 0) {
+      throw new Error(`Multiplier for "${item}" must be greater than zero.`);
+    }
+    return { value: item, multiplier };
+  });
+  if (new Set(values.map((entry) => entry.value)).size !== values.length) {
+    throw new Error('Pricing property values must be unique.');
+  }
+  if (!Array.isArray(candidate.metrics)) {
+    throw new Error('Pricing property must select Image, Video, or both.');
+  }
+  const metrics = [...new Set(candidate.metrics)].filter(
+    (metric): metric is MetricKey => metric === 'image' || metric === 'video',
+  );
+  if (metrics.length === 0 || metrics.length !== candidate.metrics.length) {
+    throw new Error('Pricing metrics must contain Image, Video, or both.');
+  }
+  return { propertyKey, values, metrics };
+}
+
+function resolvePricingDimension(): PricingDimension | null {
+  const fromEnvironment =
+    process.env.METRONOME_STARTER_PRICING_DIMENSION?.trim();
+  if (fromEnvironment) {
+    try {
+      return validatePricingDimension(JSON.parse(fromEnvironment));
+    } catch (error) {
+      throw new Error(
+        `Invalid METRONOME_STARTER_PRICING_DIMENSION: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  const propertyKey = option('pricing-property');
+  const rawValues = option('pricing-values');
+  const rawMetrics = option('pricing-metrics');
+  if (!propertyKey && !rawValues && !rawMetrics) return null;
+  if (!propertyKey || !rawValues || !rawMetrics) {
+    throw new Error(
+      'Custom pricing requires --pricing-property, --pricing-values, and --pricing-metrics together.',
+    );
+  }
+  return validatePricingDimension({
+    propertyKey,
+    values: rawValues.split(',').map((entry) => {
+      const separator = entry.lastIndexOf(':');
+      return {
+        value: separator > 0 ? entry.slice(0, separator) : '',
+        multiplier: separator > 0 ? entry.slice(separator + 1) : Number.NaN,
+      };
+    }),
+    metrics: rawMetrics.split(',').map((entry) => entry.trim()),
+  });
+}
+
+function appliesPricingDimension(metric: MetricKey): boolean {
+  return pricingDimension?.metrics.includes(metric) ?? false;
+}
+
+function pricingGroupKeyFor(metric: MetricKey): string[] {
+  return [
+    'operation',
+    'model',
+    ...(appliesPricingDimension(metric) && pricingDimension
+      ? [pricingDimension.propertyKey]
+      : []),
+  ];
+}
+
+function pricingDimensionPreview(config: StarterConfig) {
+  return {
+    pricingDimension,
+    usageProducts: Object.fromEntries(
+      config.metrics.map((metric) => [
+        metric.key,
+        {
+          pricingGroupKey: pricingGroupKeyFor(metric.key),
+          propertyValues:
+            appliesPricingDimension(metric.key) && pricingDimension
+              ? pricingDimension.values.map((entry) => entry.value)
+              : [],
+        },
+      ]),
+    ),
+    rateVariants: Object.fromEntries(
+      config.rates.map((rate) => [
+        `${rate.metric}:${rate.operation}:${rate.model}`,
+        appliesPricingDimension(rate.metric) && pricingDimension
+          ? pricingDimension.values.map((entry) => ({
+              value: entry.value,
+              creditsPerUnit: rate.creditsPerUnit * entry.multiplier,
+            }))
+          : [{ value: null, creditsPerUnit: rate.creditsPerUnit }],
+      ]),
+    ),
+  };
 }
 
 function applyStarterOverrides(config: StarterConfig): StarterConfig {
@@ -367,9 +529,7 @@ async function printPlan(client: Metronome, config: StarterConfig) {
         mode: 'dry-run',
         namespace: config.namespace,
         options: {
-          timeBasedPricing,
-          timezone: config.timezone,
-          peakWindow: config.peakWindow,
+          pricingDimension,
         },
         existing: {
           pricingUnit: found.pricingUnit?.name ?? null,
@@ -430,17 +590,15 @@ async function ensureCatalog(
     config.fiatCurrency,
   );
 
-  const pricingGroupKey = timeBasedPricing
-    ? ['operation', 'model', 'time_band']
-    : ['operation', 'model'];
-  const groupKeys = [
-    pricingGroupKey,
-    ['workspace_id'],
-    ['project_id'],
-    ['user_id'],
-  ];
   const metricIds: Record<string, string> = {};
   for (const definition of config.metrics) {
+    const pricingGroupKey = pricingGroupKeyFor(definition.key);
+    const groupKeys = [
+      pricingGroupKey,
+      ['workspace_id'],
+      ['project_id'],
+      ['user_id'],
+    ];
     const propertyFilters = [
       { name: 'quantity', exists: true },
       {
@@ -453,8 +611,14 @@ async function ensureCatalog(
       { name: 'workspace_id', exists: true },
       { name: 'project_id', exists: true },
       { name: 'user_id', exists: true },
-      ...(timeBasedPricing
-        ? [{ name: 'time_band', exists: true, in_values: ['peak', 'off_peak'] }]
+      ...(appliesPricingDimension(definition.key) && pricingDimension
+        ? [
+            {
+              name: pricingDimension.propertyKey,
+              exists: true,
+              in_values: pricingDimension.values.map((entry) => entry.value),
+            },
+          ]
         : []),
     ];
     const existing = found.metrics.find(
@@ -489,6 +653,7 @@ async function ensureCatalog(
   );
   const productIds: Record<string, string> = {};
   for (const definition of config.metrics) {
+    const pricingGroupKey = pricingGroupKeyFor(definition.key);
     const existing = productsByName.get(definition.name);
     if (existing) {
       assertSame(
@@ -557,19 +722,19 @@ async function ensureCatalog(
   );
   const ratesToAdd: any[] = [];
   for (const definition of config.rates) {
-    const bands = timeBasedPricing
-      ? [
-          { name: 'peak', multiplier: 1.25 },
-          { name: 'off_peak', multiplier: 0.8 },
-        ]
-      : [{ name: null, multiplier: 1 }];
-    for (const band of bands) {
+    const dimensionValues =
+      appliesPricingDimension(definition.metric) && pricingDimension
+        ? pricingDimension.values
+        : [{ value: null, multiplier: 1 }];
+    for (const dimensionValue of dimensionValues) {
       const values: Record<string, string> = {
         operation: definition.operation,
         model: definition.model,
-        ...(band.name ? { time_band: band.name } : {}),
+        ...(dimensionValue.value && pricingDimension
+          ? { [pricingDimension.propertyKey]: dimensionValue.value }
+          : {}),
       };
-      const price = definition.creditsPerUnit * band.multiplier;
+      const price = definition.creditsPerUnit * dimensionValue.multiplier;
       const existing = currentRates.find(
         (rate) =>
           rate.product_id === productIds[definition.metric] &&
@@ -577,7 +742,7 @@ async function ensureCatalog(
       );
       if (existing) {
         assertSame(
-          `${definition.metric} ${band.name ?? 'standard'} rate`,
+          `${definition.metric} ${dimensionValue.value ?? 'base'} rate`,
           Number(existing.rate?.price),
           price,
         );
@@ -939,31 +1104,6 @@ async function ensurePersonas(
   return { customerIds, contractIds };
 }
 
-function zonedParts(date: Date, timezone: string) {
-  const values: Record<string, string> = {};
-  for (const part of new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone,
-    weekday: 'short',
-    hour: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(date)) {
-    values[part.type] = part.value;
-  }
-  const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(
-    values.weekday,
-  );
-  return { weekday, hour: Number(values.hour) };
-}
-
-function timeBand(date: Date, config: StarterConfig): 'peak' | 'off_peak' {
-  const local = zonedParts(date, config.timezone);
-  return config.peakWindow.weekdays.includes(local.weekday) &&
-    local.hour >= config.peakWindow.startHour &&
-    local.hour < config.peakWindow.endHour
-    ? 'peak'
-    : 'off_peak';
-}
-
 function stableIndex(seed: string, length: number): number {
   return Number.parseInt(fingerprint(seed).slice(0, 8), 16) % length;
 }
@@ -1021,8 +1161,16 @@ async function seedUsage(
               persona.key === 'b2b-power-user'
                 ? `power-user-seat-${userIndex + 1}`
                 : `${persona.key}-user-${userIndex + 1}`,
-            ...(timeBasedPricing
-              ? { time_band: timeBand(timestamp, config) }
+            ...(pricingDimension?.metrics.includes(rate.metric)
+              ? {
+                  [pricingDimension.propertyKey]:
+                    pricingDimension.values[
+                      stableIndex(
+                        `${seed}:${pricingDimension.propertyKey}`,
+                        pricingDimension.values.length,
+                      )
+                    ].value,
+                }
               : {}),
           },
         });
@@ -1148,15 +1296,26 @@ async function main() {
     return;
   }
   if (apply && reset) throw new Error('Choose either --apply or --reset.');
+  pricingDimension = resolvePricingDimension();
+  const config = applyStarterOverrides(
+    JSON.parse(await readFile(CONFIG_PATH, 'utf8')) as StarterConfig,
+  );
+  if (validateOnly) {
+    console.log(
+      JSON.stringify(
+        { mode: 'validated-config', ...pricingDimensionPreview(config) },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
   const apiKey = process.env.METRONOME_API_KEY?.trim();
   if (!apiKey) {
     throw new Error(
       'METRONOME_API_KEY is required in .env.metronome-target.local.',
     );
   }
-  const config = applyStarterOverrides(
-    JSON.parse(await readFile(CONFIG_PATH, 'utf8')) as StarterConfig,
-  );
   if (confirmation && confirmation !== config.namespace) {
     throw new Error(
       `Confirmation must exactly match --confirm=${config.namespace}.`,
@@ -1180,8 +1339,7 @@ async function main() {
     accountScope,
     namespace: config.namespace,
     configVersion: config.version,
-    timeBasedPricing,
-    timezone: config.timezone,
+    pricingDimension,
     generatedAt: new Date().toISOString(),
     pricingUnit: {
       id: catalog.pricingUnitId,

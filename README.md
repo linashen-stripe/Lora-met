@@ -66,7 +66,7 @@ Metronome-only Generation catalog, Quickstart, Pro, and B2B example customers,
 contracts, and representative usage without requiring Stripe.
 
 See [the Starter Kit guide](docs/METRONOME_STARTER.md) for credentials, preview,
-seed, optional peak/off-peak pricing, and namespace-scoped reset commands.
+seed, optional custom pricing properties, and namespace-scoped reset commands.
 
 ## Demo paths
 
