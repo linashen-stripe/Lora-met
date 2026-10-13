@@ -2,9 +2,67 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import Metronome from '@metronome/sdk';
+import {
+  API_INSPECTOR_CHILD_TRACE_PREFIX,
+  createTraceId,
+  safeJsonParse,
+  type ApiTraceEntry,
+} from '../src/utils/apiInspector';
 
 const ROOT = process.cwd();
 const CONFIG_PATH = resolve(ROOT, 'config/metronome/starter-kit.json');
+let metronomeFetch: typeof fetch = globalThis.fetch.bind(globalThis);
+
+function enableApiInspectorTracing(): void {
+  if (process.env.API_INSPECTOR_TRACE_ENABLED !== '1') return;
+  metronomeFetch = async (input, init) => {
+    const id = createTraceId('metronome');
+    const startedAt = new Date().toISOString();
+    const startedAtMs = Date.now();
+    const method = String(init?.method ?? 'GET').toUpperCase();
+    const url = typeof input === 'string' ? input : input.toString();
+    try {
+      const response = await fetch(input, init);
+      const responseBody = await response
+        .clone()
+        .text()
+        .then(safeJsonParse)
+        .catch(() => undefined);
+      const entry: ApiTraceEntry = {
+        id,
+        source: 'metronome',
+        method,
+        url,
+        startedAt,
+        durationMs: Date.now() - startedAtMs,
+        status: response.status,
+        state: response.ok ? 'success' : 'error',
+        request: safeJsonParse(init?.body),
+        response: responseBody,
+      };
+      process.stdout.write(
+        `${API_INSPECTOR_CHILD_TRACE_PREFIX}${JSON.stringify(entry)}\n`,
+      );
+      return response;
+    } catch (error) {
+      const entry: ApiTraceEntry = {
+        id,
+        source: 'metronome',
+        method,
+        url,
+        startedAt,
+        durationMs: Date.now() - startedAtMs,
+        state: 'error',
+        request: safeJsonParse(init?.body),
+        error: error instanceof Error ? error.message : String(error),
+      };
+      process.stdout.write(
+        `${API_INSPECTOR_CHILD_TRACE_PREFIX}${JSON.stringify(entry)}\n`,
+      );
+      throw error;
+    }
+  };
+}
 
 type MetricKey = 'image' | 'video' | '3d';
 type PackageKey = 'free' | 'quickstart' | 'pro';
@@ -405,7 +463,7 @@ function applyStarterOverrides(config: StarterConfig): StarterConfig {
 }
 
 async function createPricingUnit(apiKey: string, name: string) {
-  const response = await fetch('https://api.metronome.com/v1/credit-types/create', {
+  const response = await metronomeFetch('https://api.metronome.com/v1/credit-types/create', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -1442,7 +1500,11 @@ async function main() {
       `Confirmation must exactly match --confirm=${config.namespace}.`,
     );
   }
-  const client = new Metronome({ bearerToken: apiKey });
+  enableApiInspectorTracing();
+  const client = new Metronome({
+    bearerToken: apiKey,
+    fetch: metronomeFetch,
+  });
   if (reset) {
     await resetStarter(client, config);
     return;

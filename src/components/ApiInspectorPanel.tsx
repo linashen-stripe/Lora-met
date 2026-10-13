@@ -50,7 +50,9 @@ export default function ApiInspectorPanel() {
     clear,
   } = useApiInspector();
   const [search, setSearch] = useState('');
-  const [source, setSource] = useState<'all' | ApiTraceSource>('all');
+  const [source, setSource] = useState<
+    'upstream' | 'all' | ApiTraceSource
+  >('upstream');
   const [method, setMethod] = useState('all');
   const [outcome, setOutcome] = useState('all');
   const [selected, setSelected] = useState<ApiTraceEntry | null>(null);
@@ -72,11 +74,21 @@ export default function ApiInspectorPanel() {
       Array.from(new Set(entries.map((entry) => entry.method))).sort(),
     [entries],
   );
+  const entriesById = useMemo(
+    () => new Map(entries.map((entry) => [entry.id, entry])),
+    [entries],
+  );
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return [...entries]
       .reverse()
-      .filter((entry) => source === 'all' || entry.source === source)
+      .filter(
+        (entry) =>
+          source === 'all' ||
+          (source === 'upstream'
+            ? entry.source === 'metronome' || entry.source === 'stripe'
+            : entry.source === source),
+      )
       .filter((entry) => method === 'all' || entry.method === method)
       .filter((entry) => outcome === 'all' || entry.state === outcome)
       .filter((entry) => {
@@ -167,15 +179,21 @@ export default function ApiInspectorPanel() {
             <select
               value={source}
               onChange={(event) =>
-                setSource(event.target.value as 'all' | ApiTraceSource)
+                setSource(
+                  event.target.value as
+                    | 'upstream'
+                    | 'all'
+                    | ApiTraceSource,
+                )
               }
               aria-label='Filter by service'
               className='rounded-md border border-gray-300 px-2 py-1.5 text-xs'
             >
-              <option value='all'>All services</option>
-              <option value='app'>App</option>
+              <option value='upstream'>Upstream APIs</option>
               <option value='metronome'>Metronome</option>
               <option value='stripe'>Stripe</option>
+              <option value='app'>App routes</option>
+              <option value='all'>All activity</option>
             </select>
             <select
               value={method}
@@ -247,6 +265,11 @@ export default function ApiInspectorPanel() {
                   <p className='mt-1 truncate font-mono text-xs text-gray-700'>
                     {entry.url}
                   </p>
+                  {entry.parentId && entriesById.get(entry.parentId) && (
+                    <p className='mt-1 truncate text-[11px] text-gray-500'>
+                      via {entriesById.get(entry.parentId)?.url}
+                    </p>
+                  )}
                   <p className='mt-1 text-[11px] text-gray-400'>
                     {new Date(entry.startedAt).toLocaleTimeString()}
                     {entry.durationMs != null

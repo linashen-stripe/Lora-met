@@ -1,6 +1,13 @@
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
+import {
+  API_INSPECTOR_CHILD_TRACE_PREFIX,
+  API_INSPECTOR_SESSION_HEADER,
+  API_INSPECTOR_TRACE_HEADER,
+  type ApiTraceEntry,
+} from '@/utils/apiInspector';
+import { publishApiTrace } from '@/utils/apiInspectorServer';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -102,6 +109,11 @@ function normalizePricingDimension(value: unknown): PricingDimension | null {
 
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as StarterRequest;
+  const inspectorSessionId = request.headers.get(
+    API_INSPECTOR_SESSION_HEADER,
+  );
+  const parentTraceId =
+    request.headers.get(API_INSPECTOR_TRACE_HEADER) ?? undefined;
   const apiKey = clean(body.apiKey);
   const mode: StarterMode =
     body.mode === 'seed' || body.mode === 'reset' ? body.mode : 'plan';
@@ -136,6 +148,7 @@ export async function POST(request: Request) {
         METRONOME_STARTER_PRICING_DIMENSION: pricingDimension
           ? JSON.stringify(pricingDimension)
           : '',
+        API_INSPECTOR_TRACE_ENABLED: inspectorSessionId ? '1' : '',
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -149,7 +162,26 @@ export async function POST(request: Request) {
       const lines = pending.value.split('\n');
       pending.value = lines.pop() ?? '';
       for (const line of lines) {
-        if (line.trim()) onLog(`${prefix}${line}`);
+        if (!line.trim()) continue;
+        if (
+          inspectorSessionId &&
+          !prefix &&
+          line.startsWith(API_INSPECTOR_CHILD_TRACE_PREFIX)
+        ) {
+          try {
+            const entry = JSON.parse(
+              line.slice(API_INSPECTOR_CHILD_TRACE_PREFIX.length),
+            ) as ApiTraceEntry;
+            publishApiTrace(inspectorSessionId, {
+              ...entry,
+              parentId: parentTraceId,
+            });
+          } catch {
+            onLog('Inspector could not parse one upstream trace.');
+          }
+          continue;
+        }
+        onLog(`${prefix}${line}`);
       }
     };
     const stdout = { value: '' };

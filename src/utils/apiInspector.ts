@@ -1,6 +1,7 @@
 export const API_INSPECTOR_SESSION_HEADER = 'x-api-inspector-session';
 export const API_INSPECTOR_TRACE_HEADER = 'x-api-inspector-trace';
 export const API_INSPECTOR_EVENT = 'lora:api-trace';
+export const API_INSPECTOR_CHILD_TRACE_PREFIX = '__API_INSPECTOR_TRACE__';
 export const API_INSPECTOR_MAX_ENTRIES = 300;
 
 export type ApiTraceSource = 'app' | 'metronome' | 'stripe';
