@@ -5,7 +5,9 @@
 - `config/metronome/starter-kit.json` is now the single canonical Generation
   manifest used by both the app and account starter; the duplicate generation
   manifest/script were removed.
-- Resource names use a configurable prefix that defaults to `Lora Generate`.
+- Generic seeded resource names use a configurable prefix that defaults to
+  `Generate`; neutral pricing model IDs are `vision-2`, `motion-1`, and
+  `mesh-3`.
 - The starter CLI and admin route share the in-process engine in
   `src/server/metronomeStarter/`.
 - Metronome-only remains the default. The admin page optionally accepts a

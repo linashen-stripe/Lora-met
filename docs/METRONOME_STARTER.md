@@ -2,7 +2,7 @@
 
 This starter and the Generation app use the same canonical manifest,
 `config/metronome/starter-kit.json`. The configurable resource prefix defaults
-to `Lora Generate`. Metronome-only remains the default; Stripe test billing is
+to `Generate`. Metronome-only remains the default; Stripe test billing is
 optional.
 
 ## Credentials
