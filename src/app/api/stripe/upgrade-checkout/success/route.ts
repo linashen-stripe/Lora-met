@@ -14,6 +14,8 @@ import {
   isMetronomeHourBoundaryError,
 } from '@/utils/metronome';
 import { finalizeAndPayMetronomeInvoice } from '@/utils/stripeInvoiceFinalize';
+import { configureContractAutoTopUp } from '@/server/metronomeAutoTopUp';
+import { AI_BUILDER_PRO_TERMS } from '@/config/aiBuilderCatalog';
 
 export async function GET(request: NextRequest) {
   const publicOrigin = getPublicOriginFromRequest(request);
@@ -55,6 +57,7 @@ export async function GET(request: NextRequest) {
       demoMode = 'generation',
       contractStartDaysAgo: contractStartDaysAgoRaw,
       seedUsageAfter,
+      seedPersona,
     } = session.metadata ?? {};
 
     const contractStartDaysAgo = contractStartDaysAgoRaw
@@ -226,6 +229,27 @@ export async function GET(request: NextRequest) {
         console.log(
           `✅ Created Metronome ${packageName} contract: ${contractId} (starting_at ${startingAt.toISOString()})`,
         );
+        if (demoMode === 'ai-builder' && seedPersona === 'pro') {
+          try {
+            await configureContractAutoTopUp({
+              metronome,
+              customerId: metronomeCustomerId,
+              contractId,
+              thresholdAmount:
+                AI_BUILDER_PRO_TERMS.autoTopUpThresholdCents,
+              rechargeToAmount: AI_BUILDER_PRO_TERMS.autoTopUpToCents,
+              name: 'Seeded Pro Auto Top-Up',
+            });
+            console.log(
+              `[upgrade-checkout/success] Configured seeded AI Builder Pro auto top-up on ${contractId}`,
+            );
+          } catch (topUpError) {
+            console.warn(
+              '[upgrade-checkout/success] Seeded Pro auto top-up was skipped:',
+              topUpError,
+            );
+          }
+        }
 
         // Finalize and pay the subscription invoice Metronome creates in Stripe.
         // Runs in background — don't block the redirect.
@@ -278,12 +302,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Quickstart sets seedUsageAfter=true in session metadata — seed history in the background.
-    if (
-      seedUsageAfter === 'true' &&
-      demoMode === 'generation' &&
-      metronomeCustomerId
-    ) {
-      const seedUrl = new URL('/api/metronome/seed-usage-multi-project', publicOrigin);
+    if (seedUsageAfter === 'true' && metronomeCustomerId) {
+      const seedUrl = new URL(
+        demoMode === 'generation'
+          ? '/api/metronome/seed-usage-multi-project'
+          : '/api/metronome/seed-usage-multi-seat',
+        publicOrigin,
+      );
       seedUrl.searchParams.set('customerId', metronomeCustomerId);
       seedUrl.searchParams.set('story', 'healthy');
       seedUrl.searchParams.set('trailingDays', '1');

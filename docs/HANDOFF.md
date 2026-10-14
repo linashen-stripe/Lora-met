@@ -1,4 +1,29 @@
-# Handoff — 2026-10-13
+# Handoff — 2026-10-14
+
+## AI Builder parity and admin update
+
+- Local `master` is three commits ahead of GitHub before this update; a clean
+  working tree means changes are committed locally, not necessarily pushed.
+- The existing AI Builder rate card, metrics, products, and rates remain
+  unchanged. Canonical `AI Builder Pro` and `AI Builder Enterprise Quickstart`
+  packages were created from the legacy Premium/Enterprise terms.
+- AI Builder Quickstart is a `$2,500` prepaid, 12-month commitment. Existing
+  legacy packages remain available for contracts already using them.
+- AI Builder is presented as Free, Pro, Enterprise Quickstart, and custom
+  Enterprise. Canonical packages are preferred when legacy names coexist.
+- Login and Admin → Demo customers can prepare Pro, Quickstart, and B2B
+  personas for either demo mode. AI Builder Pro/Quickstart now seed
+  representative usage after checkout.
+- Only AI Builder Pro customers created through the seeded-demo path receive
+  the `$5 → $15` Stripe invoice-gated auto top-up example. The reusable Pro
+  package does not enable it for ordinary customers.
+- Settings now links to one Admin hub separating Account setup, Demo customers,
+  and Customer cleanup. Power-user creation moved out of cleanup.
+- Account setup uses explicit memory-only target keys. Starter reset requires
+  the target key plus typed `metronome-starter` confirmation and remains scoped
+  to state-owned resources.
+- Stripe customer cleanup now searches for scoped demo customers instead of
+  auto-paging the entire shared account.
 
 ## Latest unified starter update
 
@@ -33,11 +58,10 @@
 - The Generation playground and legacy `/chat` simulation now emit the
   canonical `service_tier` dimension, price Standard/Priority jobs from manifest
   multipliers, and use neutral model IDs.
-- Generation pricing shows detailed credit and USD list value for every
-  product/service-tier combination. Invoice pacing can filter quality and
+- Generation pricing shows detailed credit cost for every product/service-tier
+  combination without exposing the USD conversion. Invoice pacing can filter quality and
   service tier independently, and manual usage seeding mixes both tiers.
-- Sample-customer login shortcuts were considered and intentionally omitted;
-  the normal login flow remains unchanged.
+- Login includes explicit seeded Quickstart, Pro, and B2B persona shortcuts.
 - The connected demo account was successfully seeded in Stripe-assisted mode:
   three linked personas/contracts, 1,009 deterministic usage events, and three
   finalized/paid Stripe test invoices. Stripe tax was unavailable, so the

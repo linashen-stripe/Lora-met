@@ -95,7 +95,7 @@ export default function MetronomeStarterPage() {
     METRONOME_STARTER_KIT.pricingDimension.metrics as PricingMetric[],
   );
   const [running, setRunning] = useState<StarterMode | null>(null);
-  const [resetConfirming, setResetConfirming] = useState(false);
+  const [resetConfirmationText, setResetConfirmationText] = useState('');
 
   const pricingPropertyError = (() => {
     if (!pricingPropertyEnabled) return null;
@@ -234,7 +234,6 @@ export default function MetronomeStarterPage() {
       return;
     }
     setRunning(mode);
-    setResetConfirming(false);
     appendLines([
       '',
       `$ starter:${mode}${
@@ -273,6 +272,7 @@ export default function MetronomeStarterPage() {
       );
     } finally {
       setRunning(null);
+      if (mode === 'reset') setResetConfirmationText('');
     }
   };
 
@@ -285,7 +285,7 @@ export default function MetronomeStarterPage() {
               Admin tools
             </p>
             <h1 className='mt-2 text-3xl font-bold text-foreground'>
-              Metronome Starter Seed
+              Account setup
             </h1>
             <p className='mt-3 max-w-3xl text-sm text-muted-foreground'>
               Prepare a new account with the canonical Generation catalog and
@@ -294,10 +294,10 @@ export default function MetronomeStarterPage() {
             </p>
           </div>
           <Link
-            href={`/${language}/admin/cleanup-environment`}
+            href={`/${language}/admin`}
             className='text-sm font-medium text-purple hover:underline'
           >
-            Open cleanup tools
+            Back to admin tools
           </Link>
         </div>
 
@@ -739,27 +739,31 @@ export default function MetronomeStarterPage() {
             </div>
 
             <div className='mt-5 border-t pt-5'>
+              <label className='mb-3 block text-xs font-medium text-gray-700'>
+                Type <span className='font-mono'>metronome-starter</span> to
+                enable reset
+                <input
+                  value={resetConfirmationText}
+                  onChange={(event) =>
+                    setResetConfirmationText(event.target.value)
+                  }
+                  autoComplete='off'
+                  className='mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm'
+                />
+              </label>
               <button
                 type='button'
-                onClick={() =>
-                  resetConfirming
-                    ? run('reset', true)
-                    : setResetConfirming(true)
-                }
-                onBlur={() => setResetConfirming(false)}
+                onClick={() => run('reset', true)}
                 disabled={
                   !apiKey.trim() ||
                   (stripeEnabled && !stripeSecretKey.trim()) ||
+                  resetConfirmationText !== 'metronome-starter' ||
                   running !== null
                 }
-                className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 ${
-                  resetConfirming ? 'bg-red-600' : 'bg-gray-700'
-                }`}
+                className='flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50'
               >
                 <RotateCcw className='h-4 w-4' />
-                {resetConfirming
-                  ? 'Confirm starter reset'
-                  : 'Reset starter resources'}
+                Reset starter resources
               </button>
               <p className='mt-2 text-xs text-gray-500'>
                 Reset archives namespaced Metronome resources. With Stripe

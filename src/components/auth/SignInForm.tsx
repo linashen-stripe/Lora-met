@@ -149,6 +149,16 @@ const SignInForm = () => {
             });
           router.push(`/${lang}/dashboard/usage?demoMode=${demoMode}`);
         } else {
+          await fetchClient
+            .get('/api/metronome/seed-usage-multi-seat', {
+              params: {
+                customerId: data.metronomeCustomerId,
+                story: 'healthy',
+              },
+            })
+            .catch((seedError) => {
+              console.warn('AI Builder usage seeding was skipped:', seedError);
+            });
           router.push(`/${lang}/demos/ai-builder`);
         }
         return;
@@ -163,6 +173,7 @@ const SignInForm = () => {
           contractStartDaysAgo: QUICKSTART_DAYS_AGO,
           contractPackage:
             persona === 'pro' ? ('premium' as const) : ('enterprise' as const),
+          seedPersona: persona,
           demoMode,
         },
       );

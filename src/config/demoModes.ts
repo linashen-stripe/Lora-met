@@ -1,4 +1,5 @@
 import { METRONOME_PACKAGE_NAMES } from '@/config/metronomeCatalog';
+import { AI_BUILDER_PACKAGE_NAMES } from '@/config/aiBuilderCatalog';
 
 export type DemoMode = 'generation' | 'ai-builder';
 
@@ -43,9 +44,17 @@ export const DEMO_MODES: Record<DemoMode, DemoModeDefinition> = {
     route: '/demos/ai-builder',
     customerPrefix: 'builder',
     packageNames: {
-      free: ['AI Builder Free'],
-      premium: ['AI Builder Premium'],
-      enterprise: ['AI Builder Enterprise'],
+      free: [AI_BUILDER_PACKAGE_NAMES.free, 'AI Builder Free'],
+      premium: [
+        AI_BUILDER_PACKAGE_NAMES.pro,
+        AI_BUILDER_PACKAGE_NAMES.legacyPro,
+        'AI Builder Premium',
+      ],
+      enterprise: [
+        AI_BUILDER_PACKAGE_NAMES.quickstart,
+        AI_BUILDER_PACKAGE_NAMES.legacyQuickstart,
+        'AI Builder Enterprise',
+      ],
     },
   },
 };

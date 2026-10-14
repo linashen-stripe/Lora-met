@@ -24,6 +24,10 @@ import {
 } from '@/config/generationCatalog';
 import { DEMO_MODES } from '@/config/demoModes';
 import { METRONOME_CATALOG, packageByKey } from '@/config/metronomeCatalog';
+import {
+  AI_BUILDER_PACKAGE_NAMES,
+  AI_BUILDER_QUICKSTART_TERMS,
+} from '@/config/aiBuilderCatalog';
 
 /** Metronome package `name` must match one of these (case-insensitive, trimmed) to appear on /pricing. */
 const METRONOME_PRICING_PACKAGE_NAMES = new Set(['free', 'premium', 'enterprise']);
@@ -268,8 +272,33 @@ function PricingPageContent() {
         const namespacedPackages = rawPackages.filter((pkg: any) =>
           modePackageNames.has(normPackageName(pkg.name)),
         );
+        const canonicalAiPackages =
+          demoMode === 'ai-builder'
+            ? rawPackages.filter((pkg: any) =>
+                [
+                  AI_BUILDER_PACKAGE_NAMES.free,
+                  AI_BUILDER_PACKAGE_NAMES.pro,
+                  AI_BUILDER_PACKAGE_NAMES.quickstart,
+                ]
+                  .map(normPackageName)
+                  .includes(normPackageName(pkg.name)),
+              )
+            : [];
+        const hasCanonicalAiPaidPackages =
+          canonicalAiPackages.some(
+            (pkg: any) =>
+              normPackageName(pkg.name) ===
+              normPackageName(AI_BUILDER_PACKAGE_NAMES.pro),
+          ) &&
+          canonicalAiPackages.some(
+            (pkg: any) =>
+              normPackageName(pkg.name) ===
+              normPackageName(AI_BUILDER_PACKAGE_NAMES.quickstart),
+          );
         const packages =
-          namespacedPackages.length > 0
+          hasCanonicalAiPaidPackages
+            ? canonicalAiPackages
+            : namespacedPackages.length > 0
             ? namespacedPackages
             : demoMode === 'ai-builder'
               ? rawPackages.filter(isAllowedMetronomePricingPackage)
@@ -417,10 +446,7 @@ function PricingPageContent() {
   };
 
   const teamCard: Plan = {
-    name:
-      demoMode === 'generation'
-        ? 'Enterprise'
-        : t('products.default_team.name', 'Enterprise'),
+    name: 'Enterprise',
     price: t('plans.team.custom_pricing', 'Custom Pricing'),
     priceDetails: null,
     description: t(
@@ -442,12 +468,10 @@ function PricingPageContent() {
             'Dedicated support and spend controls',
           ]
         : [
-            t('plans.team.features.1', 'All Premium Plan features'),
-            t('plans.team.features.2', 'Tailored solutions for high-volume users'),
-            t('plans.team.features.3', 'Dedicated account manager'),
-            t('plans.team.features.4', 'Centralized billing management'),
-            t('plans.team.features.5', 'Enhanced security features'),
-            t('plans.team.features.6', 'Exclusive access to beta features'),
+            'All Pro features',
+            'Negotiated rates and commitments',
+            'Seat-based credit allocations',
+            'Dedicated support and spend controls',
           ],
     button: {
       text: t('plans.team.button.contact_sales', 'Contact Sales'),
@@ -482,7 +506,9 @@ function PricingPageContent() {
       demoMode === 'ai-builder'
         ? normPackageName(pkg.name).includes('free')
           ? 500
-          : normPackageName(pkg.name).includes('premium')
+          : ['premium', 'pro'].some((tier) =>
+                normPackageName(pkg.name).includes(tier),
+              )
             ? 2_000
             : null
         : null;
@@ -535,6 +561,13 @@ function PricingPageContent() {
               t('plans.free.features.4', 'Community support'),
               t('plans.free.features.5', 'Basic analytics dashboard'),
             ]
+          : isQuickstart
+            ? [
+                'Predefined 12-month enterprise commitment',
+                'Token-priced usage across supported models',
+                'Usage and billing analytics',
+                'Ready to evaluate before negotiated pricing',
+              ]
           : isPricedPlan
             ? [
                 t('plans.premium.features.1', 'All Free Plan features'),
@@ -569,9 +602,17 @@ function PricingPageContent() {
               ];
 
     const isCustomPricing = pkg.price_cents === null;
+    const quickstartCommitmentCents =
+      demoMode === 'generation'
+        ? QUICKSTART_ENTERPRISE_TERMS.prepaidCommitmentUsd * 100
+        : AI_BUILDER_QUICKSTART_TERMS.prepaidCommitmentCents;
+    const quickstartDurationMonths =
+      demoMode === 'generation'
+        ? QUICKSTART_ENTERPRISE_TERMS.termMonths
+        : AI_BUILDER_QUICKSTART_TERMS.durationMonths;
     const price = isQuickstart
       ? formatPrice(
-          QUICKSTART_ENTERPRISE_TERMS.prepaidCommitmentUsd * 100,
+          quickstartCommitmentCents,
           settings?.language,
           currency,
         )
@@ -579,22 +620,20 @@ function PricingPageContent() {
         ? t('plans.team.custom_pricing', 'Custom Pricing')
         : formatPrice(pkg.price_cents ?? 0, settings?.language, currency);
     const priceDetails = isQuickstart
-      ? `${QUICKSTART_ENTERPRISE_TERMS.termMonths}-month commitment`
+      ? `${quickstartDurationMonths}-month commitment`
       : isCustomPricing
         ? null
         : t('plans.price_details.month', '/month');
 
     return {
       name:
-        demoMode === 'generation'
-          ? isQuickstart
+        isQuickstart
             ? 'Enterprise Quickstart'
-            : isFreePlan
-              ? 'Free'
-              : isPricedPlan
-                ? 'Pro'
-                : pkg.name || `Plan ${idx + 1}`
-          : pkg.name || `Plan ${idx + 1}`,
+          : isFreePlan
+            ? 'Free'
+            : isPricedPlan
+              ? 'Pro'
+              : pkg.name || `Plan ${idx + 1}`,
       price,
       priceDetails,
       priceDetailsBelow: isQuickstart,
@@ -617,7 +656,13 @@ function PricingPageContent() {
       credit: {
         amount:
           isQuickstart
-            ? `${QUICKSTART_ENTERPRISE_TERMS.prepaidCommitmentCredits.toLocaleString()} credits`
+            ? demoMode === 'generation'
+              ? `${QUICKSTART_ENTERPRISE_TERMS.prepaidCommitmentCredits.toLocaleString()} credits`
+              : formatPrice(
+                  AI_BUILDER_QUICKSTART_TERMS.prepaidCommitmentCents,
+                  settings?.language,
+                  currency,
+                )
           : catalogPlan?.includedCredits != null
             ? `${catalogPlan.includedCredits.toLocaleString()} credits`
             : aiBuilderIncludedCents != null
@@ -630,7 +675,7 @@ function PricingPageContent() {
         description: isFreePlan
           ? t('plans.free.credit_description', 'one-time generation allowance')
           : isQuickstart
-            ? `pre-committed for ${QUICKSTART_ENTERPRISE_TERMS.termMonths} months`
+            ? `pre-committed for ${quickstartDurationMonths} months`
           : isPricedPlan
             ? t('plans.premium.credit_description', 'included each month')
             : t(
@@ -683,14 +728,24 @@ function PricingPageContent() {
           },
           {
             id: 'premium' as const,
-            name: 'AI Builder Premium',
+            name: 'Pro',
             monthlyPrice: 20,
             includedCredits: 2_000,
             description: 'Token-priced app building with monthly included credit.',
           },
           {
+            id: 'quickstart' as const,
+            name: 'Enterprise Quickstart',
+            monthlyPrice:
+              AI_BUILDER_QUICKSTART_TERMS.prepaidCommitmentCents / 100,
+            includedCredits:
+              AI_BUILDER_QUICKSTART_TERMS.prepaidCommitmentCents,
+            description:
+              'A predefined annual pre-commit package for evaluating enterprise custom pricing.',
+          },
+          {
             id: 'enterprise' as const,
-            name: 'AI Builder Enterprise',
+            name: 'Enterprise',
             monthlyPrice: null,
             includedCredits: null,
             description: 'Custom commitments and negotiated token rates for teams.',
@@ -708,9 +763,12 @@ function PricingPageContent() {
             settings?.currency,
           ),
     priceDetails:
-      plan.monthlyPrice === null
+      plan.id === 'quickstart'
+        ? `${AI_BUILDER_QUICKSTART_TERMS.durationMonths}-month commitment`
+        : plan.monthlyPrice === null
         ? null
         : t('plans.price_details.month', '/month'),
+    priceDetailsBelow: plan.id === 'quickstart',
     description: plan.description,
     credit: {
       amount:
@@ -731,7 +789,9 @@ function PricingPageContent() {
                 ? 'one-time generation allowance'
                 : 'one-time usage credit',
             )
-          : t('plans.premium.credit_description', 'included each month'),
+          : plan.id === 'quickstart'
+            ? `pre-committed for ${AI_BUILDER_QUICKSTART_TERMS.durationMonths} months`
+            : t('plans.premium.credit_description', 'included each month'),
       amountClass: 'text-foreground',
       descriptionClass: 'text-muted-foreground',
     },
@@ -743,6 +803,13 @@ function PricingPageContent() {
             'Negotiated generation rates',
             'Auto top-up and spend alerts',
           ]
+        : plan.id === 'quickstart'
+          ? [
+              'Predefined 12-month enterprise commitment',
+              'Token-priced usage across supported models',
+              'Usage and billing analytics',
+              'Ready to evaluate before negotiated pricing',
+            ]
         : demoMode === 'generation'
           ? [
               'Image, video, and 3D generation',
@@ -764,6 +831,8 @@ function PricingPageContent() {
       link:
         plan.id === 'enterprise'
           ? `/${settings?.language}/contact-us`
+          : plan.id === 'quickstart'
+            ? `/${settings?.language}/auth/sign-in?demoMode=${demoMode}`
           : `/${settings?.language}/auth/sign-up?plan=${plan.id}&demoMode=${demoMode}`,
       className:
         'w-full mt-8 text-base py-3 bg-accent text-accent-foreground hover:bg-purple-hover transition-colors duration-200',
@@ -778,7 +847,7 @@ function PricingPageContent() {
       : staticModeCards;
 
   const plansData: Plan[] = [...middleCards];
-  if (demoMode === 'generation' && sortedPackages.length > 0) {
+  if (sortedPackages.length > 0) {
     plansData.push(teamCard);
   }
 

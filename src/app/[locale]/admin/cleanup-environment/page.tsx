@@ -7,18 +7,14 @@ import { inspectedFetch } from '@/utils/inspectedFetch';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 import TerminalPanel from '@/components/admin/TerminalPanel';
-import { useConfigContext } from '@/contexts/ConfigContext';
-import type { DemoMode } from '@/config/demoModes';
 
-// 3-step admin wizard, in one page, run in order:
+// 2-step destructive cleanup wizard:
 //   1. Archive Metronome customers (archive ONLY — never deletes anything)
 //   2. Delete Stripe customers
-//   3. Create a new power user
 //
-// Steps 1 and 2 are destructive/irreversible, so each requires an explicit
+// Both steps are destructive/irreversible, so each requires an explicit
 // two-click confirmation (select rows -> "Archive/Delete Selected" ->
-// "Confirm ..." ) before anything is sent to the API. Step 3 is additive and
-// runs immediately. All progress streams into one shared terminal panel.
+// "Confirm ..." ) before anything is sent to the API.
 
 interface MetronomeCustomerSummary {
   id: string;
@@ -37,7 +33,6 @@ interface StripeCustomerSummary {
 const STEPS = [
   { n: 1, label: 'Archive Metronome customers' },
   { n: 2, label: 'Delete Stripe customers' },
-  { n: 3, label: 'Add power user' },
 ] as const;
 
 function Stepper({ step }: { step: number }) {
@@ -65,7 +60,6 @@ function Stepper({ step }: { step: number }) {
 }
 
 export default function CleanupEnvironmentPage() {
-  const { demoMode } = useConfigContext();
   const metronomeCustomersUrl = '/api/metronome/demo/customers?demoMode=all';
   const stripeCustomersUrl = '/api/stripe/demo/customers?demoMode=all';
   const [step, setStep] = useState(1);
@@ -84,12 +78,6 @@ export default function CleanupEnvironmentPage() {
   const [selectedStripeIds, setSelectedStripeIds] = useState<Set<string>>(new Set());
   const [deleteConfirming, setDeleteConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  // Step 3 — add power user
-  const [customerName, setCustomerName] = useState('Bufo');
-  const [powerUserDemoMode, setPowerUserDemoMode] =
-    useState<DemoMode>(demoMode);
-  const [creatingPowerUser, setCreatingPowerUser] = useState(false);
 
   const loadMetronomeCustomers = useCallback(async () => {
     setLoadingMetronome(true);
@@ -228,47 +216,13 @@ export default function CleanupEnvironmentPage() {
     }
   };
 
-  const handleCreatePowerUser = async () => {
-    const name = customerName.trim();
-    if (!name || creatingPowerUser) return;
-    setCreatingPowerUser(true);
-    appendLines([
-      '',
-      `$ create ${powerUserDemoMode} power user "${name}"`,
-    ]);
-    try {
-      const res = await inspectedFetch('/api/metronome/demo/power-user', {
-        method: 'POST',
-        headers: buildDemoRequestHeaders(),
-        body: JSON.stringify({
-          customerName: name,
-          demoMode: powerUserDemoMode,
-        }),
-      });
-      await consumeNdjsonStream(res, (msg) => {
-        if (msg.type === 'log') msg.line.split('\n').forEach(appendLine);
-        else if (msg.type === 'result') {
-          appendLine(`✓ done — customer ${msg.customerId}, contract ${msg.contractId}`);
-          if (msg.eventsIngested != null) {
-            appendLine(`  ${msg.eventsIngested} events seeded`);
-          }
-        } else if (msg.type === 'error') appendLine(`✗ error: ${msg.error}`);
-      });
-    } catch (err: unknown) {
-      const e = err as { message?: string };
-      appendLine(`✗ error: ${e?.message ?? 'unknown'}`);
-    } finally {
-      setCreatingPowerUser(false);
-    }
-  };
-
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
       <h1 className='mb-2 text-2xl font-bold'>Clean Up Environment</h1>
       <p className='mb-6 text-sm text-gray-600'>
-        Run in order: archive Metronome customers, delete Stripe customers, then create a fresh
-        power user. Archiving and deletion are irreversible — both require an explicit
-        confirmation before anything runs.
+        Archive Metronome customers, then delete their linked Stripe test
+        customers. Both actions are irreversible and require explicit
+        confirmation.
       </p>
 
       <Stepper step={step} />
@@ -433,70 +387,6 @@ export default function CleanupEnvironmentPage() {
                 : deleteConfirming
                   ? `Confirm delete of ${selectedStripeIds.size}`
                   : `Delete selected (${selectedStripeIds.size})`}
-            </button>
-            <button
-              type='button'
-              onClick={() => setStep(3)}
-              className='ml-auto rounded-md bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300'
-            >
-              Next: add power user →
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className='mb-6'>
-          <p className='mb-3 text-sm text-gray-600'>
-            Creates linked Stripe and Metronome customers, the selected demo&apos;s
-            power-user contract, and representative historical usage.
-          </p>
-          <label
-            htmlFor='power-user-demo'
-            className='mb-1 block text-sm font-medium text-gray-700'
-          >
-            Demo
-          </label>
-          <select
-            id='power-user-demo'
-            value={powerUserDemoMode}
-            onChange={(event) =>
-              setPowerUserDemoMode(event.target.value as DemoMode)
-            }
-            disabled={creatingPowerUser}
-            className='mb-3 w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100'
-          >
-            <option value='generation'>Lora Generate</option>
-            <option value='ai-builder'>AI Builder</option>
-          </select>
-          <label htmlFor='power-user-name' className='mb-1 block text-sm font-medium text-gray-700'>
-            Power user name
-          </label>
-          <div className='flex gap-2'>
-            <input
-              id='power-user-name'
-              type='text'
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              disabled={creatingPowerUser}
-              autoComplete='off'
-              placeholder='Power user name'
-              className='flex-1 rounded-md border border-gray-300 p-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100'
-            />
-            <button
-              type='button'
-              onClick={handleCreatePowerUser}
-              disabled={creatingPowerUser || !customerName.trim()}
-              className='rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400'
-            >
-              {creatingPowerUser ? 'Running…' : 'Run'}
-            </button>
-            <button
-              type='button'
-              onClick={() => setStep(2)}
-              className='ml-auto rounded-md bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300'
-            >
-              ← Back
             </button>
           </div>
         </div>
