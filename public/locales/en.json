@@ -329,7 +329,10 @@
     "sign_up_link": "Register here",
     "password_disclaimer": "Demo only. No validation applied.",
     "quickstart_multi": "Quickstart custom pricing",
-    "quickstart_sub": "Creates Stripe + Metronome customers, then payment, backdated premium contract, and seeded usage.",
+    "quickstart_sub": "Choose a prepared demo persona. Package demos collect payment details, create the contract, and seed usage.",
+    "seed_quickstart": "Create Enterprise Quickstart demo",
+    "seed_pro": "Create Pro demo",
+    "seed_b2b": "Create B2B power-user demo",
     "quickstart_conflict": "That email is already used in Metronome. Quickstart only works with a brand-new email — choose another.",
     "quickstart_loading": "Starting checkout…"
   },

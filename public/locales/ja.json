@@ -329,7 +329,10 @@
     "sign_up_link": "ここで登録",
     "password_disclaimer": "デモ専用です。検証は適用されません。",
     "quickstart_multi": "クイックスタート（カスタム料金）",
-    "quickstart_sub": "Stripe と Metronome の顧客を作成し、支払い・遡及プレミアム契約・デモ利用へ。",
+    "quickstart_sub": "準備済みのデモペルソナを選択します。契約と利用データが作成されます。",
+    "seed_quickstart": "Enterprise Quickstart デモを作成",
+    "seed_pro": "Pro デモを作成",
+    "seed_b2b": "B2B パワーユーザーデモを作成",
     "quickstart_conflict": "このメールは Metronome で既に使われています。クイックスタートは新しいメールのみ — 別のメールを選んでください。",
     "quickstart_loading": "チェックアウトを開いています…"
   },

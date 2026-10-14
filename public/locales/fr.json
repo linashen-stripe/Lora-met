@@ -329,7 +329,10 @@
     "sign_up_link": "Inscrivez-vous ici",
     "password_disclaimer": "Démo uniquement. Aucune validation appliquée.",
     "quickstart_multi": "Quickstart — tarification sur mesure",
-    "quickstart_sub": "Crée des clients Stripe et Metronome, puis paiement, contrat premium rétroactif et usage simulé.",
+    "quickstart_sub": "Choisissez un profil de démonstration préparé. Les démos créent le contrat et des données d’utilisation.",
+    "seed_quickstart": "Créer une démo Enterprise Quickstart",
+    "seed_pro": "Créer une démo Pro",
+    "seed_b2b": "Créer une démo B2B power user",
     "quickstart_conflict": "Cette adresse est déjà utilisée dans Metronome. Quickstart nécessite une adresse neuve — choisissez-en une autre.",
     "quickstart_loading": "Ouverture du paiement…"
   },

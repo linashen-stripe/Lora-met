@@ -329,7 +329,10 @@
     "sign_up_link": "Registrati qui",
     "password_disclaimer": "Solo dimostrazione. Nessuna validazione applicata.",
     "quickstart_multi": "Quickstart: prezzi personalizzati",
-    "quickstart_sub": "Crea clienti Stripe e Metronome, poi pagamento, contratto premium retroattivo e utilizzo simulato.",
+    "quickstart_sub": "Scegli un profilo demo preparato. Le demo creano il contratto e i dati di utilizzo.",
+    "seed_quickstart": "Crea demo Enterprise Quickstart",
+    "seed_pro": "Crea demo Pro",
+    "seed_b2b": "Crea demo B2B power user",
     "quickstart_conflict": "Questa email è già usata in Metronome. Quickstart richiede un’email nuova — scegline un’altra.",
     "quickstart_loading": "Apertura del checkout…"
   },

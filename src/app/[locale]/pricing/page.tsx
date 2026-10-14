@@ -17,10 +17,10 @@ import { PricingPlan } from '@/utils/types';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import {
   generationCreditsForTier,
-  GENERATION_CREDIT_USD,
   GENERATION_PLANS,
   GENERATION_SERVICE_TIERS,
   GENERATION_SKUS,
+  QUICKSTART_ENTERPRISE_TERMS,
 } from '@/config/generationCatalog';
 import { DEMO_MODES } from '@/config/demoModes';
 import { METRONOME_CATALOG, packageByKey } from '@/config/metronomeCatalog';
@@ -100,6 +100,7 @@ function PricingPageContent() {
 
   const generationFreePackage = packageByKey('free');
   const generationProPackage = packageByKey('pro');
+  const generationQuickstartPackage = packageByKey('quickstart');
   const faqs: { question: string; answer: ReactNode }[] =
     demoMode === 'generation'
       ? [
@@ -252,9 +253,17 @@ function PricingPageContent() {
         const freePlanData = freeResponse.data.plans[0];
         const rawPackages = packagesResponse.data.packages ?? [];
         const modePackageNames = new Set(
-          Object.values(DEMO_MODES[demoMode].packageNames)
-            .flat()
-            .map(normPackageName),
+          demoMode === 'generation'
+            ? [
+                generationFreePackage?.name,
+                generationProPackage?.name,
+                generationQuickstartPackage?.name,
+              ]
+                .filter(Boolean)
+                .map(normPackageName)
+            : Object.values(DEMO_MODES[demoMode].packageNames)
+                .flat()
+                .map(normPackageName),
         );
         const namespacedPackages = rawPackages.filter((pkg: any) =>
           modePackageNames.has(normPackageName(pkg.name)),
@@ -408,7 +417,10 @@ function PricingPageContent() {
   };
 
   const teamCard: Plan = {
-    name: t('products.default_team.name', 'Enterprise'),
+    name:
+      demoMode === 'generation'
+        ? 'Enterprise'
+        : t('products.default_team.name', 'Enterprise'),
     price: t('plans.team.custom_pricing', 'Custom Pricing'),
     priceDetails: null,
     description: t(
@@ -416,22 +428,27 @@ function PricingPageContent() {
       'Tailored solutions for enterprise and high-volume users.',
     ),
     credit: {
-      amount: t('plans.team.custom_amount', 'Custom'),
-      description: t(
-        'plans.team.credit_description',
-        'Credit allocation based on business needs',
-      ),
+      amount: 'Flexible',
+      description: 'credit allocation based on business needs',
       amountClass: 'text-foreground',
       descriptionClass: 'text-muted-foreground',
     },
-    features: [
-      t('plans.team.features.1', 'All Premium Plan features'),
-      t('plans.team.features.2', 'Tailored solutions for high-volume users'),
-      t('plans.team.features.3', 'Dedicated account manager'),
-      t('plans.team.features.4', 'Centralized billing management'),
-      t('plans.team.features.5', 'Enhanced security features'),
-      t('plans.team.features.6', 'Exclusive access to beta features'),
-    ],
+    features:
+      demoMode === 'generation'
+        ? [
+            'All Pro features',
+            'Negotiated rates and commitments',
+            'Seat-based credit allocations',
+            'Dedicated support and spend controls',
+          ]
+        : [
+            t('plans.team.features.1', 'All Premium Plan features'),
+            t('plans.team.features.2', 'Tailored solutions for high-volume users'),
+            t('plans.team.features.3', 'Dedicated account manager'),
+            t('plans.team.features.4', 'Centralized billing management'),
+            t('plans.team.features.5', 'Enhanced security features'),
+            t('plans.team.features.6', 'Exclusive access to beta features'),
+          ],
     button: {
       text: t('plans.team.button.contact_sales', 'Contact Sales'),
       link: `/${settings?.language}/contact-us`,
@@ -441,13 +458,17 @@ function PricingPageContent() {
     isPopular: false,
   };
 
-  // Sort packages: free first, enterprise last, premium in the middle
+  // Canonical order: Free, Pro, predefined Enterprise Quickstart.
+  // The pure custom Enterprise card is appended after these packages.
   const sortedPackages = [...metronomePackages].sort((a, b) => {
-    if (normPackageName(a.name).includes('free')) return -1;
-    if (normPackageName(b.name).includes('free')) return 1;
-    if (normPackageName(a.name).includes('enterprise')) return 1;
-    if (normPackageName(b.name).includes('enterprise')) return -1;
-    return 0;
+    const rank = (name: string | undefined) => {
+      const normalized = normPackageName(name);
+      if (normalized.includes('free')) return 0;
+      if (normalized.includes('pro') || normalized.includes('premium')) return 1;
+      if (normalized.includes('quickstart')) return 2;
+      return 3;
+    };
+    return rank(a.name) - rank(b.name);
   });
 
   // Build package cards from Metronome packages
@@ -470,6 +491,7 @@ function PricingPageContent() {
 
     const isFreePlan = pkg.price_cents === 0;
     const isPricedPlan = pkg.price_cents != null && pkg.price_cents !== 0;
+    const isQuickstart = packageName.includes('quickstart');
     const prepaidCommit = pkg.commits?.[0];
     const prepaidInvoiceItem =
       prepaidCommit?.invoice_schedule?.schedule_items?.[0];
@@ -484,77 +506,105 @@ function PricingPageContent() {
         ? isFreePlan
           ? [
               'Image, video, and 3D generation',
-              '100 one-time generation credits',
               'Transparent per-job credit costs',
+            ]
+          : isQuickstart
+            ? [
+                'Annual pre-commit billed upfront',
+                'Standard and Priority service tiers',
+                'Usage and billing analytics',
+                'Ready to evaluate before negotiated pricing',
+              ]
+            : isPricedPlan
+              ? [
+                  'All Free plan features',
+                  'Usage and billing analytics',
+                  'Priority support',
+                ]
+              : [
+                  'Custom prepaid commitment',
+                  'Per-seat monthly credit allocations',
+                  'Negotiated generation rates',
+                  'Auto top-up and spend alerts',
+                ]
+        : isFreePlan
+          ? [
+              t('plans.free.features.1', 'Free for individual usage'),
+              t('plans.free.features.2', 'Unlimited image and video generation'),
+              t('plans.free.features.3', 'Standard embedding creation'),
+              t('plans.free.features.4', 'Community support'),
+              t('plans.free.features.5', 'Basic analytics dashboard'),
             ]
           : isPricedPlan
             ? [
-                'All Free plan features',
-                'Monthly generation credit allowance',
-                'Usage and billing analytics',
-                'Priority support',
+                t('plans.premium.features.1', 'All Free Plan features'),
+                t('plans.premium.features.2', 'Priority support via email'),
+                t(
+                  'plans.premium.features.3',
+                  'Comprehensive analytics dashboard',
+                ),
+                t(
+                  'plans.premium.features.4',
+                  'API access for programmatic integration',
+                ),
+                t(
+                  'plans.premium.features.5',
+                  'Single Sign-On (SSO) for enhanced security',
+                ),
+                t(
+                  'plans.premium.features.6',
+                  'Automated zero data retention feature',
+                ),
               ]
-            : [
-                'Custom prepaid commitment',
-                'Per-seat monthly credit allocations',
-                'Negotiated generation rates',
-                'Auto top-up and spend alerts',
-              ]
-        : isFreePlan
-          ? [
-          t('plans.free.features.1', 'Free for individual usage'),
-          t('plans.free.features.2', 'Unlimited image and video generation'),
-          t('plans.free.features.3', 'Standard embedding creation'),
-          t('plans.free.features.4', 'Community support'),
-          t('plans.free.features.5', 'Basic analytics dashboard'),
-          ]
-        : isPricedPlan
-          ? [
-            t('plans.premium.features.1', 'All Free Plan features'),
-            t('plans.premium.features.2', 'Priority support via email'),
-            t('plans.premium.features.3', 'Comprehensive analytics dashboard'),
-            t(
-              'plans.premium.features.4',
-              'API access for programmatic integration',
-            ),
-            t(
-              'plans.premium.features.5',
-              'Single Sign-On (SSO) for enhanced security',
-            ),
-            t(
-              'plans.premium.features.6',
-              'Automated zero data retention feature',
-            ),
-            ]
           : [
-            t('plans.team.features.1', 'All Premium Plan features'),
-            t(
-              'plans.team.features.2',
-              'Tailored solutions for high-volume users',
-            ),
-            t('plans.team.features.3', 'Dedicated account manager'),
-            t('plans.team.features.4', 'Centralized billing management'),
-            t('plans.team.features.5', 'Enhanced security features'),
-            t('plans.team.features.6', 'Exclusive access to beta features'),
-            ];
+                t('plans.team.features.1', 'All Premium Plan features'),
+                t(
+                  'plans.team.features.2',
+                  'Tailored solutions for high-volume users',
+                ),
+                t('plans.team.features.3', 'Dedicated account manager'),
+                t('plans.team.features.4', 'Centralized billing management'),
+                t('plans.team.features.5', 'Enhanced security features'),
+                t('plans.team.features.6', 'Exclusive access to beta features'),
+              ];
 
     const isCustomPricing = pkg.price_cents === null;
-    const price = isCustomPricing
-      ? t('plans.team.custom_pricing', 'Custom Pricing')
-      : formatPrice(pkg.price_cents ?? 0, settings?.language, currency);
-    const priceDetails = isCustomPricing
-      ? null
-      : t('plans.price_details.month', '/month');
+    const price = isQuickstart
+      ? formatPrice(
+          QUICKSTART_ENTERPRISE_TERMS.prepaidCommitmentUsd * 100,
+          settings?.language,
+          currency,
+        )
+      : isCustomPricing
+        ? t('plans.team.custom_pricing', 'Custom Pricing')
+        : formatPrice(pkg.price_cents ?? 0, settings?.language, currency);
+    const priceDetails = isQuickstart
+      ? `${QUICKSTART_ENTERPRISE_TERMS.termMonths}-month commitment`
+      : isCustomPricing
+        ? null
+        : t('plans.price_details.month', '/month');
 
     return {
-      name: pkg.name || `Plan ${idx + 1}`,
+      name:
+        demoMode === 'generation'
+          ? isQuickstart
+            ? 'Enterprise Quickstart'
+            : isFreePlan
+              ? 'Free'
+              : isPricedPlan
+                ? 'Pro'
+                : pkg.name || `Plan ${idx + 1}`
+          : pkg.name || `Plan ${idx + 1}`,
       price,
       priceDetails,
+      priceDetailsBelow: isQuickstart,
       description: isFreePlan
         ? t(
             'plans.free.description',
             'Perfect for individuals getting started with AI content creation.',
           )
+        : isQuickstart
+          ? 'A predefined annual pre-commit package for evaluating enterprise custom pricing.'
         : isPricedPlan
           ? t(
               'plans.premium.description',
@@ -566,7 +616,9 @@ function PricingPageContent() {
             ),
       credit: {
         amount:
-          catalogPlan?.includedCredits != null
+          isQuickstart
+            ? `${QUICKSTART_ENTERPRISE_TERMS.prepaidCommitmentCredits.toLocaleString()} credits`
+          : catalogPlan?.includedCredits != null
             ? `${catalogPlan.includedCredits.toLocaleString()} credits`
             : aiBuilderIncludedCents != null
               ? formatPrice(
@@ -577,6 +629,8 @@ function PricingPageContent() {
             : t('plans.team.custom_amount', 'Custom'),
         description: isFreePlan
           ? t('plans.free.credit_description', 'one-time generation allowance')
+          : isQuickstart
+            ? `pre-committed for ${QUICKSTART_ENTERPRISE_TERMS.termMonths} months`
           : isPricedPlan
             ? t('plans.premium.credit_description', 'included each month')
             : t(
@@ -724,6 +778,9 @@ function PricingPageContent() {
       : staticModeCards;
 
   const plansData: Plan[] = [...middleCards];
+  if (demoMode === 'generation' && sortedPackages.length > 0) {
+    plansData.push(teamCard);
+  }
 
   return (
     <div className='flex flex-col min-h-screen bg-background text-foreground'>
@@ -753,10 +810,7 @@ function PricingPageContent() {
         {/* Subscription Plans */}
         <section className='container mx-auto px-6 pb-20'>
           <div
-            className='grid gap-8 max-w-6xl mx-auto items-stretch'
-            style={{
-              gridTemplateColumns: `repeat(${Math.min(plansData.length, 4)}, minmax(0, 1fr))`,
-            }}
+            className='mx-auto grid max-w-7xl items-stretch gap-6 sm:grid-cols-2 xl:grid-cols-4'
           >
             {plansData.map((plan, index) => (
               <PricingCard key={index} plan={plan} />
@@ -846,9 +900,6 @@ function PricingPageContent() {
                             >
                               <span className='block font-bold'>
                                 {credits} {t('common.credits', 'credits')}
-                              </span>
-                              <span className='text-xs text-muted-foreground'>
-                                ${(credits * GENERATION_CREDIT_USD).toFixed(2)}
                               </span>
                             </td>
                           );

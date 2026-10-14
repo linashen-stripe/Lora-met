@@ -25,13 +25,14 @@ export function pickMetronomePackageForTier(
   demoMode: DemoMode = 'generation',
 ): { id: string; name?: string } | undefined {
   const mode = normalizeDemoMode(demoMode);
-  const configuredNames = new Set(
-    DEMO_MODES[mode].packageNames[tier].map(normName),
-  );
-  const namespaced = packages.find((pkg) =>
-    configuredNames.has(normName(pkg.name)),
-  );
-  if (namespaced) return namespaced;
+  // Preserve configured priority so the canonical Generate package wins when
+  // older Lora-named packages coexist in the same account.
+  for (const configuredName of DEMO_MODES[mode].packageNames[tier]) {
+    const namespaced = packages.find(
+      (pkg) => normName(pkg.name) === normName(configuredName),
+    );
+    if (namespaced) return namespaced;
+  }
 
   if (tier === 'enterprise') {
     return packages.find((p) => ENTERPRISE_PACKAGE_NAMES.has(normName(p.name)));

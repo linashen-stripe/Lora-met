@@ -16,6 +16,7 @@ export interface Plan {
   name: string;
   price: string;
   priceDetails: string | null;
+  priceDetailsBelow?: boolean;
   description: string;
   credit: {
     amount: string;
@@ -62,10 +63,15 @@ export default function PricingCard({ plan }: PricingCardProps) {
         </CardTitle>
         <div className='flex items-baseline'>
           <span className='text-4xl font-bold text-gray-900'>{plan.price}</span>
-          {plan.priceDetails && (
+          {plan.priceDetails && !plan.priceDetailsBelow && (
             <span className='text-gray-600 ml-1'>{plan.priceDetails}</span>
           )}
         </div>
+        {plan.priceDetails && plan.priceDetailsBelow && (
+          <span className='mt-1 block text-sm font-medium text-gray-600'>
+            {plan.priceDetails}
+          </span>
+        )}
         <CardDescription className='text-base text-gray-600 pt-4 min-h-[72px]'>
           {plan.description}
         </CardDescription>

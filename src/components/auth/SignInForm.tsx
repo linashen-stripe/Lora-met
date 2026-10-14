@@ -6,20 +6,28 @@ import { AxiosError } from 'axios';
 import fetchClient from '@/utils/fetchClient';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import { defaultDemoSignInPassword } from '@/config/config';
-import { generateRandomCustomerEmail } from '@/utils/helpers';
+import {
+  deriveCustomerNameFromEmail,
+  generateRandomCustomerEmail,
+} from '@/utils/helpers';
 import { loadFromStorage } from '@/utils/clientStorage';
 import ErrorBanner from '../ui/ErrorBanner';
-import { customerStorageKey } from '@/config/demoModes';
+import { customerStorageKey, DEMO_MODES } from '@/config/demoModes';
+import { inspectedFetch } from '@/utils/inspectedFetch';
+import { buildDemoRequestHeaders } from '@/utils/demoRequestHeaders';
+import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 
 // Keep the one-month Enterprise prepaid commit active when history is seeded.
 const QUICKSTART_DAYS_AGO = 29;
+type SeedPersona = 'quickstart' | 'pro' | 'b2b';
 
 const SignInForm = () => {
   const { t } = useTranslation();
   const router = useRouter();
   const { updateCustomer, settings, demoMode } = useConfigContext();
   const [error, setError] = useState<string | null>(null);
-  const [quickstartLoading, setQuickstartLoading] = useState(false);
+  const [seedPersonaLoading, setSeedPersonaLoading] =
+    useState<SeedPersona | null>(null);
   // Match anonymous demo sessions: use stored customer email if any, else same generator as ConfigContext.
   const [email, setEmail] = useState(() => {
     const stored = loadFromStorage(customerStorageKey(demoMode), {}) as {
@@ -59,11 +67,60 @@ const SignInForm = () => {
     }
   };
 
-  const runQuickstart = async (e: FormEvent) => {
+  const runQuickstart = async (e: FormEvent, persona: SeedPersona) => {
     e.preventDefault();
     setError(null);
-    setQuickstartLoading(true);
+    setSeedPersonaLoading(persona);
     try {
+      const lang = settings?.language || 'en';
+      if (persona === 'b2b') {
+        const response = await inspectedFetch(
+          '/api/metronome/demo/power-user',
+          {
+            method: 'POST',
+            headers: buildDemoRequestHeaders(),
+            body: JSON.stringify({
+              customerName: deriveCustomerNameFromEmail(email),
+              demoMode,
+            }),
+          },
+        );
+        let seededCustomer:
+          | {
+              customerId: string;
+              stripeCustomerId?: string;
+            }
+          | undefined;
+        let streamError: string | undefined;
+        await consumeNdjsonStream(response, (message) => {
+          if (message.type === 'result') {
+            seededCustomer = {
+              customerId: String(message.customerId),
+              ...(message.stripeCustomerId
+                ? { stripeCustomerId: String(message.stripeCustomerId) }
+                : {}),
+            };
+          } else if (message.type === 'error') {
+            streamError = message.error;
+          }
+        });
+        if (streamError) throw new Error(streamError);
+        if (!seededCustomer) {
+          throw new Error('The B2B demo customer could not be created.');
+        }
+        updateCustomer({
+          id: seededCustomer.customerId,
+          email,
+          name: `[${DEMO_MODES[demoMode].label}] ${deriveCustomerNameFromEmail(email)}`,
+          metronomeCustomerId: seededCustomer.customerId,
+          ...(seededCustomer.stripeCustomerId
+            ? { stripeCustomerId: seededCustomer.stripeCustomerId }
+            : {}),
+        });
+        router.push(`/${lang}/dashboard/usage?demoMode=${demoMode}`);
+        return;
+      }
+
       const { data } = await fetchClient.post('/api/auth/quickstart', {
         email,
         demoMode,
@@ -77,7 +134,6 @@ const SignInForm = () => {
         stripeCustomerId: data.stripeCustomerId,
       });
 
-      const lang = settings?.language || 'en';
       if (data.existing && data.hasActiveContract) {
         if (demoMode === 'generation') {
           await fetchClient
@@ -105,7 +161,8 @@ const SignInForm = () => {
           metronomeCustomerId: data.metronomeCustomerId,
           language: lang,
           contractStartDaysAgo: QUICKSTART_DAYS_AGO,
-          contractPackage: 'enterprise' as const,
+          contractPackage:
+            persona === 'pro' ? ('premium' as const) : ('enterprise' as const),
           demoMode,
         },
       );
@@ -127,7 +184,7 @@ const SignInForm = () => {
         setError(t('common.error.default_message'));
       }
     } finally {
-      setQuickstartLoading(false);
+      setSeedPersonaLoading(null);
     }
   };
 
@@ -230,20 +287,31 @@ const SignInForm = () => {
             <p className='text-xs text-gray-500 text-center'>
               {t('signin.quickstart_sub')}
             </p>
-            <button
-              type='button'
-              disabled={
-                !email ||
-                email.length === 0 ||
-                quickstartLoading
-              }
-              onClick={runQuickstart}
-              className='w-full flex justify-center py-2 px-4 border border-purple/30 rounded-md shadow-sm text-sm font-medium text-purple bg-purple/5 hover:bg-purple/10 transition duration-300 disabled:opacity-50'
-            >
-              {quickstartLoading
-                ? t('signin.quickstart_loading')
-                : t('signin.quickstart_multi')}
-            </button>
+            <div className='grid gap-2'>
+              {(
+                [
+                  ['quickstart', 'signin.seed_quickstart'],
+                  ['pro', 'signin.seed_pro'],
+                  ['b2b', 'signin.seed_b2b'],
+                ] as const
+              ).map(([persona, label]) => (
+                <button
+                  key={persona}
+                  type='button'
+                  disabled={
+                    !email ||
+                    email.length === 0 ||
+                    seedPersonaLoading !== null
+                  }
+                  onClick={(event) => runQuickstart(event, persona)}
+                  className='w-full flex justify-center py-2 px-4 border border-purple/30 rounded-md shadow-sm text-sm font-medium text-purple bg-purple/5 hover:bg-purple/10 transition duration-300 disabled:opacity-50'
+                >
+                  {seedPersonaLoading === persona
+                    ? t('signin.quickstart_loading')
+                    : t(label)}
+                </button>
+              ))}
+            </div>
           </form>
         </div>
         <div className='text-center'>

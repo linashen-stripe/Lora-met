@@ -329,7 +329,10 @@
     "sign_up_link": "点击这里注册",
     "password_disclaimer": "仅供演示。未应用验证。",
     "quickstart_multi": "快速开始（自定义定价）",
-    "quickstart_sub": "创建 Stripe 与 Metronome 客户，然后付款、回溯高级合同与模拟用量。",
+    "quickstart_sub": "选择预设的演示角色。系统将创建合同并填充用量数据。",
+    "seed_quickstart": "创建 Enterprise Quickstart 演示",
+    "seed_pro": "创建 Pro 演示",
+    "seed_b2b": "创建 B2B 高级用户演示",
     "quickstart_conflict": "该邮箱已在 Metronome 中使用。快速开始仅支持全新邮箱；请换一个。",
     "quickstart_loading": "正在打开结账…"
   },

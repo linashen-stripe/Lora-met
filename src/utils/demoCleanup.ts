@@ -64,14 +64,39 @@ export interface StripeCustomerSummary {
   name: string | null;
   email: string | null;
   created: number;
+  metadata: Record<string, string>;
 }
 
-export async function listStripeCustomers(stripe: Stripe): Promise<StripeCustomerSummary[]> {
-  const customers: StripeCustomerSummary[] = [];
-  for await (const c of stripe.customers.list({ limit: 100 })) {
-    customers.push({ id: c.id, name: c.name ?? null, email: c.email ?? null, created: c.created });
+export async function listStripeCustomers(
+  stripe: Stripe,
+  searchQueries: string[] = [],
+): Promise<StripeCustomerSummary[]> {
+  // Do not auto-page through the entire Stripe account. Shared demo accounts
+  // can contain thousands of customers, which made the cleanup screen appear
+  // to hang before deletion could begin.
+  const latestPage = await stripe.customers.list({ limit: 100 });
+  const searchPages = await Promise.all(
+    searchQueries.map((query) =>
+      stripe.customers.search({ query, limit: 100 }).catch(() => null),
+    ),
+  );
+  const uniqueCustomers = new Map(
+    latestPage.data.map((customer) => [customer.id, customer]),
+  );
+  for (const page of searchPages) {
+    for (const customer of page?.data ?? []) {
+      uniqueCustomers.set(customer.id, customer);
+    }
   }
-  return customers;
+  return [...uniqueCustomers.values()]
+    .map((customer) => ({
+      id: customer.id,
+      name: customer.name ?? null,
+      email: customer.email ?? null,
+      created: customer.created,
+      metadata: customer.metadata,
+    }))
+    .sort((a, b) => b.created - a.created);
 }
 
 export interface DeleteStripeCustomersResult {
