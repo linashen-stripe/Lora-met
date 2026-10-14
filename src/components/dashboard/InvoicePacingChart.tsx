@@ -33,6 +33,7 @@ import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import { TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { formatMetronomeAmount } from '@/utils/metronomeAmount';
+import { GENERATION_SERVICE_TIER_PROPERTY } from '@/config/generationCatalog';
 
 const PURPLE = '#7C3AED';
 const BLUE = '#3B82F6';
@@ -102,6 +103,7 @@ export default function InvoicePacingChart({
   const [selectedProduct, setSelectedProduct] = useState('all');
   const [selectedModel, setSelectedModel] = useState('all');
   const [selectedQuality, setSelectedQuality] = useState('all');
+  const [selectedServiceTier, setSelectedServiceTier] = useState('all');
 
   const commitTotalCents = metronomeContract?.commitTotal ?? 0;
   const commitmentCents =
@@ -201,6 +203,20 @@ export default function InvoicePacingChart({
     return Array.from(set).sort();
   }, [breakdowns, demoMode]);
 
+  const serviceTiers = useMemo(() => {
+    if (demoMode !== 'generation') return [];
+    const set = new Set<string>();
+    for (const breakdown of breakdowns)
+      for (const lineItem of breakdown.line_items ?? []) {
+        const value =
+          lineItem.pricing_group_values?.[
+            GENERATION_SERVICE_TIER_PROPERTY
+          ];
+        if (lineItem.type === 'usage' && value) set.add(value);
+      }
+    return Array.from(set).sort();
+  }, [breakdowns, demoMode]);
+
   const dailySpend = useMemo(() => {
     const map: Record<string, number> = {};
     for (const bd of breakdowns) {
@@ -228,13 +244,28 @@ export default function InvoicePacingChart({
             ] !== selectedQuality
           )
             return false;
+          if (
+            demoMode === 'generation' &&
+            selectedServiceTier !== 'all' &&
+            li.pricing_group_values?.[
+              GENERATION_SERVICE_TIER_PROPERTY
+            ] !== selectedServiceTier
+          )
+            return false;
           return true;
         })
         .reduce((s: number, li: any) => s + (li.total ?? 0), 0);
       map[dateKey] = (map[dateKey] ?? 0) + dayTotal;
     }
     return map;
-  }, [breakdowns, selectedProduct, selectedModel, selectedQuality, demoMode]);
+  }, [
+    breakdowns,
+    selectedProduct,
+    selectedModel,
+    selectedQuality,
+    selectedServiceTier,
+    demoMode,
+  ]);
 
   const chartData = useMemo(() => {
     if (!periodStart) return [];
@@ -271,7 +302,8 @@ export default function InvoicePacingChart({
     const filtersAreAll =
       selectedProduct === 'all' &&
       selectedModel === 'all' &&
-      selectedQuality === 'all';
+      selectedQuality === 'all' &&
+      selectedServiceTier === 'all';
     const compareToCommit = commitmentCents > 0 && filtersAreAll;
     const pctUsed = compareToCommit ? (currentSpend / commitmentCents) * 100 : 0;
     return { currentSpend, projectedEnd, pctUsed };
@@ -281,6 +313,7 @@ export default function InvoicePacingChart({
     selectedProduct,
     selectedModel,
     selectedQuality,
+    selectedServiceTier,
   ]);
 
   if (loading) {
@@ -320,7 +353,8 @@ export default function InvoicePacingChart({
   const filtersAreAll =
     selectedProduct === 'all' &&
     selectedModel === 'all' &&
-    selectedQuality === 'all';
+    selectedQuality === 'all' &&
+    selectedServiceTier === 'all';
   /** Commitment line only when viewing all products/models/qualities (full invoice scope). */
   const showCommitmentComparison = commitmentCents > 0 && filtersAreAll;
 
@@ -383,6 +417,25 @@ export default function InvoicePacingChart({
                 </option>
               ))}
             </select>
+            {demoMode === 'generation' && (
+              <select
+                value={selectedServiceTier}
+                onChange={(e) => setSelectedServiceTier(e.target.value)}
+                className='rounded-md border border-border bg-white px-2 py-1 text-xs text-gray-700'
+              >
+                <option value='all'>
+                  {t(
+                    'dashboard.usage_pacing.all_tiers',
+                    'All service tiers',
+                  )}
+                </option>
+                {serviceTiers.map((tier) => (
+                  <option key={tier} value={tier}>
+                    {tier}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         </div>
 

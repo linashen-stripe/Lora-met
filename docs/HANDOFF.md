@@ -2,6 +2,8 @@
 
 ## Latest unified starter update
 
+- Pre-migration checkpoint `caa079b` is pushed and tagged
+  `pre-generic-demo-migration-2026-10-14`.
 - `config/metronome/starter-kit.json` is now the single canonical Generation
   manifest used by both the app and account starter; the duplicate generation
   manifest/script were removed.
@@ -25,6 +27,18 @@
   to preview, reset its prior starter seed if needed, then exercise fresh
   Metronome-only and optional Stripe-assisted seed/reset before seeding the
   account intended for sharing.
+- The Generation playground and legacy `/chat` simulation now emit the
+  canonical `service_tier` dimension, price Standard/Priority jobs from manifest
+  multipliers, and use neutral model IDs.
+- Generation pricing shows detailed credit and USD list value for every
+  product/service-tier combination. Invoice pacing can filter quality and
+  service tier independently, and manual usage seeding mixes both tiers.
+- Sample-customer login shortcuts were considered and intentionally omitted;
+  the normal login flow remains unchanged.
+- The connected demo account was successfully seeded in Stripe-assisted mode:
+  three linked personas/contracts, 1,009 deterministic usage events, and three
+  finalized/paid Stripe test invoices. Stripe tax was unavailable, so the
+  existing supported fallback linked billing without `tax_provider`.
 
 ## Completed
 

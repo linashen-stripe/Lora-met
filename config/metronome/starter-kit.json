@@ -4,9 +4,27 @@
   "resourcePrefix": "Generate",
   "eventType": "generation.completed",
   "fiatCurrency": "USD",
+  "pricingDimension": {
+    "propertyKey": "service_tier",
+    "values": [
+      {
+        "value": "standard",
+        "multiplier": 1
+      },
+      {
+        "value": "priority",
+        "multiplier": 1.25
+      }
+    ],
+    "metrics": ["image", "video", "3d"]
+  },
   "pricingUnit": {
     "name": "Generation Credits",
     "fiatMinorUnitsPerCustomCredit": 1
+  },
+  "creditPurchases": {
+    "minimumCredits": 500,
+    "presetCredits": [1000, 2500]
   },
   "rateCard": {
     "name": "Generate - Standard Rate Card",

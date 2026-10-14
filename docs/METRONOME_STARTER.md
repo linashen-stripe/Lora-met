@@ -43,9 +43,9 @@ written to browser storage or `.env`.
 
 ## Custom pricing property
 
-A starter catalog can include one custom event property with two to four
-values, rate multipliers, and an Image/Video/3D scope. For example, this creates
-`service_tier: standard | priority` on all three usage products:
+The canonical catalog includes `service_tier: standard | priority` on all
+three usage products, with `1×` and `1.25×` multipliers. The admin editor can
+review or customize this property before seeding.
 
 The base pricing dimensions remain separate: `operation`, `quality`, and
 `model`. The custom property is appended as an additional dimension; it does
@@ -88,6 +88,8 @@ npm run starter:plan -- \
 The starter distributes property values deterministically across example
 events. Metronome does not infer `peak`, `priority`, or other values: a
 production event producer must classify the event and send the property.
+The Generation playground exposes Standard/Priority controls and sends the
+selected `service_tier` value on every event.
 
 Billable metric and product dimensions cannot be safely repurposed in place.
 To change or remove a property after seeding, preview and run Starter Reset

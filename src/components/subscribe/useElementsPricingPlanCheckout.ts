@@ -3,6 +3,7 @@ import { useConfigContext } from '@/contexts/ConfigContext';
 import fetchClient from '@/utils/fetchClient';
 import { useElements, useStripe } from '@stripe/react-stripe-js';
 import { useRouter } from 'next/navigation';
+import { DEMO_MODES } from '@/config/demoModes';
 
 const useElementsPricingPlanCheckout = ({
   isUpgrade,
@@ -13,6 +14,7 @@ const useElementsPricingPlanCheckout = ({
   const {
     settings,
     customer,
+    demoMode,
     triggerSubscriptionRefresh,
   } = useConfigContext();
   const stripe = useStripe();
@@ -94,7 +96,9 @@ const useElementsPricingPlanCheckout = ({
       if (isUpgrade) {
         router.push(`/${settings?.language}/dashboard`);
       } else {
-        router.push(`/${settings?.language}/chat`);
+        router.push(
+          `/${settings?.language || 'en'}${DEMO_MODES[demoMode].route}`,
+        );
       }
     } catch (error: any) {
       setErrorMessage(error.message || 'An unexpected error occurred.');

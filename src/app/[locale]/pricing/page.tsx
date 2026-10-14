@@ -16,10 +16,14 @@ import SubscribeMetronomePackageDialog from '@/components/subscribe/SubscribeMet
 import { PricingPlan } from '@/utils/types';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import {
+  generationCreditsForTier,
+  GENERATION_CREDIT_USD,
   GENERATION_PLANS,
+  GENERATION_SERVICE_TIERS,
   GENERATION_SKUS,
 } from '@/config/generationCatalog';
 import { DEMO_MODES } from '@/config/demoModes';
+import { METRONOME_CATALOG, packageByKey } from '@/config/metronomeCatalog';
 
 /** Metronome package `name` must match one of these (case-insensitive, trimmed) to appear on /pricing. */
 const METRONOME_PRICING_PACKAGE_NAMES = new Set(['free', 'premium', 'enterprise']);
@@ -94,7 +98,74 @@ function PricingPageContent() {
     }
   };
 
-  const faqs: { question: string; answer: ReactNode }[] = [
+  const generationFreePackage = packageByKey('free');
+  const generationProPackage = packageByKey('pro');
+  const faqs: { question: string; answer: ReactNode }[] =
+    demoMode === 'generation'
+      ? [
+          {
+            question: t(
+              'faq.generation.credits.question',
+              'How do Generation Credits work?',
+            ),
+            answer: (
+              <p>
+                {t(
+                  'faq.generation.credits.answer',
+                  'Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table.',
+                  {
+                    freeCredits:
+                      generationFreePackage?.includedCredits ?? 100,
+                    proCredits:
+                      generationProPackage?.monthlyCredits ?? 1_000,
+                  },
+                )}
+              </p>
+            ),
+          },
+          {
+            question: t(
+              'faq.generation.service_tier.question',
+              'What changes with Priority service?',
+            ),
+            answer: (
+              <p>
+                {t(
+                  'faq.generation.service_tier.answer',
+                  'Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible.',
+                  {
+                    multiplier:
+                      METRONOME_CATALOG.pricingDimension.values.find(
+                        (tier) => tier.value === 'priority',
+                      )?.multiplier ?? 1.25,
+                  },
+                )}
+              </p>
+            ),
+          },
+          {
+            question: t(
+              'faq.generation.top_up.question',
+              'What happens when credits run low?',
+            ),
+            answer: (
+              <p>
+                {t(
+                  'faq.generation.top_up.answer',
+                  'Pro can recharge from {{threshold}} to {{target}} credits automatically. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice.',
+                  {
+                    threshold:
+                      generationProPackage?.autoTopUpThresholdCredits ?? 50,
+                    target: generationProPackage?.autoTopUpToCredits ?? 500,
+                    minimum:
+                      METRONOME_CATALOG.creditPurchases.minimumCredits,
+                  },
+                )}
+              </p>
+            ),
+          },
+        ]
+      : [
     {
       question: t('faq.questions.credits.question'),
       answer: (
@@ -155,7 +226,7 @@ function PricingPageContent() {
       question: t('faq.questions.change_plan.question'),
       answer: <p>{t('faq.questions.change_plan.answer')}</p>,
     },
-  ];
+        ];
 
   useEffect(() => {
     const premiumPlanLookupKey = `llama_ai_premium_plan_${currency}`;
@@ -715,7 +786,7 @@ function PricingPageContent() {
             </p>
             {demoMode === 'generation' ? (
               <div className='mt-8 overflow-x-auto rounded-xl border border-border bg-card text-left shadow-sm'>
-                <table className='w-full min-w-[860px] border-collapse'>
+                <table className='w-full min-w-[980px] border-collapse'>
                   <thead className='bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground'>
                     <tr>
                       <th className='px-5 py-3 font-semibold'>Product</th>
@@ -723,9 +794,15 @@ function PricingPageContent() {
                       <th className='px-5 py-3 font-semibold'>Operation</th>
                       <th className='px-5 py-3 font-semibold'>Quality</th>
                       <th className='px-5 py-3 font-semibold'>Billed as</th>
-                      <th className='px-5 py-3 text-right font-semibold'>
-                        Cost
-                      </th>
+                      {GENERATION_SERVICE_TIERS.map((tier) => (
+                        <th
+                          key={tier.value}
+                          className='px-5 py-3 text-right font-semibold'
+                        >
+                          <span className='capitalize'>{tier.value}</span>{' '}
+                          service ({tier.multiplier}×)
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-border'>
@@ -757,10 +834,25 @@ function PricingPageContent() {
                           {sku.quantity} {sku.unit}
                           {sku.quantity === 1 ? '' : 's'}
                         </td>
-                        <td className='whitespace-nowrap px-5 py-4 text-right font-bold text-foreground'>
-                          {sku.credits}{' '}
-                          {t('common.credits', 'credits')}
-                        </td>
+                        {GENERATION_SERVICE_TIERS.map((tier) => {
+                          const credits = generationCreditsForTier(
+                            sku,
+                            tier.value,
+                          );
+                          return (
+                            <td
+                              key={tier.value}
+                              className='whitespace-nowrap px-5 py-4 text-right text-foreground'
+                            >
+                              <span className='block font-bold'>
+                                {credits} {t('common.credits', 'credits')}
+                              </span>
+                              <span className='text-xs text-muted-foreground'>
+                                ${(credits * GENERATION_CREDIT_USD).toFixed(2)}
+                              </span>
+                            </td>
+                          );
+                        })}
                       </tr>
                     ))}
                   </tbody>

@@ -6,13 +6,19 @@ import { useTranslation } from 'next-i18next';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import fetchClient from '@/utils/fetchClient';
 import Stripe from 'stripe';
+import { DEMO_MODES } from '@/config/demoModes';
 
 function ReturnPageContent() {
   const { t } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { settings, customer, triggerSubscriptionRefresh } = useConfigContext();
+  const {
+    settings,
+    customer,
+    demoMode,
+    triggerSubscriptionRefresh,
+  } = useConfigContext();
   /** Prefer `[locale]` from the URL — `settings.language` can be `default` or out of sync. */
   const locale =
     (typeof params?.locale === 'string' && params.locale) ||
@@ -126,8 +132,7 @@ function ReturnPageContent() {
           await triggerSubscriptionRefresh();
         }
 
-        // Land back in chat (same as embedded checkout) — locale comes from this page’s `[locale]` segment
-        router.replace(`/${locale}/chat`);
+        router.replace(`/${locale}${DEMO_MODES[demoMode].route}`);
       } catch (err) {
         console.error('Error handling return:', err);
         setError(
@@ -141,6 +146,7 @@ function ReturnPageContent() {
     handleReturn();
   }, [
     customer?.stripeCustomerId,
+    demoMode,
     router,
     searchParams,
     settings,

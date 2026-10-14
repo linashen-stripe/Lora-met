@@ -3,6 +3,7 @@ import fetchClient from '@/utils/fetchClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import Stripe from 'stripe';
+import { DEMO_MODES } from '@/config/demoModes';
 
 // Save payment method to customer
 const savePaymentMethod = async (
@@ -32,6 +33,7 @@ const useEmbeddedPricingPlanCheckout = ({
   const {
     settings,
     customer,
+    demoMode,
     subscription: currentSubscription,
     triggerSubscriptionRefresh,
   } = useConfigContext();
@@ -115,13 +117,16 @@ const useEmbeddedPricingPlanCheckout = ({
 
         await triggerSubscriptionRefresh();
       }
-      router.push(`/${settings?.language}/chat`);
+      router.push(
+        `/${settings?.language || 'en'}${DEMO_MODES[demoMode].route}`,
+      );
     } finally {
       setIsProcessing(false);
     }
   }, [
     checkoutData,
     customer,
+    demoMode,
     isUpgrade,
     currentSubscription,
     settings,

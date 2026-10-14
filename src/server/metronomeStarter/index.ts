@@ -81,7 +81,12 @@ type StarterConfig = {
   resourcePrefix: string;
   eventType: string;
   fiatCurrency: string;
+  pricingDimension: PricingDimension;
   pricingUnit: { name: string; fiatMinorUnitsPerCustomCredit: number };
+  creditPurchases: {
+    minimumCredits: number;
+    presetCredits: number[];
+  };
   rateCard: { name: string; alias: string };
   metrics: Array<{
     key: MetricKey;
@@ -790,8 +795,9 @@ async function ensureCatalog(
   client: Metronome,
   apiKey: string,
   config: StarterConfig,
-  stripeBilling = false,
+  stripeDeliveryMethod?: string,
 ) {
+  const stripeBilling = Boolean(stripeDeliveryMethod);
   const found = await discover(client, config);
   let pricingUnitId = found.pricingUnit?.id;
   if (!pricingUnitId) {
@@ -1035,15 +1041,29 @@ async function ensureCatalog(
 
   const packageIds: Record<string, string> = {};
   const packageRunId = Date.now().toString(36);
+  const archivedPackageIds = new Set<string>();
   const usageProductIds = config.metrics.map(
     (metric) => productIds[metric.key],
   );
   for (const definition of config.packages) {
-    const existing = found.packages.find(
+    let existing = found.packages.find(
       (pkg) =>
         pkg.name === definition.name &&
         packageKeyMatches(config, definition.key, pkg.uniqueness_key),
     );
+    if (existing && stripeDeliveryMethod) {
+      const packageDetail = await client.v1.packages.retrieve({
+        package_id: existing.id,
+      });
+      if ((packageDetail.data as any).billing_provider !== 'stripe') {
+        emit(
+          `Replacing partial non-Stripe package before Stripe seed: ${definition.name}`,
+        );
+        await client.v1.packages.archive({ package_id: existing.id });
+        archivedPackageIds.add(existing.id);
+        existing = undefined;
+      }
+    }
     if (existing) {
       packageIds[definition.key] = existing.id;
       continue;
@@ -1057,6 +1077,12 @@ async function ensureCatalog(
       name: definition.name,
       contract_name: definition.name,
       rate_card_id: rateCardId,
+      ...(stripeDeliveryMethod
+        ? {
+            billing_provider: 'stripe' as const,
+            delivery_method: stripeDeliveryMethod as any,
+          }
+        : {}),
       aliases: [
         { name: packageAlias(config, definition.key, packageRunId) },
       ],
@@ -1068,7 +1094,8 @@ async function ensureCatalog(
       },
     };
     const sameName = found.packages.find(
-      (pkg) => pkg.name === definition.name,
+      (pkg) =>
+        pkg.name === definition.name && !archivedPackageIds.has(pkg.id),
     );
     if (
       sameName &&
@@ -1960,7 +1987,9 @@ export async function runStarter(
   try {
     const apiKey = options.apiKey.trim();
     pricingDimension = validatePricingDimension(
-      options.pricingDimension ?? null,
+      options.pricingDimension === undefined
+        ? manifest.pricingDimension
+        : options.pricingDimension,
     );
     const config = applyStarterOverrides(manifest as StarterConfig, options);
     if (options.mode === 'validate') {
@@ -2173,7 +2202,7 @@ export async function runStarter(
         client,
         apiKey,
         config,
-        Boolean(stripeSeed),
+        stripeSeed?.deliveryMethod,
       );
       state = {
         ...state,
@@ -2286,7 +2315,7 @@ export async function runStarterFromCli(): Promise<void> {
           ? 'seed'
           : 'plan',
     confirmReset: confirmation === manifest.namespace,
-    pricingDimension: dimension,
+    pricingDimension: dimension ?? undefined,
     resourcePrefix:
       process.env.METRONOME_STARTER_RESOURCE_PREFIX?.trim(),
     quickstartName:

@@ -119,9 +119,13 @@ export default function PurchaseCreditsModal({
     const minPurchase = balanceInfo.hasDebt ? Math.ceil(debtInDollars) : 5;
     if (customCreditTypeName) {
       return {
-        minPurchase: 500,
-        standard: { amount: 1000 },
-        large: { amount: 2500 },
+        minPurchase: METRONOME_CATALOG.creditPurchases.minimumCredits,
+        standard: {
+          amount: METRONOME_CATALOG.creditPurchases.presetCredits[0],
+        },
+        large: {
+          amount: METRONOME_CATALOG.creditPurchases.presetCredits[1],
+        },
       };
     }
     return {

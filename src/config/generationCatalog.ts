@@ -5,6 +5,7 @@ import {
 } from '@/config/metronomeCatalog';
 
 export type GenerationModality = 'image' | 'video' | '3d';
+export type GenerationServiceTier = 'standard' | 'priority';
 
 export interface GenerationSku {
   id: string;
@@ -31,6 +32,23 @@ export interface GenerationPlan {
 
 export const GENERATION_CREDIT_USD = METRONOME_CREDIT_USD;
 export const GENERATION_EVENT_TYPE = METRONOME_CATALOG.eventType;
+export const GENERATION_SERVICE_TIER_PROPERTY =
+  METRONOME_CATALOG.pricingDimension.propertyKey;
+export const GENERATION_SERVICE_TIERS =
+  METRONOME_CATALOG.pricingDimension.values as Array<{
+    value: GenerationServiceTier;
+    multiplier: number;
+  }>;
+
+export function generationCreditsForTier(
+  sku: GenerationSku,
+  serviceTier: GenerationServiceTier,
+): number {
+  const multiplier =
+    GENERATION_SERVICE_TIERS.find((tier) => tier.value === serviceTier)
+      ?.multiplier ?? 1;
+  return sku.credits * multiplier;
+}
 
 const SKU_PRESENTATION: Record<
   string,
@@ -149,17 +167,20 @@ export interface GenerationUsageEventInput {
   userId: string;
   workspaceId: string;
   projectId: string;
+  serviceTier?: GenerationServiceTier;
   timestamp?: string;
 }
 
 export function buildGenerationUsageEvent(input: GenerationUsageEventInput) {
+  const serviceTier = input.serviceTier ?? 'standard';
+  const creditsConsumed = generationCreditsForTier(input.sku, serviceTier);
   return {
     transactionId: `${input.taskId}:completed`,
     customerId: input.customerId,
     eventType: GENERATION_EVENT_TYPE,
     timestamp: input.timestamp ?? new Date().toISOString(),
     properties: {
-      credits_consumed: input.sku.credits,
+      credits_consumed: creditsConsumed,
       quantity: input.sku.quantity,
       modality: input.sku.modality,
       operation: input.sku.operation,
@@ -169,6 +190,7 @@ export function buildGenerationUsageEvent(input: GenerationUsageEventInput) {
       user_id: input.userId,
       workspace_id: input.workspaceId,
       project_id: input.projectId,
+      [GENERATION_SERVICE_TIER_PROPERTY]: serviceTier,
     },
   };
 }

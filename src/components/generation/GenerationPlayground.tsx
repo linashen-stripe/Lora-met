@@ -17,8 +17,11 @@ import { useConfigContext } from '@/contexts/ConfigContext';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import {
   buildGenerationUsageEvent,
+  generationCreditsForTier,
+  GENERATION_SERVICE_TIERS,
   GENERATION_SKUS,
   type GenerationModality,
+  type GenerationServiceTier,
 } from '@/config/generationCatalog';
 import fetchClient from '@/utils/fetchClient';
 
@@ -146,6 +149,8 @@ export default function GenerationPlayground() {
   const [selectedSkuId, setSelectedSkuId] = useState('3d-ultra-bundle');
   const [prompt, setPrompt] = useState(modalityMeta['3d'].prompt);
   const [batchSize, setBatchSize] = useState(1);
+  const [serviceTier, setServiceTier] =
+    useState<GenerationServiceTier>('standard');
   const [wallet, setWallet] = useState<WalletState>(initialWallet);
   const [hydrated, setHydrated] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -160,7 +165,8 @@ export default function GenerationPlayground() {
     () => GENERATION_SKUS.filter((sku) => sku.modality === modality),
     [modality],
   );
-  const batchCredits = selectedSku.credits * batchSize;
+  const creditsPerJob = generationCreditsForTier(selectedSku, serviceTier);
+  const batchCredits = creditsPerJob * batchSize;
   const outOfCredits = wallet.balance < batchCredits;
   const contractName = metronomeContract?.name?.trim().toLowerCase() ?? '';
   const isFreePlan = !contractName || contractName.includes('free');
@@ -269,7 +275,8 @@ export default function GenerationPlayground() {
         sku: selectedSku,
         userId: customer?.email ?? 'creator@example.com',
         workspaceId: metronomeCustomerId,
-        projectId: 'project-lora-launch',
+        projectId: 'project-generation-launch',
+        serviceTier,
       }),
     );
 
@@ -381,7 +388,7 @@ export default function GenerationPlayground() {
                         </p>
                       </div>
                       <span className='whitespace-nowrap rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700'>
-                        {sku.credits} credits
+                        {generationCreditsForTier(sku, serviceTier)} credits
                       </span>
                     </div>
                     <div className='mt-3 flex gap-3 text-[11px] uppercase tracking-wide text-gray-400'>
@@ -394,6 +401,31 @@ export default function GenerationPlayground() {
                     </div>
                   </button>
                 ))}
+              </div>
+
+              <div className='mt-5'>
+                <p className='text-sm font-semibold text-gray-800'>
+                  Service tier
+                </p>
+                <div className='mt-2 grid grid-cols-2 gap-2'>
+                  {GENERATION_SERVICE_TIERS.map((tier) => (
+                    <button
+                      key={tier.value}
+                      type='button'
+                      onClick={() => setServiceTier(tier.value)}
+                      className={`rounded-lg border px-3 py-2 text-left transition ${
+                        serviceTier === tier.value
+                          ? 'border-purple bg-purple/5 text-purple'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className='block text-sm font-semibold capitalize'>
+                        {tier.value}
+                      </span>
+                      <span className='text-xs'>{tier.multiplier}× rate</span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className='mt-5'>
@@ -477,7 +509,9 @@ export default function GenerationPlayground() {
           <div>
             <ResultPreview modality={modality} generating={generating} completed={completed} />
             <div className='mt-4 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900'>
-              <span className='font-semibold'>Pricing preview:</span> {batchCredits} credits equals $
+              <span className='font-semibold'>Pricing preview:</span>{' '}
+              <span className='capitalize'>{serviceTier}</span> service ·{' '}
+              {batchCredits} credits equals $
               {(batchCredits * 0.01).toFixed(2)} at list value. Enterprise
               discounts and included credits are applied by Metronome.
             </div>

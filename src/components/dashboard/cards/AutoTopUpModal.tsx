@@ -1,6 +1,6 @@
 'use client';
 
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogBackdrop,
@@ -16,6 +16,7 @@ import Button from '@/components/ui/Button';
 import { formatPrice } from '@/utils/helpers';
 import { formatMetronomeAmount } from '@/utils/metronomeAmount';
 import { GENERATION_CREDIT_USD } from '@/config/generationCatalog';
+import { packageByKey } from '@/config/metronomeCatalog';
 
 interface AutoTopUpModalProps {
   open: boolean;
@@ -42,6 +43,13 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
     Number.isFinite(rechargeValue) &&
     thresholdValue >= 0 &&
     rechargeValue > thresholdValue;
+
+  useEffect(() => {
+    if (!open || demoMode !== 'generation') return;
+    const proPackage = packageByKey('pro');
+    setThreshold(String(proPackage?.autoTopUpThresholdCredits ?? ''));
+    setTopUpAmount(String(proPackage?.autoTopUpToCredits ?? ''));
+  }, [demoMode, open]);
 
   const handleSave = async () => {
     if (!amountsAreValid) {

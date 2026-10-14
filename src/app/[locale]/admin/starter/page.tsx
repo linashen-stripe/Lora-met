@@ -84,16 +84,16 @@ export default function MetronomeStarterPage() {
   const [powerUserName, setPowerUserName] = useState('B2B Power User');
   const [pricingPropertyEnabled, setPricingPropertyEnabled] = useState(true);
   const [pricingPropertyKey, setPricingPropertyKey] =
-    useState('service_tier');
-  const [pricingValues, setPricingValues] = useState<PricingValue[]>([
-    { value: 'standard', multiplier: '1' },
-    { value: 'priority', multiplier: '1.25' },
-  ]);
-  const [pricingMetrics, setPricingMetrics] = useState<PricingMetric[]>([
-    'image',
-    'video',
-    '3d',
-  ]);
+    useState(METRONOME_STARTER_KIT.pricingDimension.propertyKey);
+  const [pricingValues, setPricingValues] = useState<PricingValue[]>(
+    METRONOME_STARTER_KIT.pricingDimension.values.map((entry) => ({
+      value: entry.value,
+      multiplier: String(entry.multiplier),
+    })),
+  );
+  const [pricingMetrics, setPricingMetrics] = useState<PricingMetric[]>(
+    METRONOME_STARTER_KIT.pricingDimension.metrics as PricingMetric[],
+  );
   const [running, setRunning] = useState<StarterMode | null>(null);
   const [resetConfirming, setResetConfirming] = useState(false);
 

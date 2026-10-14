@@ -1,7 +1,10 @@
 import Metronome from '@metronome/sdk';
 import {
   buildGenerationUsageEvent,
+  generationCreditsForTier,
+  GENERATION_SERVICE_TIERS,
   GENERATION_SKUS,
+  type GenerationServiceTier,
 } from '@/config/generationCatalog';
 import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
 import {
@@ -130,6 +133,9 @@ export async function seedGenerationUsage({
       if (targetCredits > 0 && dailyCredits >= dailyTarget) break;
       const seed = `${customerId}:${story}:${dayOffset}:${slot}`;
       const sku = GENERATION_SKUS[stableIndex(`${seed}:sku`, GENERATION_SKUS.length)];
+      const serviceTier = GENERATION_SERVICE_TIERS[
+        stableIndex(`${seed}:service-tier`, GENERATION_SERVICE_TIERS.length)
+      ].value as GenerationServiceTier;
       const userId =
         weightedUsers[
           stableIndex(`${seed}:user`, weightedUsers.length)
@@ -143,16 +149,17 @@ export async function seedGenerationUsage({
 
       events.push(
         buildGenerationUsageEvent({
-          taskId: `seed-${story}-${dayOffset}-${slot}-${sku.id}-${userId}`,
+          taskId: `seed-${story}-${dayOffset}-${slot}-${sku.id}-${serviceTier}-${userId}`,
           customerId,
           sku,
           userId,
           workspaceId: `workspace-${customerId}`,
           projectId,
+          serviceTier,
           timestamp: timestamp.toISOString(),
         }),
       );
-      dailyCredits += sku.credits;
+      dailyCredits += generationCreditsForTier(sku, serviceTier);
     }
   }
 

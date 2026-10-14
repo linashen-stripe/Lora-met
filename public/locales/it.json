@@ -1034,6 +1034,11 @@
   "not_available": "N/D",
   "faq": {
     "title": "Domande Frequenti",
+    "generation": {
+      "credits": {"question": "How do Generation Credits work?", "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."},
+      "service_tier": {"question": "What changes with Priority service?", "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."},
+      "top_up": {"question": "What happens when credits run low?", "answer": "Pro can recharge from {{threshold}} to {{target}} credits automatically. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."}
+    },
     "questions": {
       "credits": {
         "question": "Cosa sono i crediti e come funzionano?",
