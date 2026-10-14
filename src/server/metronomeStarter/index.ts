@@ -797,7 +797,6 @@ async function ensureCatalog(
   config: StarterConfig,
   stripeDeliveryMethod?: string,
 ) {
-  const stripeBilling = Boolean(stripeDeliveryMethod);
   const found = await discover(client, config);
   let pricingUnitId = found.pricingUnit?.id;
   if (!pricingUnitId) {
@@ -1204,27 +1203,6 @@ async function ensureCatalog(
             },
           },
         ],
-        prepaid_balance_threshold_configuration: {
-          is_enabled: true,
-          threshold_amount: definition.autoTopUpThresholdCredits,
-          recharge_to_amount: definition.autoTopUpToCredits,
-          custom_credit_type_id: pricingUnitId,
-          payment_gate_config: {
-            payment_gate_type: stripeBilling ? 'STRIPE' : 'NONE',
-            ...(stripeBilling
-              ? {
-                  stripe_config: {
-                    payment_type: 'INVOICE',
-                  },
-                }
-              : {}),
-          },
-          commit: {
-            product_id: productIds.creditGrant,
-            name: 'Pro Auto Top-Up',
-            applicable_product_ids: usageProductIds,
-          },
-        },
       };
     }
     emit(`Creating package: ${definition.name}`);
@@ -1435,6 +1413,50 @@ async function ensureStripeBillingConfiguration(
   )?.id;
 }
 
+async function ensureSeededProAutoTopUp(
+  client: Metronome,
+  config: StarterConfig,
+  catalog: Awaited<ReturnType<typeof ensureCatalog>>,
+  customerId: string,
+  contractId: string,
+  alreadyConfigured: boolean,
+  stripeSeed?: StripeSeedContext,
+): Promise<void> {
+  if (alreadyConfigured) return;
+  const proPackage = config.packages.find((pkg) => pkg.key === 'pro');
+  if (!proPackage || proPackage.key !== 'pro') {
+    throw new Error('Canonical Pro package configuration is missing.');
+  }
+  await (client.v2.contracts as any).edit({
+    customer_id: customerId,
+    contract_id: contractId,
+    add_prepaid_balance_threshold_configuration: {
+      is_enabled: true,
+      threshold_amount: proPackage.autoTopUpThresholdCredits,
+      recharge_to_amount: proPackage.autoTopUpToCredits,
+      custom_credit_type_id: catalog.pricingUnitId,
+      payment_gate_config: {
+        payment_gate_type: stripeSeed ? 'STRIPE' : 'NONE',
+        ...(stripeSeed
+          ? {
+              stripe_config: {
+                payment_type: 'INVOICE',
+              },
+            }
+          : {}),
+      },
+      commit: {
+        product_id: catalog.productIds.creditGrant,
+        name: 'Seeded Pro Auto Top-Up',
+        applicable_product_ids: config.metrics.map(
+          (metric) => catalog.productIds[metric.key],
+        ),
+      },
+    },
+  });
+  emit('Configured auto top-up for the seeded Pro persona.');
+}
+
 async function ensurePersonas(
   client: Metronome,
   config: StarterConfig,
@@ -1520,6 +1542,20 @@ async function ensurePersonas(
           customerId,
           matchingContracts[0].id,
           stripeSeed.deliveryMethodId,
+        );
+      }
+      if (persona.key === 'pro') {
+        await ensureSeededProAutoTopUp(
+          client,
+          config,
+          catalog,
+          customerId,
+          matchingContracts[0].id,
+          Boolean(
+            (matchingContracts[0] as any)
+              .prepaid_balance_threshold_configuration?.is_enabled,
+          ),
+          stripeSeed,
         );
       }
       continue;
@@ -1681,6 +1717,17 @@ async function ensurePersonas(
         customerId,
         response.data.id,
         stripeSeed.deliveryMethodId,
+      );
+    }
+    if (persona.key === 'pro') {
+      await ensureSeededProAutoTopUp(
+        client,
+        config,
+        catalog,
+        customerId,
+        response.data.id,
+        false,
+        stripeSeed,
       );
     }
   }

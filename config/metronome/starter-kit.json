@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "namespace": "metronome-starter",
   "resourcePrefix": "Generate",
   "eventType": "generation.completed",
@@ -28,7 +28,7 @@
   },
   "rateCard": {
     "name": "Generate - Standard Rate Card",
-    "alias": "metronome-starter-generation-v3"
+    "alias": "metronome-starter-generation-v4"
   },
   "metrics": [
     {

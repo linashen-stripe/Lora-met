@@ -152,7 +152,7 @@ function PricingPageContent() {
               <p>
                 {t(
                   'faq.generation.top_up.answer',
-                  'Pro can recharge from {{threshold}} to {{target}} credits automatically. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice.',
+                  'Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice.',
                   {
                     threshold:
                       generationProPackage?.autoTopUpThresholdCredits ?? 50,

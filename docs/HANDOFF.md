@@ -14,8 +14,11 @@
   `src/server/metronomeStarter/`.
 - Metronome-only remains the default. The admin page optionally accepts a
   memory-only `sk_test_` key and delivery method ID for linked Stripe test
-  customers, payment methods, billing configurations, Pro invoice-gated
-  auto-top-up, invoice settlement, tracing, and state-owned cleanup.
+  customers, payment methods, billing configurations, invoice settlement,
+  tracing, and state-owned cleanup.
+- The reusable Pro package does not enable auto top-up. Only the starter-seeded
+  Pro demonstration contract receives the manifest's threshold and target;
+  ordinary Free → Pro customers can opt into auto top-up through settings.
 - State now records billing mode, prefix, Stripe account/delivery method,
   Stripe customer IDs, billing configurations, and recovery checkpoints—never
   credentials.

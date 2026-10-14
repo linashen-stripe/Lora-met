@@ -998,7 +998,7 @@
       },
       "top_up": {
         "question": "What happens when credits run low?",
-        "answer": "Pro can recharge from {{threshold}} to {{target}} credits automatically. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."
+        "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."
       }
     },
     "questions": {
