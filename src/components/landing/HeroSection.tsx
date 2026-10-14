@@ -80,13 +80,33 @@ function HeroSection() {
   const { settings, customer, demoMode } = useConfigContext();
   const router = useRouter();
   const { t } = useTranslation();
+  const isGeneration = demoMode === 'generation';
   const typedText = useTypewriter({
-    texts: [
-      t('header.hero.typewriter.text1'),
-      t('header.hero.typewriter.text2'),
-      t('header.hero.typewriter.text3'),
-      t('header.hero.typewriter.text4'),
-    ],
+    texts: isGeneration
+      ? [
+          t(
+            'landing.hero.generation.typewriter.text1',
+            'a cinematic product launch video',
+          ),
+          t(
+            'landing.hero.generation.typewriter.text2',
+            'a campaign image set in three visual styles',
+          ),
+          t(
+            'landing.hero.generation.typewriter.text3',
+            'a textured 3D product asset',
+          ),
+          t(
+            'landing.hero.generation.typewriter.text4',
+            'a storyboard with matching video clips',
+          ),
+        ]
+      : [
+          t('header.hero.typewriter.text1'),
+          t('header.hero.typewriter.text2'),
+          t('header.hero.typewriter.text3'),
+          t('header.hero.typewriter.text4'),
+        ],
   });
 
   const language = settings?.language || 'en';
@@ -108,10 +128,20 @@ function HeroSection() {
 
       <Section className='pt-20'>
         <h1 className='bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-5xl font-bold tracking-tight text-transparent md:text-7xl'>
-          {t('landing.hero.main_title')}
+          {isGeneration
+            ? t('landing.hero.main_title')
+            : t(
+                'landing.hero.ai_builder.main_title',
+                'Build Production Apps with AI',
+              )}
         </h1>
         <p className='mx-auto mt-6 max-w-2xl text-xl text-muted-foreground'>
-          {t('landing.hero.description')}
+          {isGeneration
+            ? t('landing.hero.description')
+            : t(
+                'landing.hero.ai_builder.description',
+                'Describe what you need and turn an idea into a working application with transparent usage pricing.',
+              )}
         </p>
 
         {/* Typing indicator */}
@@ -119,7 +149,9 @@ function HeroSection() {
           <div className='relative flex min-h-[4rem] items-center rounded-xl border border-border bg-card p-6 font-mono text-left text-lg shadow-lg'>
             <span className='text-purple'>~ $</span>
             <span className='ml-2 text-foreground'>
-              {t('landing.hero.build_command')}&nbsp;
+              {isGeneration
+                ? t('landing.hero.generation.command', 'generate')
+                : t('landing.hero.build_command')}&nbsp;
             </span>
             <span className='font-medium text-purple'>{typedText}</span>
             <span className='animate-pulse text-purple'>|</span>
@@ -134,9 +166,16 @@ function HeroSection() {
             onClick={handleGetStarted}
             className='rounded-lg bg-purple hover:bg-purple-hover px-8 py-2 text-lg font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:scale-105 relative z-20'
           >
-            {isLoggedIn
+            {isGeneration
+              ? isLoggedIn
                 ? t('landing.hero.button_logged_in')
-                : t('landing.hero.button_not_logged_in')}
+                : t('landing.hero.button_not_logged_in')
+              : isLoggedIn
+                ? t('landing.hero.ai_builder.button_logged_in', 'Open AI Builder')
+                : t(
+                    'landing.hero.ai_builder.button_not_logged_in',
+                    'Start building for free',
+                  )}
           </button>
           {!isLoggedIn && (
             <p className='mt-4 text-xs text-muted-foreground'>

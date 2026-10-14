@@ -1087,7 +1087,9 @@
       "button_logged_in": "Apri Lora Generate",
       "button_not_logged_in": "Inizia a generare gratis",
       "no_credit_card": "Nessuna carta di credito richiesta",
-      "build_command": "costruire"
+      "build_command": "costruire",
+      "ai_builder": {"main_title": "Build Production Apps with AI", "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.", "button_logged_in": "Open AI Builder", "button_not_logged_in": "Start building for free"},
+      "generation": {"command": "generate", "typewriter": {"text1": "a cinematic product launch video", "text2": "a campaign image set in three visual styles", "text3": "a textured 3D product asset", "text4": "a storyboard with matching video clips"}}
     },
     "aggregated_usage": {
       "title": "Utilizzo Aggregato",
