@@ -8,6 +8,7 @@ import {
   runAccountStarter,
   type AccountStarterMode,
 } from '@/server/accountStarter';
+import { validateStarterPricingDimension } from '@/server/starterPricingDimension';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -64,65 +65,11 @@ function normalizePricingDimension(
   value: unknown,
   starterMode: AccountStarterMode,
 ) {
-  if (value == null) return null;
-  if (!value || typeof value !== 'object') {
-    throw new Error('Custom pricing property is invalid.');
-  }
-  const candidate = value as {
-    propertyKey?: unknown;
-    values?: unknown;
-    metrics?: unknown;
-  };
-  const propertyKey = clean(candidate.propertyKey);
-  if (!propertyKey || !/^[a-z][a-z0-9_]{0,63}$/.test(propertyKey)) {
-    throw new Error(
-      'Property key must use lowercase letters, numbers, and underscores.',
-    );
-  }
-  if (RESERVED_PROPERTY_KEYS.has(propertyKey)) {
-    throw new Error(`Property key "${propertyKey}" is reserved.`);
-  }
-  if (
-    !Array.isArray(candidate.values) ||
-    candidate.values.length < 2 ||
-    candidate.values.length > 4
-  ) {
-    throw new Error('Custom pricing property requires 2–4 values.');
-  }
-  const values = candidate.values.map((entry, index) => {
-    const row =
-      entry && typeof entry === 'object'
-        ? (entry as { value?: unknown; multiplier?: unknown })
-        : {};
-    const item = clean(row.value);
-    const multiplier = Number(row.multiplier);
-    if (!item || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(item)) {
-      throw new Error(`Custom pricing value ${index + 1} is invalid.`);
-    }
-    if (!Number.isFinite(multiplier) || multiplier <= 0) {
-      throw new Error(`Multiplier for "${item}" must be greater than zero.`);
-    }
-    return { value: item, multiplier };
+  return validateStarterPricingDimension(value, {
+    metricKeys: [...PRICING_METRICS[starterMode]],
+    reservedPropertyKeys: RESERVED_PROPERTY_KEYS,
+    metricLabel: starterMode,
   });
-  if (new Set(values.map((entry) => entry.value)).size !== values.length) {
-    throw new Error('Custom pricing property values must be unique.');
-  }
-  const rawMetrics = Array.isArray(candidate.metrics) ? candidate.metrics : [];
-  const metrics = rawMetrics.filter(
-    (metric): metric is string =>
-      typeof metric === 'string' &&
-      PRICING_METRICS[starterMode].has(metric),
-  );
-  if (
-    metrics.length === 0 ||
-    metrics.length !== rawMetrics.length ||
-    new Set(metrics).size !== metrics.length
-  ) {
-    throw new Error(
-      `Select at least one valid ${starterMode} usage metric for custom pricing.`,
-    );
-  }
-  return { propertyKey, values, metrics };
 }
 
 export async function POST(request: Request) {

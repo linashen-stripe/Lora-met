@@ -190,30 +190,20 @@ Durable references:
 - Expected fresh AI Builder flow: two Free prompts consume `$5.25`; after upgrading, the next prompt produces only `0.3M` input and `0.2M` output on the Pro invoice (`$3.90`), leaving `$16.10`.
 - TypeScript, lint, and the isolated production build pass. Lint output contains only the repository's existing warnings.
 
-## Next task
+## Multi-mode Account Setup checkpoint
 
-- Start from clean commit `7e343f6`, pushed to `origin/master` and tagged
-  `checkpoint-generation-starter-2026-10-15`. This is the fallback before the
-  multi-mode Account Setup redesign.
-- Follow the approved plan at
-  `/Users/linashen/.cursor/plans/multi-mode_starter_redesign_2f4eccaf.plan.md`.
-- Implement only Phase 1 first:
-  1. preserve the existing Generation starter behind a mode-runner contract;
-  2. add an independently owned AI Builder starter for a blank target account;
-  3. build the no-default, sequential AI Builder → Generation setup wizard;
-  4. seed each selected mode's primitives, packages, Pro/Quickstart/B2B
-     customers, contracts, usage, and optional Stripe linkage;
-  5. add mode-scoped preview, retry state, and reset.
-- Keep AI Builder USD cents and Generation Credits completely isolated.
-  `processing_tier` remains a canonical AI Builder dimension.
-- Do not add the optional custom pricing property during Phase 1. After a fresh
-  account verifies both modes and a new checkpoint is created, implement Phase
-  2 with the property unchecked by default. The starter-only example is
-  `time_band: off_peak 0.8× | standard 1× | peak 1.25×`; it does not change the
-  live playground, pricing page, or dashboard.
-- Preserve the separate Admin concerns: target-account setup must use the keys
-  entered on that page and must not call app-key demo-customer or cleanup
-  routes.
+- Local commit `cf12930` implements the no-default, sequential AI Builder →
+  Generation wizard and the independent AI Builder blank-account starter.
+- AI Builder and Generation keep separate ownership state, units, catalogs,
+  packages, personas, usage, Stripe linkage, and demo-only/full reset scopes.
+- The optional custom property uses shared validation, remains disabled by
+  default, and includes the starter-only `time_band` preset. It does not
+  reconfigure the live app.
+- TypeScript, repository lint (existing warnings only), production build,
+  manifest review, and diff checks pass.
+- A fresh disposable target-account seed/reset matrix still requires explicit
+  target credentials. Do not substitute `.env` or mutate a shared demo account
+  for that verification.
 
 ## Current catalog
 
