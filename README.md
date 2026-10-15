@@ -8,9 +8,18 @@ A single Lora-branded presenter app with two monetization demos:
 Both modes share one Metronome sandbox and Stripe test account while keeping
 their customers, packages, usage schemas, and local state isolated.
 
-See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) for the complete demo
-story and scope. Use [the presenter runbook](docs/DEMO_RUNBOOK.md) for setup and
-the live click path.
+Use:
+
+- [product and billing requirements](docs/DEMO_REQUIREMENTS.md) for the current
+  source of truth;
+- [setup and test guide](docs/SETUP_AND_TEST_GUIDE.md) for account preparation
+  and end-to-end validation;
+- [regression checklist](docs/REGRESSION_CHECKLIST.md) before handing off
+  shared billing changes; and
+- [presenter runbook](docs/DEMO_RUNBOOK.md) for the live click path.
+
+The older [implementation plan](docs/IMPLEMENTATION_PLAN.md) records the
+original project direction and may contain superseded prices or names.
 
 ## Local setup
 
@@ -71,13 +80,15 @@ seed, optional custom pricing properties, and namespace-scoped reset commands.
 - Switch modes from the Demo tab in the left Tools panel.
 - AI Builder: `/en/demos/ai-builder`
 - Lora Generate: `/en/demos/generation`
-- Self-serve: pricing → Free signup → two 50-credit jobs → Premium upgrade.
+- Self-serve: pricing → Free signup → two 50-credit jobs → Pro upgrade.
 - Quickstart: prepared Enterprise customer → historical generation usage →
   dashboard, alerts, auto top-up, Stripe, and Metronome contract views.
 
 ## Validation
 
 ```bash
+npx tsc --noEmit
 npm run lint
 npm run build
+git diff --check
 ```

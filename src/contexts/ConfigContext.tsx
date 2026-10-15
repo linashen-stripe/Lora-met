@@ -381,7 +381,6 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
       );
 
       const contracts: any[] = data.contracts ?? [];
-      const topUpTotalCents: number = data.topUpTotalCents ?? 0;
       if (contracts.length === 0) {
         updateState({ metronomeContract: null, metronomeContractLoaded: true });
         return;
@@ -467,33 +466,14 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
         pickEarliestStart(activeCredits) ??
         null;
 
-      // Compute available = poolCap − current-period usage from invoice-breakdowns.
-      // The raw Metronome commit `balance` field is unreliable when invoice_schedule
-      // items interact with the access balance (e.g. the period-commit shows ~$3 remaining
-      // instead of ~$14). Using breakdowns matches the pacing chart and usage page.
-      let totalAvailable: number;
-      try {
-        const periodStartDate = currentPeriodStart
-          ? new Date(currentPeriodStart)
-          : new Date(now.getFullYear(), now.getMonth(), 1);
-        const endDate  = new Date(now.getFullYear(), now.getMonth() + 1, 1); // first day of next month
-        const startingOn   = periodStartDate.toISOString().slice(0, 10) + 'T00:00:00Z';
-        const endingBefore = endDate.toISOString().slice(0, 10) + 'T00:00:00Z';
-
-        const bdRes = await fetchClient.get(
-          `/api/metronome/customer/${metronomeCustomerId}/invoice-breakdowns`,
-          { params: { starting_on: startingOn, ending_before: endingBefore, window_size: 'day' } },
-        );
-        const usedCents: number = (bdRes.data?.data ?? [])
-          .flatMap((bd: any) => bd.line_items ?? [])
-          .filter((li: any) => li.type === 'usage')
-          .reduce((s: number, li: any) => s + (Number(li.total) || 0), 0);
-
-        totalAvailable = poolCap > 0 ? Math.max(0, poolCap - usedCents) : normalizeMetronomeSpendableSumCents(rawBalanceSum, scheduleSum, poolCap);
-      } catch {
-        // Fallback to raw balance if breakdowns fetch fails.
-        totalAvailable = normalizeMetronomeSpendableSumCents(rawBalanceSum, scheduleSum, poolCap);
-      }
+      // Balance belongs to this selected contract. Customer-level invoice
+      // breakdowns can include usage from an earlier Free contract and must not
+      // be subtracted from a newly-created Pro pool.
+      const totalAvailable = normalizeMetronomeSpendableSumCents(
+        rawBalanceSum,
+        scheduleSum,
+        poolCap,
+      );
 
       const balanceScale =
         rawBalanceSum > 0 ? totalAvailable / rawBalanceSum : 1;
@@ -545,7 +525,7 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
           creditTypeName: resolveCreditTypeNameFromContract(contract),
           creditBalance: {
             totalAvailable,
-            totalAmount: poolCap + topUpTotalCents,
+            totalAmount: poolCap,
           },
           commitTotal,
           currentPeriodStart,

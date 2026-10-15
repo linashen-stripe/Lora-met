@@ -1,0 +1,23 @@
+---
+description: Require mode-aware regression review for demo billing changes
+alwaysApply: true
+---
+
+# Billing regression safety
+
+- Treat `docs/DEMO_REQUIREMENTS.md` as the current product/billing source of
+  truth. Treat `docs/IMPLEMENTATION_PLAN.md` as historical when they conflict.
+- Before changing packages, contracts, usage, balances, invoices, checkout,
+  credit purchase, auto top-up, customer state, or seeding, read the applicable
+  sections of `docs/REGRESSION_CHECKLIST.md`.
+- Changes in shared billing/customer code require review of both AI Builder
+  (USD credits) and Generation (custom credits), including legacy Generation
+  contracts that still use `USD (cents)`.
+- Validate transition changes against both exact-time behavior and the
+  temporary legacy hour-boundary fallback. Never mask misattributed usage with
+  a compensating credit.
+- Use a fresh customer for end-to-end attribution checks; historical usage
+  cannot validate a corrected contract transition.
+- Never edit or overwrite `.env`.
+- In handoff, distinguish uncommitted work, local commits, GitHub pushes, and
+  tags. Do not describe the tree as clean without checking `git status`.

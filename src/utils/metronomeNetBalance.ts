@@ -26,14 +26,12 @@ function coerceFiniteNumber(raw: unknown): number | null {
 
 /**
  * Normalize Metronome net balance to USD minor units (cents).
- * Docs: default credit type is USD (cents). Payloads may use dollar floats or strings.
+ * The balance is denominated in the requested credit type. For the default
+ * `USD (cents)` type, even fractional values are minor units caused by
+ * fractional metered quantities; they are not dollar values.
  */
 export function metronomeNetBalanceToCents(raw: unknown): number | null {
   const n = coerceFiniteNumber(raw);
   if (n == null) return null;
-  // Fractional values with small magnitude are usually whole dollars in examples
-  if (Math.abs(n) < 1_000_000 && !Number.isInteger(n)) {
-    return Math.round(n * 100);
-  }
   return Math.round(n);
 }

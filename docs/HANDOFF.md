@@ -1,12 +1,76 @@
 # Handoff — 2026-10-14
 
+Durable references:
+
+- `docs/DEMO_REQUIREMENTS.md`
+- `docs/SETUP_AND_TEST_GUIDE.md`
+- `docs/REGRESSION_CHECKLIST.md`
+- `docs/METRONOME_STARTER.md`
+- `docs/DEMO_RUNBOOK.md`
+
+## Latest seeding performance update
+
+- AI Builder and Generation persona seeders now aggregate representative
+  higher-quantity usage into at most roughly 145 events for a five-seat,
+  29-day history (one or two Metronome batches), while preserving coverage for
+  product/model, pricing tier, project, user/seat, and date dimensions.
+- The same shared seeders serve checkout-created personas, Admin → Demo
+  customers, and manual reseeding. The standalone AI Builder B2B seeder already
+  emits 100 events in one batch.
+- Generation B2B weighting targets exactly one seat above its 10,000-credit
+  allocation; the remaining four retain varied, nonzero balances.
+- Plans & Billing checks background seed completion every two seconds only
+  while seeding. Completion includes a six-second aggregation grace period so
+  "ready" does not refresh against an empty draft invoice. Ordinary dashboard
+  refresh remains every 60 seconds.
+- AI Builder carries accepted-but-not-yet-aggregated local spend from the
+  playground to Plans & Billing. Each accepted chat ingestion schedules one
+  contract reconciliation after two seconds; Plans & Billing keeps its normal
+  60-second safety refresh rather than starting a polling loop. Resetting the
+  story preserves pending spend because reset cannot undo ingested usage.
+- Seed status is process-local on `globalThis` so separately bundled local
+  route handlers share completion state. A distributed deployment still needs
+  durable shared state.
+- TypeScript and focused lint pass. A fresh Admin seed should be timed against
+  the target Metronome account to confirm the expected roughly 10-second
+  end-to-end behavior.
+
+## Consolidated billing-flow regression pass
+
+- Canonical `AI Builder Free` now wins over legacy `Free` for new signups.
+- AI Builder chat state and optimistic balances are customer-scoped; new demo
+  customers never inherit another customer's story.
+- AI Builder and Generation attempt an exact transition first. Until the target
+  account supports millisecond boundaries, Free contracts and synthetic Free
+  usage use the prior-hour compatibility fallback.
+- Expected AI Builder transition: two Free prompts consume `$5.25`; after
+  upgrading, the third prompt alone contributes `0.3M` input and `0.2M` output
+  tokens and leaves `$16.10` of the `$20` Pro credit.
+- Dashboard balances now reconcile from explicit draft usage lines as soon as
+  the Upcoming Invoice updates, with live net balance and contract balance as
+  fallbacks. Subscription-only invoices no longer reduce the displayed credit.
+- Contract schedule totals are no longer double-counted with manual ledger
+  entries after credit purchases.
+- AI Builder auto top-up defaults to `$5 → $15`, enforces Metronome's `$5`
+  threshold and `$10` minimum recharge gap, refreshes contract state after
+  setup/cancel, and surfaces cancellation errors. Generation applies the same
+  fiat-equivalent limits in custom-credit units.
+- Credit purchases refresh the Metronome contract immediately and display API
+  failures in the modal. Reusing an existing seeded persona no longer seeds
+  another batch of usage.
+- TypeScript, repository lint (existing warnings only), and an isolated
+  production build pass. A final fresh-customer live verification is still
+  required because already-ingested usage cannot be reassigned between
+  contracts.
+
 ## AI Builder parity and admin update
 
-- Local `master` is three commits ahead of GitHub before this update; a clean
+- Local `master` is five commits ahead of GitHub before this update; a clean
   working tree means changes are committed locally, not necessarily pushed.
 - The existing AI Builder rate card, metrics, products, and rates remain
-  unchanged. Canonical `AI Builder Pro` and `AI Builder Enterprise Quickstart`
-  packages were created from the legacy Premium/Enterprise terms.
+  unchanged. Canonical `AI Builder Free`, `AI Builder Pro`, and
+  `AI Builder Enterprise Quickstart` packages were created from the legacy
+  Free/Premium/Enterprise terms.
 - AI Builder Quickstart is a `$2,500` prepaid, 12-month commitment. Existing
   legacy packages remain available for contracts already using them.
 - AI Builder is presented as Free, Pro, Enterprise Quickstart, and custom
@@ -14,6 +78,12 @@
 - Login and Admin → Demo customers can prepare Pro, Quickstart, and B2B
   personas for either demo mode. AI Builder Pro/Quickstart now seed
   representative usage after checkout.
+- New checkout-created personas show **Loading demo usage…** on Plans &
+  Billing while background historical usage is ingested, then refresh the page
+  automatically. No ingestion status is shown in the playgrounds.
+- Login-created Pro and Quickstart personas now use the same embedded
+  Setup-mode Checkout modal and package summary as pricing-page upgrades.
+  Admin-only preparation retains hosted Checkout as a deliberate fallback.
 - Only AI Builder Pro customers created through the seeded-demo path receive
   the `$5 → $15` Stripe invoice-gated auto top-up example. The reusable Pro
   package does not enable it for ordinary customers.
@@ -70,26 +140,28 @@
 ## Completed
 
 - Unified AI Builder and Generation demo flows.
-- Exact-time Metronome contract transitions are attempted for both modes, with an hour-boundary fallback for accounts that still enforce the legacy restriction.
+- Exact-time Metronome contract transitions are attempted first for both modes,
+  with a temporary hour-boundary fallback for accounts that still reject them.
 - Fixed AI Builder Free-credit reporting so an exhausted `$5.00` grant displays `$0.00` rather than treating zero as a missing balance.
 - Verified the Free-credit progression with real usage: `$5.00 → $2.60 → $0.00`; test customers were cleaned up.
 - Generation account pages now consistently present custom `Generation Credits`, including balances, usage, invoice line items, purchases, and auto top-up.
 - Draft current-period Metronome invoices remain in Upcoming Invoice and are excluded from invoice history.
 - Upcoming Invoice groups subtotals, applied credits, and totals by credit type; USD and Generation Credits are never arithmetically combined.
-- Generation catalog v8 provides demo-sized plans: Free (`$0`, 100 credits), Pro (`$20/month`, 1,000 credits), and Enterprise (`$1,000` prepaid for 100,000 credits).
+- Generation catalog v10 provides demo-sized plans: Free (`$0`, 100 credits), Pro (`$20/month`, 1,000 credits), and Enterprise Quickstart (`$1,000` prepaid for 100,000 credits).
 - The corrected Pro subscription uses a separate product so it cannot inherit the legacy `$99` rate.
 - Credit purchases use a 500-credit minimum and presets of 1,000 credits for `$10` or 2,500 for `$25`.
 - The Generation playground supports 1×, 5×, and 10× event batches so usage and auto top-up can be demonstrated quickly.
 - Generation now reserves credits locally before work, rolls the reservation back when ingestion fails, and reconciles against Metronome after accepted batches.
 - Accepted local usage remains marked as pending until Metronome catches up, preventing a stale reconciliation read from restoring already-burned Free credits.
 - Background Metronome balance/invoice polling was reduced from 10 seconds to 60 seconds; webhook events produce reconciliation signals checked on tab focus/visibility.
-- Legacy hour-boundary fallback now recognizes both contract start and contract end errors, including `Contract ending before is required to be on an hour boundary`.
-- Legacy fallback floors to the current hour instead of scheduling at the next hour, so paid contracts activate and invoice immediately.
+- The temporary fallback recognizes both contract-start and contract-end
+  hour-boundary errors and floors Pro to the current hour.
 - Generation upgrade auto-selection matches configured Pro package names rather than searching only for `premium`.
 - Future Pro contracts left by the old fallback are archived and safely replaced on retry.
 - Generation Quickstart seeding scales to the active credit pool: healthy targets 42%, burst 65%, and at-risk 82%, with an optional `spendCap` override.
 - A single bulk batch that exhausts the Free balance now opens the Pro upgrade prompt.
-- The left Settings panel now links to the shared admin cleanup and power-user wizard.
+- The left Settings panel now links to the Admin hub; power-user creation lives
+  under Demo customers and cleanup is destructive-only.
 - Admin cleanup safely lists demo customers from both modes while excluding unrelated customers.
 - Power-user creation has an explicit Lora Generate / AI Builder selector; it does not depend on the currently selected demo mode.
 - AI Builder power users retain the original B2B contract structure.
@@ -100,13 +172,38 @@
 - The production build passes with only the existing repository warnings.
 - Clean local checkpoints: `41c0716` (shared mode-aware admin flow) and `5f69075` (correct Generation B2B power-user contract).
 
+## Consolidated billing regression checkpoint
+
+- AI Builder Free usage is isolated from Pro usage through an exact boundary
+  where available, or the temporary prior-hour fallback where required.
+- AI Builder balances now keep local usage deductions until Metronome catches up; stale balance reads cannot restore spent credit. Generation uses the same reconciliation rule.
+- Dashboard availability uses the selected contract's own balance and may only
+  be lowered by explicit draft usage lines. Customer-level invoice breakdowns
+  are not subtracted from a new contract. Subscription-only invoice lines do
+  not consume credits.
+- Free package lookup is mode-specific and ordered. Pricing retains a configured legacy Free package when canonical paid packages exist, and sign-up returns `409` instead of attaching an unrelated shared-account Free package.
+- Sign-up and logged-in Free package selection backdate Free one hour for the
+  temporary compatibility path. Upgrades attempt exact time first and fall back
+  to the current hour only when Metronome rejects the exact boundary.
+- Auto top-up and credit purchase behavior now follows the contract credit type, not only the selected demo mode. Legacy Generation USD wallets keep fiat semantics; true Generation custom-credit wallets keep Generation Credit semantics.
+- Auto top-up reports a visible error when no Metronome customer exists. AI seeded Pro customers use one seat and one project consistently from both login and Admin.
+- Expected fresh AI Builder flow: two Free prompts consume `$5.25`; after upgrading, the next prompt produces only `0.3M` input and `0.2M` output on the Pro invoice (`$3.90`), leaving `$16.10`.
+- TypeScript, lint, and the isolated production build pass. Lint output contains only the repository's existing warnings.
+
 ## Next task
 
-- Create a fresh Generation power user from `/en/admin/cleanup-environment` and verify its Metronome contract, Stripe invoice delivery, five seats, recurring seat credits, 0.85 override, and seeded usage. A customer created before the 2026-10-13 pricing correction retains its original contract and should be cleaned up rather than treated as the expected result.
+- Finish and regression-test the Free, Pro, and Quickstart flows before
+  redesigning Plans & Billing for B2B. The deferred B2B experience should
+  eventually show commitments, seat allocations, per-seat usage, and pooled
+  balances, using Metronome's customer billing dashboard example as a design
+  reference: https://docs.metronome.com/guides/customers-billing/demo-dashboard/app
+- Create a fresh Generation power user from `/en/admin/customers` and verify its Metronome contract, Stripe invoice delivery, five seats, recurring seat credits, 0.85 override, and seeded usage. A customer created before the 2026-10-13 pricing correction retains its original contract and should be cleaned up rather than treated as the expected result.
 - Visually verify the Generation pricing page shows Free, Pro, and Enterprise correctly.
 - Test a fresh Generation customer through Free → Pro; existing legacy customers retain their old 8,000-credit contracts.
 - Consider blocking auto top-up for legacy Generation contracts because their old rate card used the incorrect conversion.
-- GitHub push is still pending: the local repository has no remote because GitHub authentication was not completed. Intended destination: `https://github.com/linashen-stripe/Lora-met.git`.
+- GitHub remote `origin` is configured for
+  `https://github.com/linashen-stripe/Lora-met.git`; local `master` was five
+  commits ahead before the current uncommitted regression/documentation work.
 
 ## Current catalog
 
@@ -128,7 +225,6 @@ npm install
 npm run dev
 ```
 
-Do not overwrite `.env`; it contains the user's restored credentials.
-
-The working tree was clean before this handoff update. Commit `docs/HANDOFF.md`
-after restart if a fully clean checkpoint is desired.
+Do not overwrite `.env`; it contains the user's restored credentials. The
+consolidated regression changes are currently uncommitted; do not describe the
+working tree as clean until they are committed.

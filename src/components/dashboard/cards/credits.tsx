@@ -6,7 +6,10 @@ import { useConfigContext } from '@/contexts/ConfigContext';
 import { useTranslation } from 'react-i18next';
 import { MetronomeAutoTopUp } from '@/utils/types';
 import useAnimatedNumber from '@/components/hooks/useAnimatedNumber';
-import { formatMetronomeAmount } from '@/utils/metronomeAmount';
+import {
+  formatMetronomeAmount,
+  metronomeCreditTypeCurrency,
+} from '@/utils/metronomeAmount';
 
 const CreditsCard = ({
   totalAvailable,
@@ -31,12 +34,26 @@ const CreditsCard = ({
   const { settings } = useConfigContext();
   const { t } = useTranslation();
   const currency = balanceCurrency ?? settings?.currency;
+  const fiatCreditCurrency = metronomeCreditTypeCurrency(creditTypeName);
+  // Generation service-tier pricing can produce half/quarter credits. Preserve
+  // those custom-credit decimals during animation; integer-only animation made
+  // 487.5 appear as 488 while the playground correctly showed 487.5.
+  const animationFractionDigits =
+    creditTypeName && !fiatCreditCurrency ? 2 : 0;
   const displayedAvailable = useAnimatedNumber(
     totalAvailable,
     700,
     animationFrom ?? totalAvailable,
+    true,
+    animationFractionDigits,
   );
-  const displayedTotal = useAnimatedNumber(totalAmount);
+  const displayedTotal = useAnimatedNumber(
+    totalAmount,
+    700,
+    totalAmount,
+    true,
+    animationFractionDigits,
+  );
   const percentageRemaining =
     displayedTotal === 0 ? 0 : (displayedAvailable / displayedTotal) * 100;
   const usedPct =
@@ -60,7 +77,10 @@ const CreditsCard = ({
         )
       : formatPrice(amount, settings?.language, currency);
 
-  const heading = creditTypeName ?? t('dashboard.ai_credits');
+  const heading =
+    fiatCreditCurrency?.toUpperCase() ??
+    creditTypeName ??
+    t('dashboard.ai_credits');
   const barAria = t('dashboard.ai_credits');
 
   return (

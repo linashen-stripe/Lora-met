@@ -16,7 +16,12 @@ import useDashboardData, {
 import { useUsageChartRefresh } from '@/contexts/UsageChartRefreshContext';
 
 export default function UsagePage() {
-  const { customer, plan, metronomeContract } = useConfigContext();
+  const {
+    customer,
+    plan,
+    metronomeContract,
+    triggerMetronomeContractRefresh,
+  } = useConfigContext();
   const { t } = useTranslation();
   const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
   const [isDashboardLoading, dashboardData] = useDashboardData(false);
@@ -27,6 +32,7 @@ export default function UsagePage() {
   const [isPurchaseCreditsModalOpen, setIsPurchaseCreditsModalOpen] =
     useState(false);
   const [isTopUpActionLoading, setIsTopUpActionLoading] = useState(false);
+  const [topUpActionError, setTopUpActionError] = useState<string | null>(null);
 
   const autoTopUpEnabled = metronomeCustomerId
     ? Boolean(metronomeContract?.autoTopUp)
@@ -50,19 +56,24 @@ export default function UsagePage() {
   const handleCancelAutoTopUp = async () => {
     if (!metronomeCustomerId && !customer?.stripeCustomerId) return;
     setIsTopUpActionLoading(true);
+    setTopUpActionError(null);
     try {
       if (metronomeCustomerId) {
         await fetchClient.delete('/api/metronome/notifications', {
           data: { metronomeCustomerId },
         });
+        await triggerMetronomeContractRefresh();
       } else {
         await fetchClient.delete('/api/stripe/auto-top-up', {
           data: { customerId: customer?.stripeCustomerId },
         });
       }
       invalidateDashboard();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to cancel auto top-up:', error);
+      setTopUpActionError(
+        error.response?.data?.error || 'Failed to cancel auto top-up.',
+      );
     } finally {
       setIsTopUpActionLoading(false);
     }
@@ -82,32 +93,37 @@ export default function UsagePage() {
 
         {showCreditActions && (
           <div className='flex shrink-0 justify-start lg:justify-end'>
-            <div className='inline-flex flex-wrap items-center gap-2'>
-              <Button
-                text={
-                  autoTopUpEnabled
-                    ? t('dashboard.buttons.cancel_auto_topup')
-                    : t('dashboard.buttons.setup_auto_topup')
-                }
-                onClick={
-                  autoTopUpEnabled
-                    ? handleCancelAutoTopUp
-                    : () => setIsAutoTopUpModalOpen(true)
-                }
-                className={`${
-                  autoTopUpEnabled
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-purple hover:bg-purple-hover text-button-color'
-                } h-9 w-auto min-w-0 shrink-0 px-4 py-0 text-sm font-semibold shadow-none ${
-                  isTopUpActionLoading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                disabled={isTopUpActionLoading}
-              />
-              <Button
-                text={t('dashboard.buttons.purchase_credits')}
-                onClick={() => setIsPurchaseCreditsModalOpen(true)}
-                className='h-9 w-auto min-w-0 shrink-0 bg-purple px-4 py-0 text-sm font-semibold text-button-color shadow-none hover:bg-purple-hover'
-              />
+            <div>
+              <div className='inline-flex flex-wrap items-center gap-2'>
+                <Button
+                  text={
+                    autoTopUpEnabled
+                      ? t('dashboard.buttons.cancel_auto_topup')
+                      : t('dashboard.buttons.setup_auto_topup')
+                  }
+                  onClick={
+                    autoTopUpEnabled
+                      ? handleCancelAutoTopUp
+                      : () => setIsAutoTopUpModalOpen(true)
+                  }
+                  className={`${
+                    autoTopUpEnabled
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-purple hover:bg-purple-hover text-button-color'
+                  } h-9 w-auto min-w-0 shrink-0 px-4 py-0 text-sm font-semibold shadow-none ${
+                    isTopUpActionLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isTopUpActionLoading}
+                />
+                <Button
+                  text={t('dashboard.buttons.purchase_credits')}
+                  onClick={() => setIsPurchaseCreditsModalOpen(true)}
+                  className='h-9 w-auto min-w-0 shrink-0 bg-purple px-4 py-0 text-sm font-semibold text-button-color shadow-none hover:bg-purple-hover'
+                />
+              </div>
+              {topUpActionError && (
+                <p className='mt-2 text-sm text-red-600'>{topUpActionError}</p>
+              )}
             </div>
           </div>
         )}

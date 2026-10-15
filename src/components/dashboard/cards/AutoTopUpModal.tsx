@@ -14,9 +14,16 @@ import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import { formatPrice } from '@/utils/helpers';
-import { formatMetronomeAmount } from '@/utils/metronomeAmount';
+import {
+  formatMetronomeAmount,
+  isCustomMetronomeCreditType,
+} from '@/utils/metronomeAmount';
 import { GENERATION_CREDIT_USD } from '@/config/generationCatalog';
-import { packageByKey } from '@/config/metronomeCatalog';
+import {
+  METRONOME_CATALOG,
+  packageByKey,
+} from '@/config/metronomeCatalog';
+import { AI_BUILDER_PRO_TERMS } from '@/config/aiBuilderCatalog';
 
 interface AutoTopUpModalProps {
   open: boolean;
@@ -25,10 +32,20 @@ interface AutoTopUpModalProps {
 
 export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
   const { t } = useTranslation();
-  const { customer, settings, metronomeContract, demoMode } =
-    useConfigContext();
+  const {
+    customer,
+    settings,
+    metronomeContract,
+    demoMode,
+    triggerMetronomeContractRefresh,
+  } = useConfigContext();
+  const contractCreditTypeName = metronomeContract?.creditTypeName;
   const customCreditTypeName =
-    demoMode === 'generation' ? metronomeContract?.creditTypeName : undefined;
+    demoMode === 'generation' &&
+    (!contractCreditTypeName ||
+      isCustomMetronomeCreditType(contractCreditTypeName))
+      ? contractCreditTypeName ?? METRONOME_CATALOG.pricingUnit.name
+      : undefined;
   const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
   const [threshold, setThreshold] = useState('');
   const [topUpAmount, setTopUpAmount] = useState('');
@@ -36,19 +53,37 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
   const [error, setError] = useState<string | null>(null);
   const thresholdValue = Number(threshold);
   const rechargeValue = Number(topUpAmount);
+  const customCreditFiatMinorUnits =
+    METRONOME_CATALOG.pricingUnit.fiatMinorUnitsPerCustomCredit;
+  const minimumThreshold = customCreditTypeName
+    ? Math.ceil(500 / customCreditFiatMinorUnits)
+    : 5;
+  const minimumRechargeGap = customCreditTypeName
+    ? Math.ceil(1000 / customCreditFiatMinorUnits)
+    : 10;
   const amountsAreValid =
     threshold !== '' &&
     topUpAmount !== '' &&
     Number.isFinite(thresholdValue) &&
     Number.isFinite(rechargeValue) &&
-    thresholdValue >= 0 &&
-    rechargeValue > thresholdValue;
+    thresholdValue >= minimumThreshold &&
+    rechargeValue >= thresholdValue + minimumRechargeGap;
 
   useEffect(() => {
-    if (!open || demoMode !== 'generation') return;
-    const proPackage = packageByKey('pro');
-    setThreshold(String(proPackage?.autoTopUpThresholdCredits ?? ''));
-    setTopUpAmount(String(proPackage?.autoTopUpToCredits ?? ''));
+    if (!open) return;
+    if (demoMode === 'generation') {
+      const proPackage = packageByKey('pro');
+      setThreshold(String(proPackage?.autoTopUpThresholdCredits ?? ''));
+      setTopUpAmount(String(proPackage?.autoTopUpToCredits ?? ''));
+    } else {
+      setThreshold(
+        String(AI_BUILDER_PRO_TERMS.autoTopUpThresholdCents / 100),
+      );
+      setTopUpAmount(
+        String(AI_BUILDER_PRO_TERMS.autoTopUpToCents / 100),
+      );
+    }
+    setError(null);
   }, [demoMode, open]);
 
   const handleSave = async () => {
@@ -56,8 +91,16 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
       setError(
         t('modals.auto_top_up.invalid_amounts', {
           defaultValue:
-            'Recharge balance must be greater than the balance threshold.',
+            customCreditTypeName
+              ? `Metronome requires a threshold of at least ${minimumThreshold.toLocaleString()} ${customCreditTypeName} and a recharge target at least ${minimumRechargeGap.toLocaleString()} credits higher.`
+              : 'Metronome requires a threshold of at least $5.00 and a recharge target at least $10.00 higher.',
         }),
+      );
+      return;
+    }
+    if (!metronomeCustomerId) {
+      setError(
+        'A Metronome customer is required before auto top-up can be configured.',
       );
       return;
     }
@@ -72,13 +115,12 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
         Number(topUpAmount) * (customCreditTypeName ? 1 : 100),
       );
 
-      if (metronomeCustomerId) {
-        await fetchClient.post('/api/metronome/notifications', {
-          metronomeCustomerId,
-          thresholdAmount,
-          rechargeAmount,
-        });
-      }
+      await fetchClient.post('/api/metronome/notifications', {
+        metronomeCustomerId,
+        thresholdAmount,
+        rechargeAmount,
+      });
+      await triggerMetronomeContractRefresh();
 
       setOpen(false);
     } catch (err: any) {
@@ -122,6 +164,30 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
             </DialogTitle>
             <div className='mt-2 space-y-4'>
               {error && <p className='text-red-500'>{error}</p>}
+              <div className='rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900'>
+                {customCreditTypeName ? (
+                  <p>
+                    Metronome requires at least{' '}
+                    {minimumThreshold.toLocaleString()} {customCreditTypeName}{' '}
+                    for the threshold and a recharge target at least{' '}
+                    {minimumRechargeGap.toLocaleString()} credits higher.
+                    For example, if your threshold is{' '}
+                    {minimumThreshold.toLocaleString()} credits, your recharge
+                    to amount must be at least{' '}
+                    {(
+                      minimumThreshold + minimumRechargeGap
+                    ).toLocaleString()}{' '}
+                    credits.
+                  </p>
+                ) : (
+                  <p>
+                    Metronome requires a threshold of at least $5.00 and a
+                    recharge target at least $10.00 higher. For example, if your
+                    threshold is $5, your recharge to amount must be at least
+                    $15.
+                  </p>
+                )}
+              </div>
               {customCreditTypeName && (
                 <div className='rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900'>
                   <p className='font-medium'>
@@ -152,8 +218,8 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
                 </label>
                 <input
                   type='number'
-                  min='0'
-                  step={customCreditTypeName ? '1' : '0.01'}
+                  min={minimumThreshold}
+                  step='1'
                   name='threshold'
                   id='threshold'
                   value={threshold}
@@ -176,8 +242,8 @@ export default function AutoTopUpModal({ open, setOpen }: AutoTopUpModalProps) {
                 </label>
                 <input
                   type='number'
-                  min='0'
-                  step={customCreditTypeName ? '1' : '0.01'}
+                  min={thresholdValue + minimumRechargeGap}
+                  step='1'
                   name='topUpAmount'
                   id='topUpAmount'
                   value={topUpAmount}

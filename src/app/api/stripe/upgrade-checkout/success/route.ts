@@ -16,6 +16,11 @@ import {
 import { finalizeAndPayMetronomeInvoice } from '@/utils/stripeInvoiceFinalize';
 import { configureContractAutoTopUp } from '@/server/metronomeAutoTopUp';
 import { AI_BUILDER_PRO_TERMS } from '@/config/aiBuilderCatalog';
+import { packageByKey } from '@/config/metronomeCatalog';
+import { setDemoUsageSeedStatus } from '@/server/demoUsageSeedStatus';
+
+const DEMO_USAGE_AGGREGATION_GRACE_MS = 6_000;
+const GENERATION_PRO_TERMS = packageByKey('pro')!;
 
 export async function GET(request: NextRequest) {
   const publicOrigin = getPublicOriginFromRequest(request);
@@ -26,7 +31,7 @@ export async function GET(request: NextRequest) {
     const sessionId = searchParams.get('session_id');
 
     if (!sessionId) {
-      const u = new URL('/en/chat', publicOrigin);
+      const u = new URL('/en/pricing', publicOrigin);
       console.log(
         '[upgrade-checkout/success] redirect (missing session_id):',
         u.href,
@@ -35,20 +40,6 @@ export async function GET(request: NextRequest) {
     }
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-    // mode: 'setup' sessions don't have payment_status — check setup_intent status
-    if (session.mode === 'setup' && session.status !== 'complete') {
-      console.error(
-        `Setup session ${sessionId} not complete: ${session.status}`,
-      );
-      const u = new URL('/en/chat', publicOrigin);
-      console.log(
-        '[upgrade-checkout/success] redirect (session not complete):',
-        u.href,
-      );
-      return NextResponse.redirect(u);
-    }
-
     const {
       metronomeCustomerId,
       packageId,
@@ -59,6 +50,19 @@ export async function GET(request: NextRequest) {
       seedUsageAfter,
       seedPersona,
     } = session.metadata ?? {};
+
+    // mode: 'setup' sessions don't have payment_status — check setup_intent status
+    if (session.mode === 'setup' && session.status !== 'complete') {
+      console.error(
+        `Setup session ${sessionId} not complete: ${session.status}`,
+      );
+      const u = new URL(`/${language}/demos/${demoMode}`, publicOrigin);
+      console.log(
+        '[upgrade-checkout/success] redirect (session not complete):',
+        u.href,
+      );
+      return NextResponse.redirect(u);
+    }
 
     const contractStartDaysAgo = contractStartDaysAgoRaw
       ? parseInt(String(contractStartDaysAgoRaw), 10)
@@ -137,147 +141,156 @@ export async function GET(request: NextRequest) {
       } else {
         let endedContractIds: string[] = [];
         try {
-        const isQuickstart =
-          seedUsageAfter === 'true' && contractStartDaysAgo > 0;
-        let transitionAt = new Date();
-        let startingAt = isQuickstart
-          ? subDays(transitionAt, contractStartDaysAgo)
-          : transitionAt;
-
-        // Quickstart creates a brand-new Enterprise customer with backdated history.
-        // Self-serve upgrades preserve the Free contract and end it exactly where
-        // Premium begins, so earlier usage cannot be re-rated against Premium.
-        if (!isQuickstart) {
-          try {
-            endedContractIds = await endActiveCustomerContractsAt(
-              metronome,
-              metronomeCustomerId,
-              transitionAt.toISOString(),
-            );
-          } catch (endError) {
-            if (!isMetronomeHourBoundaryError(endError)) throw endError;
-            transitionAt = currentMetronomeHourBoundary();
-            startingAt = transitionAt;
-            console.warn(
-              `[upgrade-checkout/success] Exact-time contract endings are unavailable; retrying at ${startingAt.toISOString()}`,
-            );
-            endedContractIds = await endActiveCustomerContractsAt(
-              metronome,
-              metronomeCustomerId,
-              transitionAt.toISOString(),
-            );
-          }
-        }
-
-        const createdAfter = Math.floor(Date.now() / 1000) - 15;
-        let contractId: string;
-        try {
-          contractId = await createContract(metronome, {
-            metronomeCustomerId,
-            packageId,
-            startingAt: startingAt.toISOString(),
-            uniquenessKey: `checkout-${sessionId}`,
-          });
-        } catch (exactTimeError) {
-          if ((exactTimeError as { status?: number })?.status === 409) {
-            const contracts = await metronome.v2.contracts.list({
-              customer_id: metronomeCustomerId,
-            });
-            const duplicate = (contracts.data ?? []).find(
-              (contract: any) =>
-                contract.package_id === packageId && !contract.archived_at,
-            );
-            if (!duplicate) throw exactTimeError;
-            contractId = duplicate.id;
-            console.log(
-              `[upgrade-checkout/success] Reused idempotent contract ${contractId}`,
-            );
-          } else {
-          if (!isMetronomeHourBoundaryError(exactTimeError)) {
-            throw exactTimeError;
-          }
-
-          if (endedContractIds.length > 0) {
-            await restoreOpenEndedContracts(
-              metronome,
-              metronomeCustomerId,
-              endedContractIds,
-            );
-          }
-          transitionAt = currentMetronomeHourBoundary();
-          startingAt = isQuickstart
+          const isQuickstart =
+            seedUsageAfter === 'true' && contractStartDaysAgo > 0;
+          let transitionAt = new Date();
+          let startingAt = isQuickstart
             ? subDays(transitionAt, contractStartDaysAgo)
             : transitionAt;
-          endedContractIds = !isQuickstart
-            ? await endActiveCustomerContractsAt(
+
+          // Quickstart creates a brand-new Enterprise customer with backdated history.
+          // Self-serve upgrades preserve the Free contract and end it exactly where
+          // Pro begins, so earlier usage cannot be re-rated against Pro.
+          if (!isQuickstart) {
+            try {
+              endedContractIds = await endActiveCustomerContractsAt(
                 metronome,
                 metronomeCustomerId,
                 transitionAt.toISOString(),
-              )
-            : [];
-          console.warn(
-            `[upgrade-checkout/success] Exact-time package transitions are unavailable; retrying at ${startingAt.toISOString()}`,
-          );
-          contractId = await createContract(metronome, {
-            metronomeCustomerId,
-            packageId,
-            startingAt: startingAt.toISOString(),
-            uniquenessKey: `checkout-${sessionId}`,
-          });
+              );
+            } catch (endError) {
+              if (!isMetronomeHourBoundaryError(endError)) throw endError;
+              transitionAt = currentMetronomeHourBoundary();
+              startingAt = transitionAt;
+              console.warn(
+                `[upgrade-checkout/success] Exact-time contract endings are unavailable; retrying at ${startingAt.toISOString()}`,
+              );
+              endedContractIds = await endActiveCustomerContractsAt(
+                metronome,
+                metronomeCustomerId,
+                transitionAt.toISOString(),
+              );
+            }
           }
-        }
-        console.log(
-          `✅ Created Metronome ${packageName} contract: ${contractId} (starting_at ${startingAt.toISOString()})`,
-        );
-        if (demoMode === 'ai-builder' && seedPersona === 'pro') {
+
+          const createdAfter = Math.floor(Date.now() / 1000) - 15;
+          let contractId: string;
           try {
-            await configureContractAutoTopUp({
-              metronome,
-              customerId: metronomeCustomerId,
-              contractId,
-              thresholdAmount:
-                AI_BUILDER_PRO_TERMS.autoTopUpThresholdCents,
-              rechargeToAmount: AI_BUILDER_PRO_TERMS.autoTopUpToCents,
-              name: 'Seeded Pro Auto Top-Up',
+            contractId = await createContract(metronome, {
+              metronomeCustomerId,
+              packageId,
+              startingAt: startingAt.toISOString(),
+              uniquenessKey: `checkout-${sessionId}`,
             });
-            console.log(
-              `[upgrade-checkout/success] Configured seeded AI Builder Pro auto top-up on ${contractId}`,
-            );
-          } catch (topUpError) {
-            console.warn(
-              '[upgrade-checkout/success] Seeded Pro auto top-up was skipped:',
-              topUpError,
+          } catch (exactTimeError) {
+            if ((exactTimeError as { status?: number })?.status === 409) {
+              const contracts = await metronome.v2.contracts.list({
+                customer_id: metronomeCustomerId,
+              });
+              const duplicate = (contracts.data ?? []).find(
+                (contract: any) =>
+                  contract.package_id === packageId && !contract.archived_at,
+              );
+              if (!duplicate) throw exactTimeError;
+              contractId = duplicate.id;
+              console.log(
+                `[upgrade-checkout/success] Reused idempotent contract ${contractId}`,
+              );
+            } else {
+              if (!isMetronomeHourBoundaryError(exactTimeError)) {
+                throw exactTimeError;
+              }
+
+              if (endedContractIds.length > 0) {
+                await restoreOpenEndedContracts(
+                  metronome,
+                  metronomeCustomerId,
+                  endedContractIds,
+                );
+              }
+              transitionAt = currentMetronomeHourBoundary();
+              startingAt = isQuickstart
+                ? subDays(transitionAt, contractStartDaysAgo)
+                : transitionAt;
+              endedContractIds = !isQuickstart
+                ? await endActiveCustomerContractsAt(
+                    metronome,
+                    metronomeCustomerId,
+                    transitionAt.toISOString(),
+                  )
+                : [];
+              console.warn(
+                `[upgrade-checkout/success] Exact-time package transitions are unavailable; retrying at ${startingAt.toISOString()}`,
+              );
+              contractId = await createContract(metronome, {
+                metronomeCustomerId,
+                packageId,
+                startingAt: startingAt.toISOString(),
+                uniquenessKey: `checkout-${sessionId}`,
+              });
+            }
+          }
+          console.log(
+            `✅ Created Metronome ${packageName} contract: ${contractId} (starting_at ${startingAt.toISOString()})`,
+          );
+          if (seedPersona === 'pro') {
+            try {
+              const thresholdAmount =
+                demoMode === 'ai-builder'
+                  ? AI_BUILDER_PRO_TERMS.autoTopUpThresholdCents
+                  : GENERATION_PRO_TERMS.autoTopUpThresholdCredits!;
+              const rechargeToAmount =
+                demoMode === 'ai-builder'
+                  ? AI_BUILDER_PRO_TERMS.autoTopUpToCents
+                  : GENERATION_PRO_TERMS.autoTopUpToCredits!;
+              await configureContractAutoTopUp({
+                metronome,
+                customerId: metronomeCustomerId,
+                contractId,
+                thresholdAmount,
+                rechargeToAmount,
+                name: 'Seeded Pro Auto Top-Up',
+              });
+              console.log(
+                `[upgrade-checkout/success] Configured seeded ${demoMode} Pro auto top-up on ${contractId}`,
+              );
+            } catch (topUpError) {
+              console.warn(
+                '[upgrade-checkout/success] Seeded Pro auto top-up was skipped:',
+                topUpError,
+              );
+            }
+          }
+
+          // Finalize and pay the subscription invoice Metronome creates in Stripe.
+          // Runs in background — don't block the redirect.
+          if (session.customer) {
+            after(() =>
+              finalizeAndPayMetronomeInvoice(
+                stripe,
+                session.customer as string,
+                createdAfter,
+                'upgrade',
+              ).catch((err) =>
+                console.error(
+                  '[upgrade] Background invoice payment failed:',
+                  err,
+                ),
+              ),
             );
           }
-        }
 
-        // Finalize and pay the subscription invoice Metronome creates in Stripe.
-        // Runs in background — don't block the redirect.
-        if (session.customer) {
-          after(() =>
-            finalizeAndPayMetronomeInvoice(
-              stripe,
-              session.customer as string,
-              createdAfter,
-              'upgrade',
-            ).catch((err) =>
-              console.error('[upgrade] Background invoice payment failed:', err),
-            ),
-          );
-        }
-
-        try {
-          const customerEmail = session.customer_details?.email ?? '';
-          await assignContractSeats(
-            metronome,
-            metronomeCustomerId,
-            contractId,
-            customerEmail,
-          );
-        } catch {
-          // seats optional
-        }
-
+          try {
+            const customerEmail = session.customer_details?.email ?? '';
+            await assignContractSeats(
+              metronome,
+              metronomeCustomerId,
+              contractId,
+              customerEmail,
+            );
+          } catch {
+            // seats optional
+          }
         } catch (contractError) {
           console.error(
             'Failed to create Metronome contract after checkout:',
@@ -303,6 +316,7 @@ export async function GET(request: NextRequest) {
 
     // Quickstart sets seedUsageAfter=true in session metadata — seed history in the background.
     if (seedUsageAfter === 'true' && metronomeCustomerId) {
+      setDemoUsageSeedStatus(metronomeCustomerId, 'pending');
       const seedUrl = new URL(
         demoMode === 'generation'
           ? '/api/metronome/seed-usage-multi-project'
@@ -312,24 +326,66 @@ export async function GET(request: NextRequest) {
       seedUrl.searchParams.set('customerId', metronomeCustomerId);
       seedUrl.searchParams.set('story', 'healthy');
       seedUrl.searchParams.set('trailingDays', '1');
-      fetch(seedUrl.toString(), { method: 'GET', cache: 'no-store' })
-        .then((res) => {
-          if (!res.ok) res.text().then((t) => console.warn('[upgrade-checkout/success] seed-usage failed:', res.status, t));
-          else console.log('[upgrade-checkout/success] seed-usage completed');
-        })
-        .catch((err) => console.warn('[upgrade-checkout/success] seed-usage error:', err));
+      if (demoMode === 'generation' && seedPersona === 'pro') {
+        // Generation quantities are indivisible jobs/seconds. Seven seeded
+        // days keep even the highest-cost valid jobs below the 1,000-credit
+        // monthly Pro grant without fractional scaling.
+        seedUrl.searchParams.set('lookbackDays', '8');
+        seedUrl.searchParams.set('spendCap', '0.05');
+      }
+      if (demoMode === 'ai-builder' && seedPersona === 'pro') {
+        seedUrl.searchParams.set('singleSeat', '1');
+        seedUrl.searchParams.set('singleProject', '1');
+      }
+      after(async () => {
+        try {
+          const res = await fetch(seedUrl.toString(), {
+            method: 'GET',
+            cache: 'no-store',
+          });
+          if (!res.ok) {
+            const errorText = await res.text();
+            setDemoUsageSeedStatus(
+              metronomeCustomerId,
+              'failed',
+              errorText,
+            );
+            console.warn(
+              '[upgrade-checkout/success] seed-usage failed:',
+              res.status,
+              errorText,
+            );
+          } else {
+            // Ingest acceptance precedes balance/invoice aggregation by a few
+            // seconds. Keep "Loading demo usage" visible until the first
+            // automatic billing refresh is likely to include those events.
+            await new Promise((resolve) =>
+              setTimeout(resolve, DEMO_USAGE_AGGREGATION_GRACE_MS),
+            );
+            setDemoUsageSeedStatus(metronomeCustomerId, 'completed');
+            console.log('[upgrade-checkout/success] seed-usage completed');
+          }
+        } catch (err) {
+          setDemoUsageSeedStatus(
+            metronomeCustomerId,
+            'failed',
+            err instanceof Error ? err.message : 'Usage seeding failed',
+          );
+          console.warn('[upgrade-checkout/success] seed-usage error:', err);
+        }
+      });
     }
 
     const redirectPath =
-      seedUsageAfter === 'true' && demoMode === 'generation'
-        ? `/${language}/dashboard?demoMode=${demoMode}`
+      seedUsageAfter === 'true'
+        ? `/${language}/dashboard?demoMode=${demoMode}&seedingUsage=true`
         : `/${language}/demos/${demoMode}`;
     const redirectUrl = new URL(redirectPath, publicOrigin);
     console.log('[upgrade-checkout/success] redirect:', redirectUrl.href);
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error('Upgrade checkout success error:', error);
-    const fallbackUrl = new URL('/en/chat', publicOrigin);
+    const fallbackUrl = new URL('/en/pricing', publicOrigin);
     console.log(
       '[upgrade-checkout/success] redirect (error fallback):',
       fallbackUrl.href,

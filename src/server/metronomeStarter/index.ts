@@ -1668,6 +1668,8 @@ async function ensurePersonas(
           {
             name: 'B2B power user seats',
             collection_schedule: 'advance',
+            starting_at: startingAt,
+            ending_before: endingBefore,
             proration: {
               is_prorated: false,
               invoice_behavior: 'bill_on_next_collection_date',
@@ -2145,8 +2147,22 @@ export async function runStarter(
         for (const customerId of Object.values(
           previousState.stripeCustomers,
         )) {
-          await stripeSeed.stripe.customers.del(customerId);
-          emit(`Deleted starter-owned Stripe customer ${customerId}.`);
+          try {
+            await stripeSeed.stripe.customers.del(customerId);
+            emit(`Deleted starter-owned Stripe customer ${customerId}.`);
+          } catch (error: any) {
+            if (
+              error?.code === 'resource_missing' ||
+              error?.raw?.code === 'resource_missing' ||
+              /no such customer/i.test(String(error?.message ?? ''))
+            ) {
+              emit(
+                `Starter-owned Stripe customer ${customerId} was already deleted.`,
+              );
+            } else {
+              throw error;
+            }
+          }
         }
         await writeStarterState(apiKey, {
           ...previousState,

@@ -16,11 +16,16 @@ import { useState, useEffect } from 'react';
 import fetchClient from '@/utils/fetchClient';
 import { MetronomeInvoice } from '@/utils/types';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
-import { pickMetronomeSpendInvoice } from '@/utils/metronomeInvoice';
+import {
+  getMetronomeInvoiceUsageSubtotalCents,
+  isMeteredUsageLineItem,
+  pickMetronomeSpendInvoice,
+} from '@/utils/metronomeInvoice';
 import {
   extractBalanceFromGetNetBalanceResponse,
   metronomeNetBalanceToCents,
 } from '@/utils/metronomeNetBalance';
+import { readAiBuilderOptimisticBalance } from '@/utils/aiBuilderOptimisticBalance';
 
 
 const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) => {
@@ -36,6 +41,36 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
     null,
   );
   const [netBalanceLoaded, setNetBalanceLoaded] = useState(false);
+  const [optimisticAiBalanceCents, setOptimisticAiBalanceCents] = useState<
+    number | null
+  >(null);
+
+  useEffect(() => {
+    const pending = readAiBuilderOptimisticBalance(customer?.id);
+    const available = Number(pending?.availableBalanceCents);
+    const pendingAt = pending?.pendingSpendAt
+      ? new Date(pending.pendingSpendAt).getTime()
+      : NaN;
+    const pendingTtlMs = 60_000;
+    const pendingAgeMs = Date.now() - pendingAt;
+    const appliesToContract =
+      !pending?.balanceContractId ||
+      pending.balanceContractId === metronomeContract?.id;
+    const shouldApply =
+      appliesToContract &&
+      Number(pending?.pendingSpendCents ?? 0) > 0 &&
+      Number.isFinite(available) &&
+      Number.isFinite(pendingAgeMs) &&
+      pendingAgeMs >= 0 &&
+      pendingAgeMs < pendingTtlMs;
+    setOptimisticAiBalanceCents(shouldApply ? available : null);
+    if (!shouldApply) return;
+    const expiryTimer = setTimeout(
+      () => setOptimisticAiBalanceCents(null),
+      pendingTtlMs - pendingAgeMs,
+    );
+    return () => clearTimeout(expiryTimer);
+  }, [customer?.id, metronomeContract?.id]);
 
   useEffect(() => {
     const metronomeId = getEffectiveMetronomeCustomerId(customer);
@@ -77,7 +112,11 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
       cancelled = true;
       clearInterval(interval);
     };
-  }, [customer?.id, customer?.metronomeCustomerId, metronomeContract?.creditTypeId]);
+  }, [
+    customer?.id,
+    customer?.metronomeCustomerId,
+    metronomeContract?.creditTypeId,
+  ]);
 
   useEffect(() => {
     const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
@@ -100,7 +139,15 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
       setMetronomeInvoices(invoices);
 
       const draftList: MetronomeInvoice[] = draftRes.data.invoices ?? [];
-      const spend = pickMetronomeSpendInvoice(invoices, draftList);
+      // Keep invoice-derived balances inside the active contract boundary.
+      // During Free → Pro, the finalized/open Free usage draft may still be the
+      // only draft with usage; selecting it here would incorrectly turn
+      // 1,000 Pro credits into 900 even though Metronome attributed it to Free.
+      const spend = pickMetronomeSpendInvoice(
+        invoices,
+        draftList,
+        metronomeContract?.id,
+      );
 
       if (spend?.id) {
         // Use the list invoice directly — the retrieve endpoint returns no line_items.
@@ -124,7 +171,34 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
       60_000,
     );
     return () => clearInterval(interval);
-  }, [customer?.id, customer?.metronomeCustomerId]);
+  }, [
+    customer?.id,
+    customer?.metronomeCustomerId,
+    metronomeContract?.id,
+  ]);
+
+  useEffect(() => {
+    if (optimisticAiBalanceCents == null || !metronomeContract) return;
+    const contractAvailable =
+      metronomeContract.creditBalance.totalAvailable ?? 0;
+    const contractTotal = metronomeContract.creditBalance.totalAmount ?? 0;
+    const hasUsage = Boolean(
+      draftInvoice?.line_items?.some((line) =>
+        isMeteredUsageLineItem(line.type),
+      ),
+    );
+    const usageAmount = getMetronomeInvoiceUsageSubtotalCents(draftInvoice);
+    const processedAvailable =
+      hasUsage && contractTotal > 0
+        ? Math.min(
+            contractAvailable,
+            Math.max(0, contractTotal - usageAmount),
+          )
+        : contractAvailable;
+    if (processedAvailable <= optimisticAiBalanceCents) {
+      setOptimisticAiBalanceCents(null);
+    }
+  }, [draftInvoice, metronomeContract, optimisticAiBalanceCents]);
 
   const isFree = plan?.lookupKey?.includes('free') || false;
 
@@ -216,10 +290,29 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
 
   const mAvail = metronomeContract?.creditBalance.totalAvailable ?? 0;
   const mTotal = metronomeContract?.creditBalance.totalAmount ?? 0;
-  // A zero contract balance is valid after Free credit is exhausted. Do not treat it as
-  // missing and fall back to getNetBalance, which may include overage.
+  const hasDraftUsageLines = Boolean(
+    draftInvoice?.line_items?.some((line) =>
+      isMeteredUsageLineItem(line.type),
+    ),
+  );
+  const draftUsageAmount = getMetronomeInvoiceUsageSubtotalCents(draftInvoice);
+  const invoiceDerivedAvailable =
+    hasDraftUsageLines && mTotal > 0
+      ? Math.max(0, mTotal - draftUsageAmount)
+      : null;
+  // Contract availability is breakdown-adjusted in ConfigContext. An explicit
+  // draft usage value may lower it sooner, but stale invoice/net-balance reads
+  // must never restore credit already consumed from a Metronome contract.
   const ubbAvailable = metronomeContract
-    ? Math.max(0, mAvail)
+    ? Math.max(
+        0,
+        Math.min(
+          invoiceDerivedAvailable == null
+            ? mAvail
+            : Math.min(mAvail, invoiceDerivedAvailable),
+          optimisticAiBalanceCents ?? Number.POSITIVE_INFINITY,
+        ),
+      )
     : Math.max(0, metronomeNetBalanceCents ?? 0);
   /** Total pool: if Metronome never populated schedule totals but we know remaining, treat as full bar. */
   const ubbTotal = mTotal > 0 ? mTotal : mAvail > 0 ? mAvail : 0;

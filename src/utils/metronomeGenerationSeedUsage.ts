@@ -109,6 +109,10 @@ export async function seedGenerationUsage({
     Number.isFinite(commitmentSpendCapFraction)
       ? Math.min(0.95, Math.max(0.05, commitmentSpendCapFraction))
       : defaultSpendFraction;
+  // UNIT INVARIANT: poolCredits and targetCredits are Generation Credits, not
+  // USD cents. Do not apply fiat x100 conversions or fractional quantity
+  // scaling here. buildGenerationUsageEvent emits whole image/3D jobs and
+  // whole video seconds. See the Generation matrix in the regression checklist.
   const targetCredits = poolCredits > 0 ? poolCredits * spendFraction : 0;
   const dayOffsets = Array.from(
     { length: safeLookback - safeTrailing },

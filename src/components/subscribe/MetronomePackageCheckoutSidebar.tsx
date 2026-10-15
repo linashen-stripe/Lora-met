@@ -2,6 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@/utils/helpers';
+import { isCustomMetronomeCreditType } from '@/utils/metronomeAmount';
 
 export type MetronomePackageSummary = {
   id?: string;
@@ -95,6 +96,8 @@ export default function MetronomePackageCheckoutSidebar({
   const commitCredits = accessItem?.amount;
   const commitCreditType =
     prepaidCommit?.access_schedule?.credit_type?.name ?? 'credits';
+  const showCommitCreditQuantity =
+    isCustomMetronomeCreditType(commitCreditType);
   const prepaidInvoiceCents =
     invoiceItem?.amount ??
     ((invoiceItem?.unit_price ?? 0) * (invoiceItem?.quantity ?? 1) || null);
@@ -145,9 +148,11 @@ export default function MetronomePackageCheckoutSidebar({
           <p className='font-semibold'>
             {prepaidCommit.name ?? 'Prepaid commitment'}
           </p>
-          <p className='mt-1 tabular-nums'>
-            {commitCredits.toLocaleString(language)} {commitCreditType}
-          </p>
+          {showCommitCreditQuantity && (
+            <p className='mt-1 tabular-nums'>
+              {commitCredits.toLocaleString(language)} {commitCreditType}
+            </p>
+          )}
           {prepaidInvoiceCents != null && (
             <p className='mt-1 text-violet-800'>
               {formatPrice(prepaidInvoiceCents, language, currency)} due at

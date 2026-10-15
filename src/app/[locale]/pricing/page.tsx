@@ -88,7 +88,12 @@ function PricingPageContent() {
     try {
       await fetchClient.post(
         `/api/metronome/customer/${metronomeCustomerId}/contracts`,
-        { packageId, email: customer?.email },
+        {
+          packageId,
+          email: customer?.email,
+          freePlan: true,
+          demoMode,
+        },
       );
       router.push(`/${settings?.language || 'en'}/demos/${demoMode}`);
     } catch (err: any) {
@@ -160,8 +165,8 @@ function PricingPageContent() {
                   'Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice.',
                   {
                     threshold:
-                      generationProPackage?.autoTopUpThresholdCredits ?? 50,
-                    target: generationProPackage?.autoTopUpToCredits ?? 500,
+                      generationProPackage?.autoTopUpThresholdCredits ?? 500,
+                    target: generationProPackage?.autoTopUpToCredits ?? 1_500,
                     minimum:
                       METRONOME_CATALOG.creditPurchases.minimumCredits,
                   },
@@ -295,9 +300,26 @@ function PricingPageContent() {
               normPackageName(pkg.name) ===
               normPackageName(AI_BUILDER_PACKAGE_NAMES.quickstart),
           );
+        const preferredAiFreePackage =
+          demoMode === 'ai-builder'
+            ? DEMO_MODES['ai-builder'].packageNames.free
+                .map((configuredName) =>
+                  rawPackages.find(
+                    (pkg: any) =>
+                      normPackageName(pkg.name) ===
+                      normPackageName(configuredName),
+                  ),
+                )
+                .find(Boolean)
+            : undefined;
         const packages =
           hasCanonicalAiPaidPackages
-            ? canonicalAiPackages
+            ? preferredAiFreePackage &&
+              !canonicalAiPackages.some(
+                (pkg: any) => pkg.id === preferredAiFreePackage.id,
+              )
+              ? [preferredAiFreePackage, ...canonicalAiPackages]
+              : canonicalAiPackages
             : namespacedPackages.length > 0
             ? namespacedPackages
             : demoMode === 'ai-builder'
@@ -395,9 +417,14 @@ function PricingPageContent() {
     };
   };
 
-  const freePackage = metronomePackages.find((p: any) =>
-    normPackageName(p.name).includes('free'),
-  );
+  const freePackage = DEMO_MODES[demoMode].packageNames.free
+    .map((configuredName) =>
+      metronomePackages.find(
+        (pkg: any) =>
+          normPackageName(pkg.name) === normPackageName(configuredName),
+      ),
+    )
+    .find(Boolean);
 
   const freeCard: Plan = {
     name: t(
@@ -431,7 +458,7 @@ function PricingPageContent() {
         ? t('plans.free.button.current', 'Current Plan')
         : t('plans.free.button.get_started', 'Get Started for Free'),
       link: freePackage
-        ? `/${settings?.language}/auth/sign-up?packageId=${freePackage.id}&demoMode=${demoMode}`
+        ? `/${settings?.language}/auth/sign-up?plan=free&packageId=${freePackage.id}&demoMode=${demoMode}`
         : `/${settings?.language}/auth/sign-up?plan=free&demoMode=${demoMode}`,
       className:
         'w-full mt-8 text-base py-3 bg-accent text-accent-foreground hover:bg-purple-hover transition-colors duration-200',

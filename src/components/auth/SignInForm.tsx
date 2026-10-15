@@ -16,6 +16,9 @@ import { customerStorageKey, DEMO_MODES } from '@/config/demoModes';
 import { inspectedFetch } from '@/utils/inspectedFetch';
 import { buildDemoRequestHeaders } from '@/utils/demoRequestHeaders';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
+import SeedPersonaCheckoutDialog, {
+  type SeedPersonaCheckoutData,
+} from '@/components/auth/SeedPersonaCheckoutDialog';
 
 // Keep the one-month Enterprise prepaid commit active when history is seeded.
 const QUICKSTART_DAYS_AGO = 29;
@@ -28,6 +31,8 @@ const SignInForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [seedPersonaLoading, setSeedPersonaLoading] =
     useState<SeedPersona | null>(null);
+  const [seedCheckout, setSeedCheckout] =
+    useState<SeedPersonaCheckoutData | null>(null);
   // Match anonymous demo sessions: use stored customer email if any, else same generator as ConfigContext.
   const [email, setEmail] = useState(() => {
     const stored = loadFromStorage(customerStorageKey(demoMode), {}) as {
@@ -117,7 +122,9 @@ const SignInForm = () => {
             ? { stripeCustomerId: seededCustomer.stripeCustomerId }
             : {}),
         });
-        router.push(`/${lang}/dashboard/usage?demoMode=${demoMode}`);
+        router.push(
+          `/${lang}/dashboard?demoMode=${demoMode}&seedingUsage=true`,
+        );
         return;
       }
 
@@ -135,32 +142,7 @@ const SignInForm = () => {
       });
 
       if (data.existing && data.hasActiveContract) {
-        if (demoMode === 'generation') {
-          await fetchClient
-            .get('/api/metronome/seed-usage-multi-project', {
-              params: {
-                customerId: data.metronomeCustomerId,
-                story: 'healthy',
-                trailingDays: 1,
-              },
-            })
-            .catch((seedError) => {
-              console.warn('Quickstart usage seeding was skipped:', seedError);
-            });
-          router.push(`/${lang}/dashboard/usage?demoMode=${demoMode}`);
-        } else {
-          await fetchClient
-            .get('/api/metronome/seed-usage-multi-seat', {
-              params: {
-                customerId: data.metronomeCustomerId,
-                story: 'healthy',
-              },
-            })
-            .catch((seedError) => {
-              console.warn('AI Builder usage seeding was skipped:', seedError);
-            });
-          router.push(`/${lang}/demos/ai-builder`);
-        }
+        router.push(`/${lang}/dashboard?demoMode=${demoMode}`);
         return;
       }
 
@@ -175,10 +157,19 @@ const SignInForm = () => {
             persona === 'pro' ? ('premium' as const) : ('enterprise' as const),
           seedPersona: persona,
           demoMode,
+          uiMode: 'embedded',
         },
       );
-      if (checkout.url) {
-        window.location.href = checkout.url;
+      if (
+        checkout.clientSecret &&
+        checkout.sessionId &&
+        checkout.package
+      ) {
+        setSeedCheckout({
+          clientSecret: checkout.clientSecret,
+          sessionId: checkout.sessionId,
+          package: checkout.package,
+        });
         return;
       }
       setError(t('common.error.default_message'));
@@ -191,6 +182,8 @@ const SignInForm = () => {
             err.response?.data?.message || t('common.error.default_message'),
           );
         }
+      } else if (err instanceof Error && err.message) {
+        setError(err.message);
       } else {
         setError(t('common.error.default_message'));
       }
@@ -301,8 +294,8 @@ const SignInForm = () => {
             <div className='grid gap-2'>
               {(
                 [
-                  ['quickstart', 'signin.seed_quickstart'],
                   ['pro', 'signin.seed_pro'],
+                  ['quickstart', 'signin.seed_quickstart'],
                   ['b2b', 'signin.seed_b2b'],
                 ] as const
               ).map(([persona, label]) => (
@@ -318,7 +311,9 @@ const SignInForm = () => {
                   className='w-full flex justify-center py-2 px-4 border border-purple/30 rounded-md shadow-sm text-sm font-medium text-purple bg-purple/5 hover:bg-purple/10 transition duration-300 disabled:opacity-50'
                 >
                   {seedPersonaLoading === persona
-                    ? t('signin.quickstart_loading')
+                    ? persona === 'b2b'
+                      ? t('signin.seed_b2b')
+                      : t('signin.quickstart_loading')
                     : t(label)}
                 </button>
               ))}
@@ -337,6 +332,10 @@ const SignInForm = () => {
           </p>
         </div>
       </div>
+      <SeedPersonaCheckoutDialog
+        checkout={seedCheckout}
+        onClose={() => setSeedCheckout(null)}
+      />
     </div>
   );
 };

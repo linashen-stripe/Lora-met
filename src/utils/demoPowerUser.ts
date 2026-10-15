@@ -4,146 +4,51 @@ import {
   createMetronomeCustomer,
   resolveMetronomeDeliveryMethodIdAsync,
 } from './metronome';
+import {
+  SEED_USAGE_MULTI_PROJECT_IDS,
+  SEED_USAGE_MULTI_PROJECT_SPEND_SHARES,
+  seedMetronomeUsage,
+} from './metronomeSeedUsage';
 
-// Intentionally self-contained: this file does NOT use the shared
-// seedMetronomeUsage utility (metronomeSeedUsage.ts), which is dollar-target
-// driven and used by other, unrelated seeding routes (multi-seat,
-// multi-project). Power user has its own fixed-event-count usage generator
-// below (ingestPowerUserUsageEvents), ported directly from
-// complex_billing_demo.py's ingest_events(), so this whole flow is isolated
-// end-to-end and can't be affected by (or affect) those other flows.
+const POWER_USER_SEAT_NAMES = ['alice', 'bob', 'carol', 'dave', 'eve'];
 
-// Per-seat usage weight + primary API product, ported verbatim from
-// complex_billing_demo.py's SEAT_PROFILES. Also doubles as the seat name
-// list — distinct from DEMO_METRONOME_USAGE_USER_IDS (4 handles, used by the
-// generic seeding tab) — this feature needs exactly 5 seats so the
-// "Enterprise Seats" subscription quantity matches the rate card's per-seat
-// price ($2,500 × 5 = $12,500).
-const SEAT_PROFILES: Record<string, { weight: number; primary: keyof typeof API_PRODUCTS }> = {
-  alice: { weight: 4.0, primary: 'chat' },
-  bob: { weight: 3.2, primary: 'code_assist' },
-  carol: { weight: 2.2, primary: 'chat' },
-  dave: { weight: 1.4, primary: 'voice' },
-  eve: { weight: 0.5, primary: 'chat' },
-};
-const POWER_USER_SEAT_NAMES = Object.keys(SEAT_PROFILES);
-
-const API_PRODUCTS = { chat: 'chat', code_assist: 'code_assist', voice: 'realtime_voice' } as const;
-const MODELS = ['lora-mythic-4.6', 'lora-prime-5.4', 'lora-prime-mini-5.4'];
-
-// complex_billing_demo.py calls random.seed(42) so its usage numbers are the
-// same on every run rather than varying invoice totals/itemization each
-// time. Math.random() has no seed hook, so we use a small seeded PRNG
-// (mulberry32) fixed to the same seed value for the same determinism —
-// every power-user run generates the same usage shape.
-const USAGE_RANDOM_SEED = 42;
-
-function createSeededRandom(seed: number): () => number {
-  let state = seed;
-  return () => {
-    state |= 0;
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** Box-Muller transform — JS has no built-in equivalent of Python's random.gauss. */
-function gaussianRandom(rand: () => number, mean: number, stdev: number): number {
-  let u = 0;
-  let v = 0;
-  while (u === 0) u = rand();
-  while (v === 0) v = rand();
-  return mean + stdev * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-}
-
-function shuffle<T>(rand: () => number, items: T[]): void {
-  for (let i = items.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [items[i], items[j]] = [items[j], items[i]];
-  }
-}
-
-/**
- * Direct port of complex_billing_demo.py's ingest_events(): same per-seat
- * event-count formula, same slot generation (days_ago 1–27, hours 9–18,
- * minutes :00/:30, shuffled), same event shape. Self-contained — does not
- * call the shared seedMetronomeUsage utility.
- */
 async function ingestPowerUserUsageEvents(
   metronome: Metronome,
   customerId: string,
+  contractId: string,
   seatIds: string[],
-  domain: string,
+  targetSpendDollars: number,
 ): Promise<number> {
-  const rand = createSeededRandom(USAGE_RANDOM_SEED);
-  const now = new Date();
-  const slots: Date[] = [];
-  for (let daysAgo = 1; daysAgo <= 27; daysAgo++) {
-    for (let hour = 9; hour < 18; hour++) {
-      for (const minute of [0, 30]) {
-        const slot = new Date(now);
-        slot.setUTCDate(slot.getUTCDate() - daysAgo);
-        slot.setUTCHours(hour, minute, 0, 0);
-        if (slot < now) slots.push(slot);
-      }
-    }
-  }
-  shuffle(rand, slots);
-  let slotIdx = 0;
-
-  const teamId = `team_${domain.split('.')[0]}`;
-  const apiProductKeys = Object.keys(API_PRODUCTS) as (keyof typeof API_PRODUCTS)[];
-
-  const events: Record<string, unknown>[] = [];
-  POWER_USER_SEAT_NAMES.forEach((name, seatIndex) => {
-    const profile = SEAT_PROFILES[name];
-    const userId = seatIds[seatIndex] ?? `${name}@${domain}`;
-    const n = Math.max(5, Math.trunc((30 * profile.weight) / 3.5));
-    for (let i = 0; i < n && slotIdx < slots.length; i++) {
-      const ts = slots[slotIdx++];
-      const apiKey =
-        rand() < 0.7
-          ? profile.primary
-          : apiProductKeys[Math.floor(rand() * apiProductKeys.length)];
-      const model = MODELS[Math.floor(rand() * MODELS.length)];
-      const tier = rand() < 0.75 ? 'standard' : 'batch';
-      events.push({
-        transaction_id: crypto.randomUUID(),
-        customer_id: customerId,
-        event_type: 'ai_platform.usage',
-        timestamp: ts.toISOString(),
-        properties: {
-          api_product: API_PRODUCTS[apiKey],
-          model,
-          processing_tier: tier,
-          upstream_provider: 'anthropic',
-          project_id: `proj_${name}`,
-          team_id: teamId,
-          user_id: userId,
-          input_tokens: Math.max(1, Math.trunc(Math.abs(gaussianRandom(rand, 5_000_000, 1_300_000)) * profile.weight)),
-          output_tokens: Math.max(1, Math.trunc(Math.abs(gaussianRandom(rand, 1_300_000, 340_000)) * profile.weight)),
-        },
-      });
-    }
+  const result = await seedMetronomeUsage({
+    metronome,
+    customerId,
+    contractId,
+    story: 'healthy',
+    logLabel: '[power-user-seed]',
+    trailingUnseededDays: 1,
+    targetSpendDollars,
+    projectAttribution: {
+      mode: 'multi',
+      projects: SEED_USAGE_MULTI_PROJECT_IDS.map((projectId, index) => ({
+        projectId,
+        spendShare: SEED_USAGE_MULTI_PROJECT_SPEND_SHARES[index]!,
+      })),
+    },
+    transactionIdPrefix: 'seed-mp',
+    usageUserIds: seatIds,
   });
-
-  for (let i = 0; i < events.length; i += 100) {
-    await metronome.v1.usage.ingest({ usage: events.slice(i, i + 100) as any });
+  if (!result.ok) {
+    throw new Error(result.error);
   }
-
-  return events.length;
+  return result.eventsIngested;
 }
 
 // Creates a fully-wired "power user" demo customer: Stripe customer (with a
 // tax address), Metronome customer linked to that Stripe customer, a
 // commitment + seat-subscription contract on a named rate card, and ~30 days
-// of seeded usage. Mirrors complex_billing_demo.py exactly, including its
-// fixed-past contract start (so historical periods actually finalize) and
-// its per-seat weighted usage generator — reimplemented locally rather than
-// via the shared, dollar-target-driven seeding utility, to keep this flow
-// fully isolated from other demo seeding routes.
+// of seeded usage. The shared dollar-targeted seeder deliberately drives one
+// seat beyond its monthly allotment while leaving varied balances on the
+// other four seats.
 
 export const DEFAULT_RATE_CARD_NAME = 'Lora AI Standard Rate Card';
 
@@ -251,6 +156,28 @@ export async function resolveProductsByName(
   return resolved;
 }
 
+async function resolveUsageProductIds(
+  metronome: Metronome,
+  rateCardId: string,
+  nonUsageProductIds: string[],
+): Promise<string[]> {
+  const excluded = new Set(nonUsageProductIds);
+  const usageProductIds = new Set<string>();
+  for await (const rate of metronome.v1.contracts.rateCards.rates.list({
+    rate_card_id: rateCardId,
+    at: new Date().toISOString(),
+  })) {
+    const productId = (rate as any).product_id;
+    if (productId && !excluded.has(productId)) {
+      usageProductIds.add(productId);
+    }
+  }
+  if (usageProductIds.size === 0) {
+    throw new Error(`No metered usage products found on rate card ${rateCardId}.`);
+  }
+  return [...usageProductIds];
+}
+
 export async function createStripeCustomerForDemo(
   stripe: Stripe,
   customerName: string,
@@ -296,6 +223,15 @@ export interface CreatePowerUserDemoCustomerParams {
   seatIds?: string[];
   /** Called with a line of progress output as each step completes (for terminal-style UIs). */
   onLog?: (line: string) => void;
+  /**
+   * Lets interactive callers return as soon as the contract exists and run
+   * the comparatively slow usage seed after navigation. Batch/admin callers
+   * can omit this to retain the original synchronous behavior.
+   */
+  deferUsageSeed?: (
+    customerId: string,
+    seedUsage: () => Promise<number>,
+  ) => void;
 }
 
 export interface CreatePowerUserDemoCustomerResult {
@@ -321,6 +257,7 @@ export async function createPowerUserDemoCustomer(
     seatMonthlyDollars = DEFAULT_SEAT_MONTHLY_DOLLARS,
     discount = DEFAULT_DISCOUNT,
     onLog = () => {},
+    deferUsageSeed,
   } = params;
 
   const domain = `${customerName.toLowerCase().replace(/[^a-z0-9]+/g, '')}.ai`;
@@ -342,8 +279,13 @@ export async function createPowerUserDemoCustomer(
   const { rateCardId, creditTypeId, currencyCode, scale } =
     await resolveRateCardByName(metronome, rateCardName);
   const products = await resolveProductsByName(metronome, productNames);
+  const usageProductIds = await resolveUsageProductIds(
+    metronome,
+    rateCardId,
+    Object.values(products),
+  );
   onLog(
-    `    ✓ rate card → ${rateCardId}  (currency ${currencyCode}, credit_type ${creditTypeId}, scale x${scale})`,
+    `    ✓ rate card → ${rateCardId}  (${usageProductIds.length} usage products, currency ${currencyCode}, credit_type ${creditTypeId}, scale x${scale})`,
   );
 
   onLog(`\n[3/5] Creating Stripe customer + Metronome customer...`);
@@ -380,6 +322,12 @@ export async function createPowerUserDemoCustomer(
   const endingBefore = new Date(startingAt);
   endingBefore.setUTCFullYear(endingBefore.getUTCFullYear() + 1);
 
+  // B2B CREDIT ORDERING:
+  // - every usage product is tagged `usage` by AI Builder account setup;
+  // - the per-seat recurring credit (priority 50, INDIVIDUAL) burns first;
+  // - excess seat usage then falls through to the shared annual commitment;
+  // - the same tag scopes the negotiated 15% usage multiplier.
+  // Do not replace this with unscoped credits or unrelated product ids.
   const contractPayload: any = {
     customer_id: customerId,
     starting_at: startingAt.toISOString(),
@@ -425,7 +373,12 @@ export async function createPowerUserDemoCustomer(
     subscriptions: [
       {
         collection_schedule: 'advance',
-        proration: { invoice_behavior: 'bill_on_next_collection_date', is_prorated: true },
+        starting_at: startingAt.toISOString(),
+        ending_before: endingBefore.toISOString(),
+        proration: {
+          invoice_behavior: 'bill_on_next_collection_date',
+          is_prorated: false,
+        },
         subscription_rate: {
           billing_frequency: 'monthly',
           product_id: products.enterpriseSubscription,
@@ -445,12 +398,14 @@ export async function createPowerUserDemoCustomer(
         access_amount: { credit_type_id: creditTypeId, unit_price: seatMonthlyAmount },
         commit_duration: { value: 1, unit: 'PERIODS' },
         recurrence_frequency: 'MONTHLY',
+        proration: 'NONE',
         priority: 50,
         rollover_fraction: 0,
+        applicable_product_tags: ['usage'],
         subscription_config: {
           subscription_id: 'seat_sub',
           allocation: 'INDIVIDUAL',
-          apply_seat_increase_config: { is_prorated: true },
+          apply_seat_increase_config: { is_prorated: false },
         },
       },
     ],
@@ -461,13 +416,33 @@ export async function createPowerUserDemoCustomer(
   const contractId = contract.data.id;
   onLog(`    ✓ contract → ${contractId}`);
 
-  onLog(`\n[5/5] Ingesting usage events for the past ~27 days...`);
+  const seedUsage = () =>
+    ingestPowerUserUsageEvents(
+      metronome,
+      customerId,
+      contractId,
+      seatIds,
+      // Only the current-month slice can consume the active monthly seat
+      // allotment. This full-window target leaves enough current-month spend
+      // for the single heavy seat to cross $2k, while every other seat remains
+      // well below its individual allocation.
+      seatMonthlyDollars * 7.5,
+    );
+
   let eventsIngested: number | undefined;
-  try {
-    eventsIngested = await ingestPowerUserUsageEvents(metronome, customerId, seatIds, domain);
-    onLog(`    ✓ ingested ${eventsIngested} usage events across ${seatIds.length} seats`);
-  } catch (error: any) {
-    onLog(`    ⚠ usage ingestion failed: ${error?.message ?? 'Unknown error'}`);
+  if (deferUsageSeed) {
+    // The Plans page owns progress once the contract is ready; do not retain
+    // the NDJSON stream while Metronome ingests and aggregates demo usage.
+    deferUsageSeed(customerId, seedUsage);
+    onLog(`\n[5/5] Usage seeding will continue on Plans & Billing.`);
+  } else {
+    onLog(`\n[5/5] Ingesting usage events for the past ~27 days...`);
+    try {
+      eventsIngested = await seedUsage();
+      onLog(`    ✓ ingested ${eventsIngested} usage events across ${seatIds.length} seats`);
+    } catch (error: any) {
+      onLog(`    ⚠ usage ingestion failed: ${error?.message ?? 'Unknown error'}`);
+    }
   }
 
   return {

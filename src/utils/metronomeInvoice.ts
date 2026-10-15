@@ -4,7 +4,7 @@ export function isAppliedCommitOrCreditLineItem(type?: string): boolean {
   return (type ?? '').toLowerCase() === 'applied_commit_or_credit';
 }
 
-function isMeteredUsageLineItem(type?: string): boolean {
+export function isMeteredUsageLineItem(type?: string): boolean {
   return (type ?? '').toLowerCase() === 'usage';
 }
 
@@ -96,16 +96,33 @@ function isValidInvoiceSummary(i: unknown): i is MetronomeInvoice {
 export function pickMetronomeSpendInvoice(
   allInvoices: MetronomeInvoice[],
   draftInvoices: MetronomeInvoice[],
+  contractId: string | null | undefined,
 ): MetronomeInvoice | null {
-  const drafts = draftInvoices.filter(isValidInvoiceSummary);
+  // TRANSITION INVARIANT: Free and Pro drafts can coexist after an upgrade.
+  // Never choose a draft merely because it contains usage; doing so can show
+  // the old Free usage against the new Pro balance. Callers must explicitly
+  // pass the active contract id. See docs/REGRESSION_CHECKLIST.md.
+  const belongsToContract = (invoice: MetronomeInvoice) =>
+    !contractId || invoice.contract_id === contractId;
+  const drafts = draftInvoices.filter(
+    (invoice) =>
+      isValidInvoiceSummary(invoice) && belongsToContract(invoice),
+  );
   if (drafts.length > 0) {
-    // Prefer the most-recent draft that actually has usage line items; only fall
-    // back to a line-item-less draft when none with data exist.
+    // B2B contracts can have separate open drafts for recurring seat charges
+    // and metered usage. This view is the usage/credits breakdown, so do not
+    // let a subscription-only draft hide the usage draft.
+    const withUsage = drafts.filter((draft) =>
+      draft.line_items?.some((line) => isMeteredUsageLineItem(line.type)),
+    );
     const withItems = drafts.filter((d) => (d.line_items?.length ?? 0) > 0);
-    return (withItems[0] ?? drafts[0]) ?? null;
+    return (withUsage[0] ?? withItems[0] ?? drafts[0]) ?? null;
   }
   const pool = allInvoices.filter(
-    (i) => isValidInvoiceSummary(i) && i.status !== 'VOID',
+    (i) =>
+      isValidInvoiceSummary(i) &&
+      i.status !== 'VOID' &&
+      belongsToContract(i),
   );
   if (pool.length === 0) return null;
   return [...pool].sort((a, b) => invoiceSortKey(b) - invoiceSortKey(a))[0] ?? null;

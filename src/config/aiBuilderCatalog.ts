@@ -1,7 +1,8 @@
 export const AI_BUILDER_PACKAGE_NAMES = {
-  free: 'Free',
+  free: 'AI Builder Free',
   pro: 'AI Builder Pro',
   quickstart: 'AI Builder Enterprise Quickstart',
+  legacyFree: 'Free',
   legacyPro: 'Premium',
   legacyQuickstart: 'Enterprise',
 } as const;

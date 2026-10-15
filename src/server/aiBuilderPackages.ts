@@ -8,6 +8,67 @@ import { listPackages } from '@/utils/metronome';
 
 type PackageRecord = Record<string, any>;
 
+const AI_BUILDER_USAGE_TAG = 'usage';
+
+function priorMonthStart(): string {
+  // Seeded B2B contracts and events begin in the prior month. Backdate the
+  // metadata-only tag version to the same boundary so tag-scoped commits,
+  // recurring seat credits, and discounts all cover that historical usage.
+  const now = new Date();
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
+  ).toISOString();
+}
+
+export async function ensureAiBuilderUsageProductTags(
+  metronome: Metronome,
+  packages?: PackageRecord[],
+): Promise<number> {
+  // Legacy AI Builder products predate the canonical `usage` tag. Keep this
+  // repair idempotent and preserve every existing tag; B2B contract terms rely
+  // on this tag rather than hard-coded product ids.
+  const packageRecords =
+    packages ?? ((await listPackages(metronome)) as PackageRecord[]);
+  const aiPackageNames = new Set(
+    Object.values(AI_BUILDER_PACKAGE_NAMES).map((name) => name.toLowerCase()),
+  );
+  const rateCardIds = new Set(
+    packageRecords
+      .filter((pkg) =>
+        aiPackageNames.has(String(pkg.name ?? '').trim().toLowerCase()),
+      )
+      .map((pkg) => pkg.rate_card_id)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0),
+  );
+
+  const rateProductIds = new Set<string>();
+  for (const rateCardId of rateCardIds) {
+    for await (const rate of metronome.v1.contracts.rateCards.rates.list({
+      rate_card_id: rateCardId,
+      at: new Date().toISOString(),
+    })) {
+      const productId = (rate as any).product_id;
+      if (typeof productId === 'string') rateProductIds.add(productId);
+    }
+  }
+
+  let updated = 0;
+  for await (const product of metronome.v1.contracts.products.list({
+    archive_filter: 'NOT_ARCHIVED',
+  })) {
+    if (product.type !== 'USAGE' || !rateProductIds.has(product.id)) continue;
+    const tags = product.current?.tags ?? [];
+    if (tags.includes(AI_BUILDER_USAGE_TAG)) continue;
+    await metronome.v1.contracts.products.update({
+      product_id: product.id,
+      starting_at: priorMonthStart(),
+      tags: [...tags, AI_BUILDER_USAGE_TAG],
+    });
+    updated += 1;
+  }
+  return updated;
+}
+
 function numberValue(value: unknown): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
@@ -63,6 +124,43 @@ function commonPackageFields(source: PackageRecord) {
       day: 'CONTRACT_START' as const,
     },
   };
+}
+
+function freePackageBody(source: PackageRecord): Packages.PackageCreateParams {
+  const credit = source.credits?.[0];
+  if (!credit) {
+    throw new Error(
+      `Legacy ${AI_BUILDER_PACKAGE_NAMES.legacyFree} package is missing its trial credit.`,
+    );
+  }
+  return {
+    name: AI_BUILDER_PACKAGE_NAMES.free,
+    contract_name: 'AI Builder Free',
+    aliases: [{ name: 'ai-builder-free' }],
+    uniqueness_key: 'lora-ai-builder-free-v1',
+    ...commonPackageFields(source),
+    credits: [
+      {
+        product_id: credit.product?.id ?? credit.product_id,
+        rate_type: credit.rate_type ?? 'LIST_RATE',
+        priority: credit.priority,
+        applicable_product_ids: credit.applicable_product_ids,
+        applicable_product_tags: credit.applicable_product_tags,
+        access_schedule: {
+          credit_type_id:
+            credit.access_schedule?.credit_type?.id ??
+            credit.access_schedule?.credit_type_id,
+          schedule_items: credit.access_schedule.schedule_items.map(
+            (item: any) => ({
+              amount: numberValue(item.amount),
+              starting_at_offset: offset(item.starting_at_offset),
+              duration: duration(item.duration),
+            }),
+          ),
+        },
+      },
+    ],
+  } as Packages.PackageCreateParams;
 }
 
 function proPackageBody(source: PackageRecord): Packages.PackageCreateParams {
@@ -182,11 +280,29 @@ function quickstartPackageBody(
 
 export async function ensureAiBuilderPackages(metronome: Metronome) {
   const packages = (await listPackages(metronome)) as PackageRecord[];
+  const usageProductsTagged = await ensureAiBuilderUsageProductTags(
+    metronome,
+    packages,
+  );
   const find = (name: string) =>
     packages.find(
       (pkg) =>
         String(pkg.name ?? '').trim().toLowerCase() === name.toLowerCase(),
     );
+
+  let free = find(AI_BUILDER_PACKAGE_NAMES.free);
+  if (!free) {
+    const legacyFree = find(AI_BUILDER_PACKAGE_NAMES.legacyFree);
+    if (!legacyFree) {
+      throw new Error(
+        `Could not find ${AI_BUILDER_PACKAGE_NAMES.legacyFree} to create ${AI_BUILDER_PACKAGE_NAMES.free}.`,
+      );
+    }
+    const created = await metronome.v1.packages.create(
+      freePackageBody(legacyFree),
+    );
+    free = { id: packageId(created), name: AI_BUILDER_PACKAGE_NAMES.free };
+  }
 
   let pro = find(AI_BUILDER_PACKAGE_NAMES.pro);
   if (!pro) {
@@ -222,6 +338,8 @@ export async function ensureAiBuilderPackages(metronome: Metronome) {
   }
 
   return {
+    usageProductsTagged,
+    free: { id: free.id, name: free.name },
     pro: { id: pro.id, name: pro.name },
     quickstart: { id: quickstart.id, name: quickstart.name },
   };

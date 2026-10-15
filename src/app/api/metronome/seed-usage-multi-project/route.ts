@@ -26,12 +26,18 @@ export async function GET(request: NextRequest) {
   const customerId = searchParams.get('customerId');
   const story = (searchParams.get('story') ?? 'healthy') as GenerationSeedStory;
   const trailingDaysRaw = searchParams.get('trailingDays');
+  const lookbackDaysRaw = searchParams.get('lookbackDays');
   const spendCapRaw = searchParams.get('spendCap');
   let trailingUnseededDays: number | undefined;
+  let lookbackDays: number | undefined;
   let commitmentSpendCapFraction: number | undefined;
   if (trailingDaysRaw != null && trailingDaysRaw !== '') {
     const v = parseInt(trailingDaysRaw, 10);
     if (Number.isFinite(v) && v >= 0) trailingUnseededDays = v;
+  }
+  if (lookbackDaysRaw != null && lookbackDaysRaw !== '') {
+    const value = parseInt(lookbackDaysRaw, 10);
+    if (Number.isFinite(value) && value > 0) lookbackDays = value;
   }
   if (spendCapRaw != null && spendCapRaw !== '') {
     const value = Number(spendCapRaw);
@@ -49,6 +55,7 @@ export async function GET(request: NextRequest) {
     metronome,
     customerId,
     story,
+    ...(lookbackDays !== undefined ? { lookbackDays } : {}),
     ...(trailingUnseededDays !== undefined ? { trailingUnseededDays } : {}),
     ...(commitmentSpendCapFraction !== undefined
       ? { commitmentSpendCapFraction }

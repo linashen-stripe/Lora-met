@@ -32,25 +32,37 @@ export async function configureContractAutoTopUp(params: {
   if (!productId) {
     throw new Error('Could not resolve the auto top-up product.');
   }
+  const existingThresholdConfiguration =
+    contract.prepaid_balance_threshold_configuration;
+  const thresholdConfiguration = {
+    is_enabled: true,
+    threshold_amount: params.thresholdAmount,
+    recharge_to_amount: params.rechargeToAmount,
+  };
   await (params.metronome.v2.contracts as any).edit({
     customer_id: params.customerId,
     contract_id: params.contractId,
-    add_prepaid_balance_threshold_configuration: {
-      is_enabled: true,
-      threshold_amount: params.thresholdAmount,
-      recharge_to_amount: params.rechargeToAmount,
-      ...(creditTypeId && creditTypeId !== USD_CREDIT_TYPE_ID
-        ? { custom_credit_type_id: creditTypeId }
-        : {}),
-      payment_gate_config: {
-        payment_gate_type: 'STRIPE',
-        stripe_config: { payment_type: 'INVOICE' },
-      },
-      commit: {
-        product_id: productId,
-        name: params.name ?? 'Auto Top-Up',
-      },
-    },
+    ...(existingThresholdConfiguration
+      ? {
+          update_prepaid_balance_threshold_configuration:
+            thresholdConfiguration,
+        }
+      : {
+          add_prepaid_balance_threshold_configuration: {
+            ...thresholdConfiguration,
+            ...(creditTypeId && creditTypeId !== USD_CREDIT_TYPE_ID
+              ? { custom_credit_type_id: creditTypeId }
+              : {}),
+            payment_gate_config: {
+              payment_gate_type: 'STRIPE',
+              stripe_config: { payment_type: 'INVOICE' },
+            },
+            commit: {
+              product_id: productId,
+              name: params.name ?? 'Auto Top-Up',
+            },
+          },
+        }),
   });
   return { contractId: params.contractId, alreadyConfigured: false };
 }

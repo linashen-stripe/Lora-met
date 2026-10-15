@@ -44,7 +44,10 @@ export const DEMO_MODES: Record<DemoMode, DemoModeDefinition> = {
     route: '/demos/ai-builder',
     customerPrefix: 'builder',
     packageNames: {
-      free: [AI_BUILDER_PACKAGE_NAMES.free, 'AI Builder Free'],
+      free: [
+        AI_BUILDER_PACKAGE_NAMES.free,
+        AI_BUILDER_PACKAGE_NAMES.legacyFree,
+      ],
       premium: [
         AI_BUILDER_PACKAGE_NAMES.pro,
         AI_BUILDER_PACKAGE_NAMES.legacyPro,

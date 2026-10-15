@@ -117,8 +117,8 @@
       "name": "Generate Pro",
       "monthlyCredits": 1000,
       "monthlyPriceCents": 2000,
-      "autoTopUpThresholdCredits": 50,
-      "autoTopUpToCredits": 500
+      "autoTopUpThresholdCredits": 500,
+      "autoTopUpToCredits": 1500
     }
   ],
   "powerUser": {

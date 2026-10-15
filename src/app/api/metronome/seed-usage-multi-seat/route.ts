@@ -29,20 +29,32 @@ export async function GET(request: NextRequest) {
   const contractId = searchParams.get('contractId')?.trim() || undefined;
   const story = (searchParams.get('story') ?? 'healthy') as SeedStory;
   const spendCapRaw = searchParams.get('spendCap');
+  const trailingDaysRaw = searchParams.get('trailingDays');
+  const singleSeat = searchParams.get('singleSeat') === '1';
+  const singleProject = searchParams.get('singleProject') === '1';
   let commitmentSpendCapFraction: number | undefined;
+  let trailingUnseededDays: number | undefined;
   if (spendCapRaw != null && spendCapRaw !== '') {
     const v = parseFloat(spendCapRaw);
     if (Number.isFinite(v)) commitmentSpendCapFraction = v;
+  }
+  if (trailingDaysRaw != null && trailingDaysRaw !== '') {
+    const value = parseInt(trailingDaysRaw, 10);
+    if (Number.isFinite(value) && value >= 0) {
+      trailingUnseededDays = value;
+    }
   }
 
   if (!customerId) {
     return NextResponse.json({ error: 'customerId is required' }, { status: 400 });
   }
 
-  const projects = SEED_USAGE_MULTI_PROJECT_IDS.map((projectId, i) => ({
-    projectId,
-    spendShare: SEED_USAGE_MULTI_PROJECT_SPEND_SHARES[i] ?? 0,
-  }));
+  const projects = singleProject
+    ? [{ projectId: SEED_USAGE_MULTI_PROJECT_IDS[0], spendShare: 1 }]
+    : SEED_USAGE_MULTI_PROJECT_IDS.map((projectId, i) => ({
+        projectId,
+        spendShare: SEED_USAGE_MULTI_PROJECT_SPEND_SHARES[i] ?? 0,
+      }));
 
   const result = await seedMetronomeUsage({
     metronome,
@@ -51,9 +63,12 @@ export async function GET(request: NextRequest) {
     logLabel: '[seed-usage-multi-seat]',
     contractId,
     commitmentSpendCapFraction,
+    trailingUnseededDays,
     projectAttribution: { mode: 'multi', projects },
     transactionIdPrefix: 'seed-mp',
-    usageUserIds: [...DEMO_METRONOME_USAGE_USER_IDS],
+    usageUserIds: singleSeat
+      ? undefined
+      : [...DEMO_METRONOME_USAGE_USER_IDS],
   });
 
   if (!result.ok) {

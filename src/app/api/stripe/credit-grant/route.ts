@@ -40,6 +40,14 @@ export async function POST(request: NextRequest) {
     if (!metronome) {
       return NextResponse.json({ error: 'Metronome API key not configured' }, { status: 503 });
     }
+    if (demoMode === 'generation' && !creditTypeId) {
+      return NextResponse.json(
+        { error: 'Generation credit type is not loaded yet' },
+        { status: 409 },
+      );
+    }
+    const usesCustomCredit =
+      demoMode === 'generation' && creditTypeId !== USD_CREDIT_TYPE_ID;
 
     // Ensure Stripe billing config is linked — Metronome needs it to create the Stripe invoice.
     const { metronomeDeliveryMethodId } = withFallbackHeaders(request.headers);
@@ -66,22 +74,15 @@ export async function POST(request: NextRequest) {
     }
 
     const accessAmount =
-      demoMode === 'generation' ? Math.round(amount) : Math.round(amount * 100);
+      usesCustomCredit ? Math.round(amount) : Math.round(amount * 100);
     const invoiceAmountCents =
-      demoMode === 'generation'
+      usesCustomCredit
         ? Math.round(
             amount *
               METRONOME_CATALOG.pricingUnit
                 .fiatMinorUnitsPerCustomCredit,
           )
         : Math.round(amount * 100);
-
-    if (demoMode === 'generation' && !creditTypeId) {
-      return NextResponse.json(
-        { error: 'Generation credit type is not loaded yet' },
-        { status: 409 },
-      );
-    }
 
     const contractsRes = await metronome.v2.contracts.list({ customer_id: metronomeCustomerId });
     const contract = pickPrimaryMetronomeContract(contractsRes.data ?? []);
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     console.log(
       `💳 Adding Metronome-invoiced commit: ${accessAmount} ${
-        demoMode === 'generation' ? 'Generation Credits' : 'cents'
+        usesCustomCredit ? 'Generation Credits' : 'cents'
       } for customer ${metronomeCustomerId}`,
     );
 
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
         name: 'Credit Purchase',
         access_schedule: {
           credit_type_id:
-            demoMode === 'generation' ? creditTypeId : USD_CREDIT_TYPE_ID,
+            usesCustomCredit ? creditTypeId : USD_CREDIT_TYPE_ID,
           schedule_items: [{
             amount: accessAmount,
             starting_at: now.toISOString(),

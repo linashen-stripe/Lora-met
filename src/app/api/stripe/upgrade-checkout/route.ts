@@ -4,6 +4,7 @@ import { initializeMetronome, listPackages } from '@/utils/metronome';
 import { pickMetronomePackageForTier } from '@/utils/metronomePackageResolve';
 import { getPublicOriginFromRequest } from '@/utils/getPublicOriginFromRequest';
 import { normalizeDemoMode, type DemoMode } from '@/config/demoModes';
+import { getStripeLocale } from '@/utils/stripe/localeUtils';
 
 /** Metronome usage ingest allows roughly 33 days of history; cap backdating here. */
 const MAX_CONTRACT_START_DAYS_AGO = 33;
@@ -24,6 +25,7 @@ interface RequestBody {
   contractPackage?: 'premium' | 'enterprise';
   seedPersona?: 'pro' | 'quickstart';
   demoMode?: DemoMode;
+  uiMode?: 'embedded' | 'hosted';
 }
 
 export async function POST(request: NextRequest) {
@@ -46,6 +48,7 @@ export async function POST(request: NextRequest) {
       contractPackage = 'premium',
       seedPersona,
       demoMode: rawDemoMode,
+      uiMode = 'hosted',
     }: RequestBody = await request.json();
     const demoMode = normalizeDemoMode(rawDemoMode);
 
@@ -76,17 +79,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Request Host matches the browser (e.g. :3000). Do not prefer NEXT_PUBLIC_BASE_URL here —
-    // it often points at the wrong port/host in .env, so Stripe redirects to localhost:8080.
     const baseUrl =
       getPublicOriginFromRequest(request) ||
       process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '');
+    const isEmbedded = uiMode === 'embedded';
+
     // Collect payment method only — Metronome will invoice the $20 subscription
     // fee immediately via ADVANCE collection and charge via the Stripe billing provider
     const session = await stripe.checkout.sessions.create({
       mode: 'setup',
       currency: 'usd',
       customer: stripeCustomerId,
+      ui_mode: isEmbedded ? 'embedded' : 'hosted',
+      locale: getStripeLocale(language),
       billing_address_collection: 'required',
       customer_update: {
         address: 'auto',
@@ -105,11 +110,23 @@ export async function POST(request: NextRequest) {
             }
           : {}),
       },
-      success_url: `${baseUrl}/api/stripe/upgrade-checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/${language}/demos/${demoMode}`,
+      ...(isEmbedded
+        ? { redirect_on_completion: 'never' as const }
+        : {
+            success_url: `${baseUrl}/api/stripe/upgrade-checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${baseUrl}/${language}/demos/${demoMode}`,
+          }),
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json(
+      isEmbedded
+        ? {
+            sessionId: session.id,
+            clientSecret: session.client_secret,
+            package: metronomePackage,
+          }
+        : { url: session.url },
+    );
   } catch (error) {
     console.error('Upgrade checkout error:', error);
     return NextResponse.json(

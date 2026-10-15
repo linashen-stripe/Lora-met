@@ -9,6 +9,14 @@ export function metronomeCreditTypeCurrency(
   return match ? match[1].toLowerCase() : null;
 }
 
+export function isCustomMetronomeCreditType(
+  creditTypeName?: string | null,
+): boolean {
+  return Boolean(
+    creditTypeName && !metronomeCreditTypeCurrency(creditTypeName),
+  );
+}
+
 export function formatMetronomeAmount(
   amount: number,
   creditTypeName: string | null | undefined,

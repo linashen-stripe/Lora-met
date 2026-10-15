@@ -36,11 +36,16 @@ const removeAccents = (str: string) =>
 const SUPPLEMENTAL_FIRST_NAMES = [
   'Avery', 'Camila', 'Darius', 'Elena', 'Felix', 'Hana', 'Imani', 'Jonah',
   'Leila', 'Mateo', 'Nadia', 'Owen', 'Priya', 'Rafael', 'Talia', 'Zane',
+  'Amara', 'Bruno', 'Chloe', 'Dev', 'Esme', 'Farah', 'Gabriel', 'Iris',
+  'Kai', 'Lucia', 'Malik', 'Noelle', 'Soren', 'Valentina', 'Yara', 'Hugo',
 ] as const;
 
 const SUPPLEMENTAL_LAST_NAMES = [
   'Bennett', 'Castillo', 'Desai', 'Fischer', 'Gupta', 'Haddad', 'Ito', 'Kim',
   'Laurent', 'Moreno', 'Novak', 'Okafor', 'Park', 'Rahman', 'Silva', 'Vega',
+  'Andersen', 'Brooks', 'Chen', 'Diallo', 'Evans', 'Fernandes', 'Garcia',
+  'Hassan', 'Ivanov', 'Jensen', 'Kowalski', 'Mensah', 'Nguyen', 'Rossi',
+  'Singh', 'Yamamoto',
 ] as const;
 
 export function generateRandomCustomerEmail(countryCode = 'US') {

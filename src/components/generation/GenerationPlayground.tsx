@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -204,13 +205,9 @@ export default function GenerationPlayground() {
         Boolean(metronomeContractId) &&
         current.contractId !== metronomeContractId;
       const hasUnreconciledUsage = (current.pendingUsageCredits ?? 0) > 0;
-      const pendingAgeMs = current.pendingUsageAt
-        ? Date.now() - new Date(current.pendingUsageAt).getTime()
-        : 0;
       if (
         !contractChanged &&
         hasUnreconciledUsage &&
-        pendingAgeMs < 120_000 &&
         metronomeBalance > current.balance
       ) {
         return current;
@@ -268,6 +265,10 @@ export default function GenerationPlayground() {
       return;
     }
 
+    const usageTimestamp = new Date();
+    if (isFreePlan) {
+      usageTimestamp.setUTCHours(usageTimestamp.getUTCHours() - 1, 59, 0, 0);
+    }
     const events = Array.from({ length: batchSize }, (_, index) =>
       buildGenerationUsageEvent({
         taskId: `${taskId}_${index + 1}`,
@@ -277,6 +278,7 @@ export default function GenerationPlayground() {
         workspaceId: metronomeCustomerId,
         projectId: 'project-generation-launch',
         serviceTier,
+        timestamp: usageTimestamp.toISOString(),
       }),
     );
 
@@ -519,8 +521,10 @@ export default function GenerationPlayground() {
         </div>
       </div>
 
-      {shouldUpgrade && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4'>
+      {shouldUpgrade &&
+        typeof document !== 'undefined' &&
+        createPortal(
+        <div className='fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 p-4'>
           <div className='w-full max-w-md rounded-2xl bg-white p-7 text-center shadow-2xl'>
             <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-violet-100'>
               <Sparkles className='h-6 w-6 text-purple' />
@@ -546,7 +550,8 @@ export default function GenerationPlayground() {
                 : 'Free trial workspace'}
             </p>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

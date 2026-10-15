@@ -44,7 +44,9 @@
 
 - Stripe prerequisites: pricing plans seeded via Demo Hub (lookup keys `llama_ai_*`), API keys set in Tools Panel, webhook endpoint configured for `billing.alert.triggered`, `billing.credit_grant.created`, `invoice.paid`, `invoice.payment_failed`.
 - Credit grants, blocking, and auto top-up all hinge on specific customer metadata; update helper utilities together.
-- New manual checklists (`API_TEST_COMMANDS.md`, `API_TEST_RESULTS.md`, `UI_TEST_CHECKLIST.md`) document the UBB verification steps—keep them consistent when workflows change.
+- Use `docs/REGRESSION_CHECKLIST.md` for mode-aware billing changes and
+  `docs/SETUP_AND_TEST_GUIDE.md` for fresh-customer validation; keep them
+  consistent when workflows change.
 - Build warnings (hook deps, `<img>` usage) are known; avoid introducing new lint errors, but it’s acceptable to leave the existing warnings.
 - Ensure locale JSON files and i18n keys stay synchronized whenever you add user-facing copy.
 
@@ -61,5 +63,6 @@ PORT=3000 npm run dev        # matches the documented API curl commands
 - [ ] `npm run lint`
 - [ ] `npm run build`
 - [ ] Verify `.node-version` and `package.json` remain in sync
-- [ ] If Stripe flows changed, re-run the manual UBB API/UI checklists with real Stripe data
+- [ ] If Stripe flows changed, run the applicable sections of
+      `docs/REGRESSION_CHECKLIST.md` with fresh Stripe test data
 - [ ] Update locale files + Tools Panel defaults for any new user-facing strings or settings

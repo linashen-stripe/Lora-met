@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeMetronome } from '@/utils/metronome';
 import { pickPrimaryMetronomeContract } from '@/utils/metronomeContractPool';
+import { METRONOME_CATALOG } from '@/config/metronomeCatalog';
 
 const USD_CREDIT_TYPE_ID = '2714e483-4ff1-48e4-9e25-ac732e8f24f2';
 
 /**
  * POST /api/metronome/notifications
  *
- * Configures native Metronome auto top-up via
- * `add_prepaid_balance_threshold_configuration` on the customer's active
- * contract. Metronome handles threshold detection, commit creation, invoicing,
- * and Stripe payment entirely — no custom webhook logic required.
+ * Configures native Metronome auto top-up on the customer's active contract.
+ * A disabled configuration is updated and re-enabled; a configuration is only
+ * added the first time. Metronome handles threshold detection, commit creation,
+ * invoicing, and Stripe payment entirely.
  *
  * Body: { metronomeCustomerId, thresholdAmount, rechargeAmount }
  * Amounts use the contract's credit type (fiat minor units or custom credits).
@@ -50,6 +51,20 @@ export async function POST(request: NextRequest) {
   try {
     const normalizedThresholdAmount = Number(thresholdAmount);
     const normalizedRechargeAmount = Number(rechargeAmount);
+    if (
+      !Number.isFinite(normalizedThresholdAmount) ||
+      !Number.isFinite(normalizedRechargeAmount) ||
+      normalizedThresholdAmount < 0 ||
+      normalizedRechargeAmount <= normalizedThresholdAmount
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Recharge amount must be greater than a non-negative threshold.',
+        },
+        { status: 400 },
+      );
+    }
 
     // Get the customer's active contract and existing commit for product_id.
     const contractsRes = await metronome.v2.contracts.list({ customer_id: metronomeCustomerId });
@@ -72,33 +87,82 @@ export async function POST(request: NextRequest) {
     if (!productId) {
       return NextResponse.json({ error: 'Could not resolve product_id from existing commit' }, { status: 500 });
     }
+    const usesCustomCredit =
+      Boolean(creditTypeId) && creditTypeId !== USD_CREDIT_TYPE_ID;
+    const customCreditFiatMinorUnits =
+      METRONOME_CATALOG.pricingUnit.fiatMinorUnitsPerCustomCredit;
+    const minimumThresholdAmount = usesCustomCredit
+      ? Math.ceil(500 / customCreditFiatMinorUnits)
+      : 500;
+    const minimumRechargeGap = usesCustomCredit
+      ? Math.ceil(1000 / customCreditFiatMinorUnits)
+      : 1000;
+    if (normalizedThresholdAmount < minimumThresholdAmount) {
+      return NextResponse.json(
+        {
+          error: usesCustomCredit
+            ? `Metronome requires an auto top-up threshold of at least ${minimumThresholdAmount} custom credits.`
+            : 'Metronome requires a USD auto top-up threshold of at least $5.00.',
+        },
+        { status: 400 },
+      );
+    }
+    if (
+      normalizedRechargeAmount <
+      normalizedThresholdAmount + minimumRechargeGap
+    ) {
+      return NextResponse.json(
+        {
+          error: usesCustomCredit
+            ? `Metronome requires the recharge target to be at least ${minimumRechargeGap} custom credits above the threshold.`
+            : 'Metronome requires the recharge target to be at least $10.00 above the threshold.',
+        },
+        { status: 400 },
+      );
+    }
 
     console.log(`[metronome/notifications] Configuring threshold ${normalizedThresholdAmount} → recharge to ${normalizedRechargeAmount} on contract ${contract.id}`);
 
+    const existingThresholdConfiguration =
+      contract.prepaid_balance_threshold_configuration;
+    const thresholdConfiguration = {
+      is_enabled: true,
+      threshold_amount: normalizedThresholdAmount,
+      recharge_to_amount: normalizedRechargeAmount,
+    };
     await (metronome.v2.contracts as any).edit({
       customer_id: metronomeCustomerId,
       contract_id: contract.id,
-      add_prepaid_balance_threshold_configuration: {
-        is_enabled: true,
-        threshold_amount: normalizedThresholdAmount,
-        recharge_to_amount: normalizedRechargeAmount,
-        ...(creditTypeId && creditTypeId !== USD_CREDIT_TYPE_ID
-          ? { custom_credit_type_id: creditTypeId }
-          : {}),
-        payment_gate_config: {
-          payment_gate_type: 'STRIPE',
-          stripe_config: {
-            payment_type: 'INVOICE',
-          },
-        },
-        commit: {
-          product_id: productId,
-          name: 'Auto Top-Up',
-        },
-      },
+      ...(existingThresholdConfiguration
+        ? {
+            update_prepaid_balance_threshold_configuration:
+              thresholdConfiguration,
+          }
+        : {
+            add_prepaid_balance_threshold_configuration: {
+              ...thresholdConfiguration,
+              ...(creditTypeId && creditTypeId !== USD_CREDIT_TYPE_ID
+                ? { custom_credit_type_id: creditTypeId }
+                : {}),
+              payment_gate_config: {
+                payment_gate_type: 'STRIPE',
+                stripe_config: {
+                  payment_type: 'INVOICE',
+                },
+              },
+              commit: {
+                product_id: productId,
+                name: 'Auto Top-Up',
+              },
+            },
+          }),
     });
 
-    console.log(`[metronome/notifications] ✓ Threshold config set on contract ${contract.id}`);
+    console.log(
+      `[metronome/notifications] ✓ Threshold config ${
+        existingThresholdConfiguration ? 'updated' : 'added'
+      } on contract ${contract.id}`,
+    );
     return NextResponse.json({ contractId: contract.id });
   } catch (error: any) {
     console.error('[metronome/notifications] Failed:', error.message);

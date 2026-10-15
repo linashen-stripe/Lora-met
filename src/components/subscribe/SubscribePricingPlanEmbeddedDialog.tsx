@@ -10,7 +10,9 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'next-i18next';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import Spinner from '@/components/ui/Spinner';
-import EmbeddedCheckoutComponent from '@/components/checkout/EmbeddedCheckout';
+import EmbeddedCheckoutComponent, {
+  EMBEDDED_CHECKOUT_DIALOG_PANEL_CLASS,
+} from '@/components/checkout/EmbeddedCheckout';
 import useEmbeddedPricingPlanCheckout from '@/components/subscribe/useEmbeddedPricingPlanCheckout';
 
 const SubscribePricingPlanEmbeddedDialogContent = ({
@@ -84,7 +86,7 @@ const SubscribePricingPlanEmbeddedDialog = ({
         <div className='flex min-h-full items-center justify-center p-4 sm:p-6'>
           <DialogPanel
             transition
-            className='relative transform overflow-hidden rounded-lg bg-background py-4 px-4 text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in w-full max-w-6xl max-h-[90vh] flex flex-col data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95'
+            className={EMBEDDED_CHECKOUT_DIALOG_PANEL_CLASS}
           >
             <div className='absolute right-0 top-0 pr-3 pt-3 z-10'>
               <button

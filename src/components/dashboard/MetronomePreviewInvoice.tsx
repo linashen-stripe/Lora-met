@@ -44,6 +44,42 @@ function presentationGroupSortKey(
 
 type ChargeLine = MetronomeInvoiceLineItem & { id?: string };
 
+function stableDimensionKey(values?: Record<string, string>): string {
+  return dimensionEntries(values)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('|');
+}
+
+function coalesceChargeLines(items: ChargeLine[]): ChargeLine[] {
+  // Metronome can split one integer usage event at a credit boundary (for
+  // example, quantity 2 becomes 0.75 covered + 1.25 uncovered). These are
+  // accounting fragments, not fractional image/3D jobs. Recombine only rows
+  // with identical product, price, credit type, and dimensions before display.
+  const lines = new Map<string, ChargeLine>();
+  items.forEach((line) => {
+    const key = [
+      line.name,
+      line.type ?? '',
+      line.credit_type?.id ?? line.credit_type?.name ?? '',
+      line.unit_price ?? '',
+      stableDimensionKey(line.pricing_group_values),
+      stableDimensionKey(line.presentation_group_values),
+    ].join('::');
+    const existing = lines.get(key);
+    if (!existing) {
+      lines.set(key, { ...line });
+      return;
+    }
+    existing.total = Number(existing.total ?? 0) + Number(line.total ?? 0);
+    if (existing.quantity != null || line.quantity != null) {
+      existing.quantity =
+        Number(existing.quantity ?? 0) + Number(line.quantity ?? 0);
+    }
+  });
+  return [...lines.values()];
+}
+
 function buildPresentationGroups(items: ChargeLine[]): {
   reactKey: string;
   hasPresentation: boolean;
@@ -213,8 +249,10 @@ export default function MetronomePreviewInvoice({
   const lineItems = (invoice as any).line_items ?? [];
 
   // Separate credits-applied line items (negative totals) from charge line items
-  const chargeItems = lineItems.filter(
-    (l: any) => !isAppliedCommitOrCreditLineItem(l.type),
+  const chargeItems = coalesceChargeLines(
+    lineItems.filter(
+      (l: any) => !isAppliedCommitOrCreditLineItem(l.type),
+    ),
   );
   const creditItems = lineItems.filter((l: any) =>
     isAppliedCommitOrCreditLineItem(l.type),

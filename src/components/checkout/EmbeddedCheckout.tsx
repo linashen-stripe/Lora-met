@@ -8,6 +8,8 @@ import { getStripeLocale } from '@/utils/stripe/localeUtils';
 
 /** Fixed width for Metronome package summary + embedded checkout column */
 export const EMBEDDED_CHECKOUT_WITH_SIDEBAR_WIDTH_PX = 444;
+export const EMBEDDED_CHECKOUT_DIALOG_PANEL_CLASS =
+  'relative flex max-h-[90vh] w-full max-w-[30rem] transform flex-col overflow-hidden rounded-lg bg-background px-4 py-4 text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95';
 
 interface Props {
   checkoutData: {

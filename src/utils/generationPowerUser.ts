@@ -45,6 +45,13 @@ export interface CreateGenerationPowerUserParams {
   customerName: string;
   deliveryMethodId?: string | null;
   onLog?: (line: string) => void;
+  deferUsageSeed?: (
+    customerId: string,
+    seedUsage: () => Promise<{
+      eventsIngested: number;
+      creditsConsumed: number;
+    }>,
+  ) => void;
 }
 
 export interface CreateGenerationPowerUserResult {
@@ -55,8 +62,8 @@ export interface CreateGenerationPowerUserResult {
   currencyCode: string;
   commitAmount: number;
   seatMonthlyAmount: number;
-  eventsIngested: number;
-  creditsConsumed: number;
+  eventsIngested?: number;
+  creditsConsumed?: number;
 }
 
 /**
@@ -72,6 +79,7 @@ export async function createGenerationPowerUser(
     stripe,
     customerName,
     onLog = () => {},
+    deferUsageSeed,
   } = params;
   const displayName = `[${DEMO_MODES.generation.label}] ${customerName}`;
   const emailSlug =
@@ -200,6 +208,8 @@ export async function createGenerationPowerUser(
     subscriptions: [
       {
         collection_schedule: 'advance',
+        starting_at: startingAt.toISOString(),
+        ending_before: endingBefore.toISOString(),
         proration: {
           invoice_behavior: 'bill_on_next_collection_date',
           is_prorated: false,
@@ -229,6 +239,7 @@ export async function createGenerationPowerUser(
         },
         commit_duration: { value: 1, unit: 'PERIODS' },
         recurrence_frequency: 'MONTHLY',
+        proration: 'NONE',
         priority: 50,
         rollover_fraction: 0,
         subscription_config: {
@@ -248,19 +259,34 @@ export async function createGenerationPowerUser(
     `    ✓ ${seats.length} seats, ${METRONOME_CATALOG.powerUser.seatMonthlyCredits.toLocaleString()} monthly credits/seat, ${Math.round((1 - METRONOME_CATALOG.powerUser.usageMultiplier) * 100)}% usage discount`,
   );
 
-  onLog('\n[5/5] Seeding Generation usage by user and project...');
-  const usage = await seedGenerationUsage({
-    metronome,
-    customerId,
-    story: 'healthy',
-    lookbackDays: GENERATION_HISTORY_DAYS - 1,
-    trailingUnseededDays: 1,
-    commitmentSpendCapFraction: 0.05,
-    userWeights: [8, 6, 4, 3, 1],
-  });
-  onLog(
-    `    ✓ ingested ${usage.eventsIngested} events consuming ${usage.creditsConsumed.toLocaleString()} Generation Credits`,
-  );
+  const seedUsage = () =>
+    seedGenerationUsage({
+      metronome,
+      customerId,
+      story: 'healthy',
+      lookbackDays: GENERATION_HISTORY_DAYS - 1,
+      trailingUnseededDays: 1,
+      commitmentSpendCapFraction: 0.05,
+      // One seat exceeds its 10k allocation and spills into the shared commit;
+      // the other four retain visibly different, below-allocation usage.
+      userWeights: [23, 5, 4, 3, 2],
+    });
+
+  let usage:
+    | { eventsIngested: number; creditsConsumed: number }
+    | undefined;
+  if (deferUsageSeed) {
+    // The Plans page owns progress once the contract is ready; do not retain
+    // the NDJSON stream while Metronome ingests and aggregates demo usage.
+    deferUsageSeed(customerId, seedUsage);
+    onLog('\n[5/5] Usage seeding will continue on Plans & Billing.');
+  } else {
+    onLog('\n[5/5] Seeding Generation usage by user and project...');
+    usage = await seedUsage();
+    onLog(
+      `    ✓ ingested ${usage.eventsIngested} events consuming ${usage.creditsConsumed.toLocaleString()} Generation Credits`,
+    );
+  }
 
   return {
     demoMode: 'generation',
@@ -270,7 +296,11 @@ export async function createGenerationPowerUser(
     currencyCode,
     commitAmount: METRONOME_CATALOG.powerUser.annualCommitCredits,
     seatMonthlyAmount: METRONOME_CATALOG.powerUser.seatMonthlyCredits,
-    eventsIngested: usage.eventsIngested,
-    creditsConsumed: usage.creditsConsumed,
+    ...(usage
+      ? {
+          eventsIngested: usage.eventsIngested,
+          creditsConsumed: usage.creditsConsumed,
+        }
+      : {}),
   };
 }

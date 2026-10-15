@@ -48,22 +48,28 @@ export async function POST(request: NextRequest) {
     // For free plan sign-ups without an explicit packageId, find the free trial package dynamically
     if (!packageId && planType === 'free') {
       const packages = await listPackages(metronome);
-      const modeNames = new Set(
-        modeDefinition.packageNames.free.map((packageName) =>
-          packageName.toLowerCase(),
-        ),
-      );
       const trialPackage =
-        packages.find((pkg: any) =>
-          modeNames.has(String(pkg.name ?? '').trim().toLowerCase()),
-        ) ??
-        packages.find((pkg: any) => /free|trial/i.test(pkg.name ?? ''));
-      if (trialPackage) {
-        packageId = trialPackage.id;
-        console.log(
-          `✅ Resolved free trial package: ${trialPackage.name} (${packageId})`,
+        modeDefinition.packageNames.free
+          .map((configuredName) =>
+            packages.find(
+              (pkg: any) =>
+                String(pkg.name ?? '').trim().toLowerCase() ===
+                configuredName.trim().toLowerCase(),
+            ),
+          )
+          .find(Boolean);
+      if (!trialPackage) {
+        return NextResponse.json(
+          {
+            message: `No configured ${modeDefinition.label} Free package was found. Seed the mode's packages before signing up.`,
+          },
+          { status: 409 },
         );
       }
+      packageId = trialPackage.id;
+      console.log(
+        `✅ Resolved free trial package: ${trialPackage.name} (${packageId})`,
+      );
     }
 
     if (!email) {
@@ -132,7 +138,10 @@ export async function POST(request: NextRequest) {
     if (packageId) {
       try {
         const startingAt = new Date();
-        startingAt.setMinutes(0, 0, 0);
+        startingAt.setUTCMinutes(0, 0, 0);
+        if (planType === 'free') {
+          startingAt.setUTCHours(startingAt.getUTCHours() - 1);
+        }
         metronomeContractId = await createContract(metronome, {
           metronomeCustomerId,
           packageId: packageId,

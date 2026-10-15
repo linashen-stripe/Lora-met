@@ -33,7 +33,14 @@ export default function DemoCustomersPage() {
         ? '/api/metronome/seed-usage-multi-project'
         : '/api/metronome/seed-usage-multi-seat';
     const { data } = await fetchClient.get(endpoint, {
-      params: { customerId: targetCustomerId, story, trailingDays: 1 },
+      params: {
+        customerId: targetCustomerId,
+        story,
+        trailingDays: 1,
+        ...(mode === 'ai-builder' && persona === 'pro'
+          ? { singleSeat: '1', singleProject: '1' }
+          : {}),
+      },
     });
     return data;
   };

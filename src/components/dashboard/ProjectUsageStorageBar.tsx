@@ -234,7 +234,11 @@ export default function ProjectUsageStorageBar({
 
         const invoices: MetronomeInvoice[] = allInv.data?.invoices ?? [];
         const drafts: MetronomeInvoice[] = draftInv.data?.invoices ?? [];
-        const pick = pickMetronomeSpendInvoice(invoices, drafts);
+        const pick = pickMetronomeSpendInvoice(
+          invoices,
+          drafts,
+          metronomeContract?.id,
+        );
         // The list endpoint already includes line_items and totals — use pick directly.
         const invoice: MetronomeInvoice | null = pick;
 
@@ -301,7 +305,13 @@ export default function ProjectUsageStorageBar({
     return () => {
       cancelled = true;
     };
-  }, [metronomeCustomerId, refreshKey, metronomeContract?.startingAt, t]);
+  }, [
+    metronomeCustomerId,
+    refreshKey,
+    metronomeContract?.id,
+    metronomeContract?.startingAt,
+    t,
+  ]);
 
   const segments = useMemo(() => {
     const totalTok = byProjectTokens.reduce((s, p) => s + p.tokens, 0);

@@ -245,6 +245,8 @@ export interface MetronomeSeedUsageParams {
    * `story=at-risk` still scales up vs healthy using `storyMultipliers` ratio on top of this cap.
    */
   commitmentSpendCapFraction?: number;
+  /** Exact synthetic spend target for the full seed window, in major currency units. */
+  targetSpendDollars?: number;
   /** When pool cap is 0, target commitment dollars for scaling (default 50). */
   defaultCommitmentDollars?: number;
   /** Single `project_id` or multi-project split for attribution only. */
@@ -524,8 +526,15 @@ function getDailyTargets(
   return raw.map((v) => Math.max(0, v * scale));
 }
 
-function jitterShare(base: number, jitter = 0.4): number {
-  return Math.max(0.05, base + (Math.random() - 0.5) * jitter * base);
+function weightedIndex(seed: string, weights: readonly number[]): number {
+  const total = weights.reduce((sum, weight) => sum + Math.max(0, weight), 0);
+  if (total <= 0) return 0;
+  let cursor = ((djb2Hash(seed) % 1_000_000) / 1_000_000) * total;
+  for (let index = 0; index < weights.length; index += 1) {
+    cursor -= Math.max(0, weights[index] ?? 0);
+    if (cursor < 0) return index;
+  }
+  return Math.max(0, weights.length - 1);
 }
 
 function tokensForDollar(dollars: number, ratePerMillion: number): number {
@@ -552,7 +561,7 @@ function compactSeedTransactionId(args: {
   tier: string;
   projectIndex: number;
   multiProject: boolean;
-  kind: 'i' | 'o';
+  kind: 'u';
   seq: number;
   runId: number;
 }): string {
@@ -586,6 +595,7 @@ export async function seedMetronomeUsage(
     seedStartOverride,
     storyMultipliers = { healthy: 0.7, atRisk: 1.3 },
     commitmentSpendCapFraction: commitmentSpendCapFractionRaw,
+    targetSpendDollars,
     defaultCommitmentDollars = 50,
     projectAttribution,
     transactionIdPrefix,
@@ -663,7 +673,16 @@ export async function seedMetronomeUsage(
   // (~75% share) clearly exceeds their allocation while others stay well under.
   // Falls back to pool-based calculation if the per-seat limit can't be resolved.
   let targetTotal: number;
-  if (usageUserIdsResolved && usageUserIdsResolved.length > 0 && contract) {
+  if (
+    targetSpendDollars != null &&
+    Number.isFinite(targetSpendDollars) &&
+    targetSpendDollars > 0
+  ) {
+    targetTotal = targetSpendDollars;
+    console.log(
+      `${logLabel} explicit seed spend target: $${targetTotal.toFixed(2)}`,
+    );
+  } else if (usageUserIdsResolved && usageUserIdsResolved.length > 0 && contract) {
     const perSeatLimitDollars = extractPerSeatLimitDollars(contract, logLabel);
     if (perSeatLimitDollars > 0) {
       targetTotal = perSeatLimitDollars * usageUserIdsResolved.length * storyScale;
@@ -698,8 +717,6 @@ export async function seedMetronomeUsage(
   const runId = Date.now();
   const events: any[] = [];
   let txSeq = 0;
-  const multiProjectSlices = projectSlices.length > 1;
-
   const perUserWeights =
     usageUserIdsResolved && usageUserIdsResolved.length > 0
       ? perUserSpendWeights(customerId, usageUserIdsResolved)
@@ -749,6 +766,20 @@ export async function seedMetronomeUsage(
             txSeg: userSlugForTransactionId(customerId),
           },
         ];
+  const coverageProductSchedule = products.flatMap((product, productIndex) =>
+    Array.from(
+      {
+        length: Math.max(
+          product.models.length,
+          product.supportsBatch ? 2 : 1,
+        ),
+      },
+      () => productIndex,
+    ),
+  );
+  const productOccurrences = seatSpendSlices.map(() =>
+    products.map(() => 0),
+  );
 
   for (let dayIdx = 0; dayIdx < daysToSeed; dayIdx++) {
     const day = addDays(seedStartDay, dayIdx);
@@ -756,122 +787,95 @@ export async function seedMetronomeUsage(
     const isTailMonth =
       seatSpendSlices.length > 1 && format(day, 'yyyy-MM') === tailMonthKey;
 
-    for (const { seatUserId, baseWeight, tailWeight, txSeg } of seatSpendSlices) {
+    for (
+      let seatIndex = 0;
+      seatIndex < seatSpendSlices.length;
+      seatIndex += 1
+    ) {
+      const { seatUserId, baseWeight, tailWeight, txSeg } =
+        seatSpendSlices[seatIndex]!;
       const weight = isTailMonth ? tailWeight : baseWeight;
       const dailySpend = daySpendTotal * weight;
-
-      for (let productIndex = 0; productIndex < products.length; productIndex++) {
-        const product = products[productIndex]!;
-        const productSpend = dailySpend * product.dailyShare;
-        const rawModelShares = product.models.map((m) => jitterShare(m.share));
-        const totalModelShare = rawModelShares.reduce((s, v) => s + v, 0);
-
-        for (let mi = 0; mi < product.models.length; mi++) {
-          const model = product.models[mi];
-          const modelSpend = productSpend * (rawModelShares[mi] / totalModelShare);
-
-          const tiers: Array<{ tier: string; share: number }> = product.supportsBatch
-            ? (() => {
-                const rawStandard = jitterShare(0.75, 0.5);
-                const rawBatch = jitterShare(0.25, 0.5);
-                const totalTier = rawStandard + rawBatch;
-                return [
-                  { tier: 'standard', share: rawStandard / totalTier },
-                  { tier: 'batch', share: rawBatch / totalTier },
-                ];
-              })()
-            : [{ tier: 'standard', share: 1.0 }];
-
-          for (const { tier, share: tierShare } of tiers) {
-            const tierSpend = modelSpend * tierShare;
-            const inputSpendBase = tierSpend * 0.6;
-            const outputSpendBase = tierSpend * 0.4;
-
-            const timestamp = new Date(day);
-            timestamp.setHours(
-              9 + Math.floor(Math.random() * 8),
-              Math.floor(Math.random() * 60),
+      const selectionSeed = `${customerId}:${dayIdx}:${seatIndex}`;
+      const productIndex =
+        coverageProductSchedule[dayIdx] ??
+        weightedIndex(
+          `${selectionSeed}:product`,
+          products.map((product) => product.dailyShare),
+        );
+      const product = products[productIndex]!;
+      const occurrence = productOccurrences[seatIndex]![productIndex]!;
+      productOccurrences[seatIndex]![productIndex] = occurrence + 1;
+      const modelIndex =
+        occurrence < product.models.length
+          ? occurrence
+          : weightedIndex(
+              `${selectionSeed}:model`,
+              product.models.map((model) => model.share),
             );
+      const model = product.models[modelIndex]!;
+      const tier =
+        product.supportsBatch &&
+        (occurrence === 1 ||
+          weightedIndex(`${selectionSeed}:tier`, [0.75, 0.25]) === 1)
+          ? 'batch'
+          : 'standard';
+      const projectIndex =
+        txSeq < projectSlices.length
+          ? txSeq
+          : weightedIndex(
+              `${selectionSeed}:project`,
+              projectSlices.map((project) => project.spendShare),
+            );
+      const projectId = projectSlices[projectIndex]!.projectId;
+      const inputRate =
+        tier === 'batch'
+          ? (model.batchInputRate ?? model.inputRate)
+          : model.inputRate;
+      const outputRate =
+        tier === 'batch'
+          ? (model.batchOutputRate ?? model.outputRate)
+          : model.outputRate;
+      const inputTokens = tokensForDollar(dailySpend * 0.6, inputRate);
+      const outputTokens = tokensForDollar(dailySpend * 0.4, outputRate);
+      const timestamp = new Date(day);
+      timestamp.setHours(
+        9 + (djb2Hash(`${selectionSeed}:hour`) % 8),
+        djb2Hash(`${selectionSeed}:minute`) % 60,
+      );
 
-            for (let pi = 0; pi < projectSlices.length; pi++) {
-              const { projectId, spendShare } = projectSlices[pi]!;
-              const inputSpend = inputSpendBase * spendShare;
-              const outputSpend = outputSpendBase * spendShare;
-
-              const inputRate =
-                tier === 'batch'
-                  ? (model.batchInputRate ?? model.inputRate)
-                  : model.inputRate;
-              const outputRate =
-                tier === 'batch'
-                  ? (model.batchOutputRate ?? model.outputRate)
-                  : model.outputRate;
-              const inputTokens = tokensForDollar(inputSpend, inputRate);
-              const outputTokens = tokensForDollar(outputSpend, outputRate);
-
-              const baseProps = {
-                api_product: product.eventProductName ?? product.name,
-                upstream_provider: 'lora',
-                model: model.name,
-                processing_tier: tier,
-                user_id: seatUserId,
-                ...(seatSpendSlices.length > 1 ? { seat_id: seatUserId } : {}),
-                team_id: customerId,
-                project_id: projectId,
-              };
-
-              if (inputTokens > 0) {
-                events.push({
-                  transaction_id: compactSeedTransactionId({
-                    transactionIdPrefix,
-                    customerId,
-                    userSlug: txSeg,
-                    multiSeat: seatSpendSlices.length > 1,
-                    day,
-                    productIndex,
-                    modelIndex: mi,
-                    tier,
-                    projectIndex: pi,
-                    multiProject: multiProjectSlices,
-                    kind: 'i',
-                    seq: txSeq++,
-                    runId,
-                  }),
-                  customer_id: customerId,
-                  event_type: 'ai_platform.usage',
-                  timestamp: timestamp.toISOString(),
-                  properties: { ...baseProps, input_tokens: inputTokens },
-                });
-              }
-
-              if (outputTokens > 0) {
-                const outTs = new Date(timestamp.getTime() + 3 * 60_000);
-                events.push({
-                  transaction_id: compactSeedTransactionId({
-                    transactionIdPrefix,
-                    customerId,
-                    userSlug: txSeg,
-                    multiSeat: seatSpendSlices.length > 1,
-                    day,
-                    productIndex,
-                    modelIndex: mi,
-                    tier,
-                    projectIndex: pi,
-                    multiProject: multiProjectSlices,
-                    kind: 'o',
-                    seq: txSeq++,
-                    runId,
-                  }),
-                  customer_id: customerId,
-                  event_type: 'ai_platform.usage',
-                  timestamp: outTs.toISOString(),
-                  properties: { ...baseProps, output_tokens: outputTokens },
-                });
-              }
-            }
-          }
-        }
-      }
+      events.push({
+        transaction_id: compactSeedTransactionId({
+          transactionIdPrefix,
+          customerId,
+          userSlug: txSeg,
+          multiSeat: seatSpendSlices.length > 1,
+          day,
+          productIndex,
+          modelIndex,
+          tier,
+          projectIndex,
+          multiProject: projectSlices.length > 1,
+          kind: 'u',
+          seq: txSeq++,
+          runId,
+        }),
+        customer_id: customerId,
+        event_type: 'ai_platform.usage',
+        timestamp: timestamp.toISOString(),
+        properties: {
+          api_product: product.eventProductName ?? product.name,
+          upstream_provider: 'lora',
+          model: model.name,
+          processing_tier: tier,
+          user_id: seatUserId,
+          ...(seatSpendSlices.length > 1 ? { seat_id: seatUserId } : {}),
+          team_id: customerId,
+          project_id: projectId,
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+        },
+      });
     }
   }
 

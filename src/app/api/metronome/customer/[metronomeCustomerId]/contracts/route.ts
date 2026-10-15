@@ -30,31 +30,7 @@ export async function GET(
       metronomeCustomerId,
     );
 
-    // Compute total ever committed (schedule grants + manual top-ups) from the ledger.
-    // This is durable — no in-memory state needed.
-    let topUpTotalCents = 0;
-    try {
-      const balances = metronome.v1.contracts.listBalances({
-        customer_id: metronomeCustomerId,
-        include_ledgers: true,
-        include_balance: true,
-      });
-      for await (const item of balances) {
-        const ledger: any[] = (item as any).ledger ?? [];
-        for (const entry of ledger) {
-          if (
-            entry.type === 'PREPAID_COMMIT_MANUAL' ||
-            entry.type === 'CREDIT_MANUAL'
-          ) {
-            if (entry.amount > 0) topUpTotalCents += entry.amount;
-          }
-        }
-      }
-    } catch (ledgerErr) {
-      console.warn('[contracts] Could not fetch ledger for topUpTotalCents:', ledgerErr);
-    }
-
-    return NextResponse.json({ contracts, topUpTotalCents });
+    return NextResponse.json({ contracts });
   } catch (error) {
     console.error('Error fetching Metronome contracts:', error);
     return NextResponse.json(
@@ -70,7 +46,7 @@ export async function POST(
 ) {
   try {
     const { metronomeCustomerId } = await params;
-    const { packageId, email, upgrade } = await request.json();
+    const { packageId, email, upgrade, freePlan } = await request.json();
 
     if (!packageId) {
       return NextResponse.json({ error: 'packageId is required' }, { status: 400 });
@@ -119,6 +95,10 @@ export async function POST(
     }
 
     let startingAt = new Date();
+    if (freePlan === true) {
+      startingAt = currentMetronomeHourBoundary();
+      startingAt.setUTCHours(startingAt.getUTCHours() - 1);
+    }
 
     let endedContractIds: string[] = [];
     if (upgrade === true) {
@@ -244,19 +224,19 @@ export async function POST(
           throw fallbackError;
         }
       } else {
-      if (endedContractIds.length > 0) {
-        await restoreOpenEndedContracts(
-          metronome,
-          metronomeCustomerId,
-          endedContractIds,
-        ).catch((restoreError) => {
-          console.error(
-            '[contracts] Failed to restore contracts after upgrade failure:',
-            restoreError,
-          );
-        });
-      }
-      throw contractError;
+        if (endedContractIds.length > 0) {
+          await restoreOpenEndedContracts(
+            metronome,
+            metronomeCustomerId,
+            endedContractIds,
+          ).catch((restoreError) => {
+            console.error(
+              '[contracts] Failed to restore contracts after upgrade failure:',
+              restoreError,
+            );
+          });
+        }
+        throw contractError;
       }
     }
 

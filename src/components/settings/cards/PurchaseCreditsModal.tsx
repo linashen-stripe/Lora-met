@@ -28,7 +28,10 @@ import {
   extractBalanceFromGetNetBalanceResponse,
   metronomeNetBalanceToCents,
 } from '@/utils/metronomeNetBalance';
-import { formatMetronomeAmount } from '@/utils/metronomeAmount';
+import {
+  formatMetronomeAmount,
+  isCustomMetronomeCreditType,
+} from '@/utils/metronomeAmount';
 import { METRONOME_CATALOG } from '@/config/metronomeCatalog';
 
 interface PurchaseCreditsModalProps {
@@ -49,9 +52,15 @@ export default function PurchaseCreditsModal({
     updateCustomer,
     metronomeContract,
     demoMode,
+    triggerMetronomeContractRefresh,
   } = useConfigContext();
+  const contractCreditTypeName = metronomeContract?.creditTypeName;
   const customCreditTypeName =
-    demoMode === 'generation' ? metronomeContract?.creditTypeName : undefined;
+    demoMode === 'generation' &&
+    (!contractCreditTypeName ||
+      isCustomMetronomeCreditType(contractCreditTypeName))
+      ? contractCreditTypeName ?? METRONOME_CATALOG.pricingUnit.name
+      : undefined;
   const formatAmount = (amount: number) =>
     formatMetronomeAmount(
       amount,
@@ -68,6 +77,7 @@ export default function PurchaseCreditsModal({
     );
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<
     'standard' | 'large' | 'custom'
   >('standard');
@@ -92,7 +102,12 @@ export default function PurchaseCreditsModal({
         },
       );
       const raw = extractBalanceFromGetNetBalanceResponse(netBalanceRes.data);
-      const balanceCents = metronomeNetBalanceToCents(raw) ?? 0;
+      const rawCustomBalance = Number(raw);
+      const balanceCents = customCreditTypeName
+        ? Number.isFinite(rawCustomBalance)
+          ? rawCustomBalance
+          : 0
+        : (metronomeNetBalanceToCents(raw) ?? 0);
       setBalanceInfo({
         hasDebt: false,
         debtAmount: 0,
@@ -103,13 +118,18 @@ export default function PurchaseCreditsModal({
     } finally {
       setIsLoading(false);
     }
-  }, [customer?.id, metronomeContract?.creditTypeId]);
+  }, [
+    customer?.id,
+    customCreditTypeName,
+    metronomeContract?.creditTypeId,
+  ]);
 
   useEffect(() => {
     if (open) {
       fetchBalanceData();
       setSelectedOption('standard'); // Reset to default on open
       setCustomAmount(''); // Clear custom amount
+      setPurchaseError(null);
     }
   }, [open, fetchBalanceData]);
 
@@ -151,6 +171,7 @@ export default function PurchaseCreditsModal({
   const handlePurchase = async () => {
     if (!finalPurchaseAmount) return;
     setIsProcessing(true);
+    setPurchaseError(null);
     try {
       await fetchClient.post(
         `/api/stripe/credit-grant?language=${settings?.language}`,
@@ -162,9 +183,14 @@ export default function PurchaseCreditsModal({
           creditTypeId: metronomeContract?.creditTypeId,
         },
       );
+      await triggerMetronomeContractRefresh();
       updateCustomer({ forceSubscriptionRepoll: new Date() });
       if (onCreditsPurchased) onCreditsPurchased();
       setOpen(false);
+    } catch (error: any) {
+      setPurchaseError(
+        error.response?.data?.error || 'Failed to purchase credits.',
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -386,6 +412,9 @@ export default function PurchaseCreditsModal({
                     id='custom'
                     title={t('modals.purchase_credits.custom_amount')}
                   />
+                  {purchaseError && (
+                    <p className='text-sm text-red-600'>{purchaseError}</p>
+                  )}
                   <button
                     onClick={handlePurchase}
                     disabled={isProcessing || !finalPurchaseAmount}

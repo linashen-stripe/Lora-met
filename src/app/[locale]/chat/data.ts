@@ -5,6 +5,7 @@ export interface Message {
   type: 'user' | 'assistant';
   content: string;
   consumptionData?: ConsumptionData;
+  creditSource?: 'trial' | 'plan';
 }
 
 export interface AppState {
