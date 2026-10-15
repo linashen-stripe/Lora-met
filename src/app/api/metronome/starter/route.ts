@@ -5,15 +5,14 @@ import {
 } from '@/utils/apiInspector';
 import { publishApiTrace } from '@/utils/apiInspectorServer';
 import {
-  runStarter,
-  type PricingDimension,
-} from '@/server/metronomeStarter';
+  runAccountStarter,
+  type AccountStarterMode,
+} from '@/server/accountStarter';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 type StarterMode = 'plan' | 'seed' | 'reset';
-type PricingMetric = 'image' | 'video' | '3d';
 const RESERVED_PROPERTY_KEYS = new Set([
   'quantity',
   'modality',
@@ -24,12 +23,28 @@ const RESERVED_PROPERTY_KEYS = new Set([
   'project_id',
   'user_id',
   'customer_id',
+  'processing_tier',
+  'upstream_provider',
+  'team_id',
 ]);
+const PRICING_METRICS: Record<AccountStarterMode, Set<string>> = {
+  generation: new Set(['image', 'video', '3d']),
+  'ai-builder': new Set([
+    'code_assist_input',
+    'code_assist_output',
+    'chat_input',
+    'chat_output',
+    'voice_input',
+    'voice_output',
+  ]),
+};
 
 interface StarterRequest {
   apiKey?: string;
   mode?: StarterMode;
+  starterMode?: AccountStarterMode;
   confirmReset?: boolean;
+  resetScope?: 'demo-data' | 'full';
   pricingDimension?: unknown;
   resourcePrefix?: string;
   quickstartName?: string;
@@ -45,7 +60,10 @@ function clean(value: unknown): string | undefined {
   return trimmed || undefined;
 }
 
-function normalizePricingDimension(value: unknown): PricingDimension | null {
+function normalizePricingDimension(
+  value: unknown,
+  starterMode: AccountStarterMode,
+) {
   if (value == null) return null;
   if (!value || typeof value !== 'object') {
     throw new Error('Custom pricing property is invalid.');
@@ -91,15 +109,18 @@ function normalizePricingDimension(value: unknown): PricingDimension | null {
   }
   const rawMetrics = Array.isArray(candidate.metrics) ? candidate.metrics : [];
   const metrics = rawMetrics.filter(
-    (metric): metric is PricingMetric =>
-      metric === 'image' || metric === 'video' || metric === '3d',
+    (metric): metric is string =>
+      typeof metric === 'string' &&
+      PRICING_METRICS[starterMode].has(metric),
   );
   if (
     metrics.length === 0 ||
     metrics.length !== rawMetrics.length ||
     new Set(metrics).size !== metrics.length
   ) {
-    throw new Error('Select Image, Video, 3D, or a combination for custom pricing.');
+    throw new Error(
+      `Select at least one valid ${starterMode} usage metric for custom pricing.`,
+    );
   }
   return { propertyKey, values, metrics };
 }
@@ -114,14 +135,24 @@ export async function POST(request: Request) {
   const apiKey = clean(body.apiKey);
   const mode: StarterMode =
     body.mode === 'seed' || body.mode === 'reset' ? body.mode : 'plan';
+  const starterMode = body.starterMode;
 
   return ndjsonStreamResponse(async (onLog) => {
     if (!apiKey) throw new Error('Target Metronome API key is required.');
-    const pricingDimension = normalizePricingDimension(body.pricingDimension);
-    await runStarter({
+    if (starterMode !== 'ai-builder' && starterMode !== 'generation') {
+      throw new Error('Select AI Builder or Generation.');
+    }
+    const pricingDimension = normalizePricingDimension(
+      body.pricingDimension,
+      starterMode,
+    );
+    await runAccountStarter({
+      starterMode,
+      action: mode,
       apiKey,
-      mode,
       confirmReset: body.confirmReset,
+      resetScope:
+        body.resetScope === 'demo-data' ? 'demo-data' : 'full',
       pricingDimension,
       resourcePrefix: clean(body.resourcePrefix),
       quickstartName: clean(body.quickstartName),
@@ -138,6 +169,6 @@ export async function POST(request: Request) {
             })
         : undefined,
     });
-    return { mode, ok: true };
+    return { mode, starterMode, ok: true };
   });
 }

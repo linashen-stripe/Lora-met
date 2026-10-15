@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "namespace": "ai-builder-starter",
+  "resourcePrefix": "Build",
+  "eventType": "ai_platform.usage",
+  "fiatCurrency": "USD",
+  "pricingDimension": null,
+  "rateCard": {
+    "name": "Build - AI Platform Rate Card",
+    "alias": "ai-builder-starter-v1"
+  },
+  "metrics": [
+    { "key": "code_assist_input", "name": "Build - Code Assist Input Tokens", "apiProduct": "code_assist", "aggregationKey": "input_tokens" },
+    { "key": "code_assist_output", "name": "Build - Code Assist Output Tokens", "apiProduct": "code_assist", "aggregationKey": "output_tokens" },
+    { "key": "chat_input", "name": "Build - Chat Input Tokens", "apiProduct": "chat", "aggregationKey": "input_tokens" },
+    { "key": "chat_output", "name": "Build - Chat Output Tokens", "apiProduct": "chat", "aggregationKey": "output_tokens" },
+    { "key": "voice_input", "name": "Build - Voice Input Tokens", "apiProduct": "realtime_voice", "aggregationKey": "input_tokens" },
+    { "key": "voice_output", "name": "Build - Voice Output Tokens", "apiProduct": "realtime_voice", "aggregationKey": "output_tokens" }
+  ],
+  "rates": [
+    { "metric": "code_assist_input", "model": "mythic-4.6", "processingTier": "standard", "centsPerMillionTokens": 300 },
+    { "metric": "code_assist_output", "model": "mythic-4.6", "processingTier": "standard", "centsPerMillionTokens": 1500 },
+    { "metric": "code_assist_input", "model": "prime-mini-5.4", "processingTier": "standard", "centsPerMillionTokens": 75 },
+    { "metric": "code_assist_output", "model": "prime-mini-5.4", "processingTier": "standard", "centsPerMillionTokens": 450 },
+    { "metric": "code_assist_input", "model": "mythic-4.6", "processingTier": "batch", "centsPerMillionTokens": 150 },
+    { "metric": "code_assist_output", "model": "mythic-4.6", "processingTier": "batch", "centsPerMillionTokens": 750 },
+    { "metric": "code_assist_input", "model": "prime-mini-5.4", "processingTier": "batch", "centsPerMillionTokens": 36 },
+    { "metric": "code_assist_output", "model": "prime-mini-5.4", "processingTier": "batch", "centsPerMillionTokens": 225 },
+
+    { "metric": "chat_input", "model": "mythic-4.6", "processingTier": "standard", "centsPerMillionTokens": 300 },
+    { "metric": "chat_output", "model": "mythic-4.6", "processingTier": "standard", "centsPerMillionTokens": 1500 },
+    { "metric": "chat_input", "model": "prime-5.4", "processingTier": "standard", "centsPerMillionTokens": 250 },
+    { "metric": "chat_output", "model": "prime-5.4", "processingTier": "standard", "centsPerMillionTokens": 1500 },
+    { "metric": "chat_input", "model": "prime-mini-5.4", "processingTier": "standard", "centsPerMillionTokens": 75 },
+    { "metric": "chat_output", "model": "prime-mini-5.4", "processingTier": "standard", "centsPerMillionTokens": 450 },
+    { "metric": "chat_input", "model": "mythic-4.6", "processingTier": "batch", "centsPerMillionTokens": 150 },
+    { "metric": "chat_output", "model": "mythic-4.6", "processingTier": "batch", "centsPerMillionTokens": 750 },
+    { "metric": "chat_input", "model": "prime-5.4", "processingTier": "batch", "centsPerMillionTokens": 125 },
+    { "metric": "chat_output", "model": "prime-5.4", "processingTier": "batch", "centsPerMillionTokens": 750 },
+    { "metric": "chat_input", "model": "prime-mini-5.4", "processingTier": "batch", "centsPerMillionTokens": 38 },
+    { "metric": "chat_output", "model": "prime-mini-5.4", "processingTier": "batch", "centsPerMillionTokens": 225 },
+
+    { "metric": "voice_input", "model": "spark-4.5", "processingTier": "standard", "centsPerMillionTokens": 100 },
+    { "metric": "voice_output", "model": "spark-4.5", "processingTier": "standard", "centsPerMillionTokens": 500 },
+    { "metric": "voice_input", "model": "spark-4.5", "processingTier": "batch", "centsPerMillionTokens": 50 },
+    { "metric": "voice_output", "model": "spark-4.5", "processingTier": "batch", "centsPerMillionTokens": 250 },
+    { "metric": "voice_input", "model": "echo-1.5", "processingTier": "standard", "centsPerMillionTokens": 3200 },
+    { "metric": "voice_output", "model": "echo-1.5", "processingTier": "standard", "centsPerMillionTokens": 6400 }
+  ],
+  "products": {
+    "trialCredit": "Build - Trial Credit",
+    "prepaidCommit": "Build - Prepaid Commit",
+    "seatCredit": "Build - Seat-based Credit",
+    "proSubscription": "Build - Pro Subscription",
+    "enterpriseSubscription": "Build - Enterprise Subscription"
+  },
+  "packages": {
+    "free": { "name": "AI Builder Free", "creditCents": 500 },
+    "pro": { "name": "AI Builder Pro", "monthlyPriceCents": 2000, "monthlyCreditCents": 2000 },
+    "quickstart": { "name": "AI Builder Enterprise Quickstart", "prepaidCents": 250000, "durationMonths": 12 }
+  },
+  "powerUser": {
+    "contractName": "AI Builder B2B Power User",
+    "annualCommitCents": 10000000,
+    "durationMonths": 12,
+    "seatCount": 5,
+    "seatMonthlyPriceCents": 200000,
+    "seatMonthlyCreditCents": 200000,
+    "usageMultiplier": 0.85
+  },
+  "personas": [
+    { "key": "pro", "name": "AI Builder Starter Pro", "package": "pro" },
+    { "key": "enterprise-quickstart", "name": "AI Builder Starter Enterprise Quickstart", "package": "quickstart" },
+    { "key": "b2b-power-user", "name": "AI Builder Starter B2B Power User", "directContract": "power-user" }
+  ]
+}

@@ -45,10 +45,16 @@ METRONOME_DELIVERY_METHOD_ID=
 
 Store secrets in the ignored `.env` or `.env.local`; never commit them.
 
-## Generation catalog
+## Account starter
 
-The Generation app and account starter share one canonical manifest:
-`config/metronome/starter-kit.json`. Commands are dry-run by default:
+Settings → Admin → Account setup can prepare AI Builder, Generation, or both
+on a target account. Nothing is selected by default; selected modes are
+previewed and seeded sequentially with independent ownership and reset state.
+An optional custom pricing property is disabled by default and affects only
+starter-created rates and sample usage.
+
+The npm commands retain their Generation-only behavior and use the canonical
+`config/metronome/starter-kit.json` manifest. Commands are dry-run by default:
 
 ```bash
 npm run starter:plan

@@ -96,8 +96,14 @@ pricing and starter-account seeding must evolve together.
 - Modalities are image, video, and 3D.
 - Base dimensions remain independent:
   `operation`, `quality`, and `model`.
-- The optional custom pricing property is an additional dimension:
-  `service_tier = standard | priority`, where Priority is `1.25×`.
+- A starter account may add one optional custom pricing property as an
+  additional dimension. It is disabled by default. The teaching preset is
+  `time_band = off_peak | standard | peak` with `0.8×`, `1×`, and `1.25×`
+  multipliers. Starter-generated events include the selected value; the live
+  app does not dynamically adopt arbitrary starter properties.
+- The current live Generation demo retains its existing Standard/Priority
+  `service_tier` behavior. That compile-time app behavior is separate from an
+  arbitrary property selected while preparing another target account.
 - Neutral model IDs are `vision-2`, `motion-1`, and `mesh-3`; do not include
   `Lora` or `Generate` in model IDs.
 - Each billable metric currently uses one combined group key containing its
@@ -226,6 +232,20 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
   1. account/catalog setup;
   2. demo-customer seeding; and
   3. customer/environment cleanup.
+- Account Setup selects AI Builder, Generation, or both explicitly; no mode is
+  selected by default. With both selected, AI Builder completes before
+  Generation unlocks.
+- Each selected mode has an independent prefix, review, preview, seed status,
+  ownership journal, and reset scope.
+- AI Builder starter setup must work on a blank target account and create its
+  token catalog, packages, Pro/Quickstart/B2B personas, deterministic usage,
+  and optional Stripe linkage. It must not depend on legacy Demo Hub packages.
+- AI Builder continues to use USD cents and canonical `processing_tier`.
+  Generation continues to use custom Generation Credits. Shared setup code
+  must never convert or combine the two units.
+- Optional custom properties append to canonical mode dimensions and apply
+  only to selected usage metrics/products/rates, never fixed or subscription
+  products.
 - Power-user creation asks which mode to seed; cleanup does not need a mode.
 - Target Metronome and optional Stripe test keys are entered explicitly and
   retained only in memory. Never copy, clear, or overwrite `.env`.

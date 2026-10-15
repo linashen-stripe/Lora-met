@@ -1,9 +1,13 @@
-# Metronome Starter Kit CLI
+# Metronome Starter Kit
 
-This starter and the Generation app use the same canonical manifest,
-`config/metronome/starter-kit.json`. The configurable resource prefix defaults
-to `Generate`. Metronome-only remains the default; Stripe test billing is
+The Account Setup UI can prepare AI Builder, Generation, or both on a blank
+target account. The modes remain independent: AI Builder bills token usage in
+USD cents, while Generation bills image, video, and 3D usage in custom
+Generation Credits. Metronome-only remains the default; Stripe test billing is
 optional.
+
+The CLI commands below retain their existing Generation-only behavior and use
+`config/metronome/starter-kit.json`.
 
 ## Credentials
 
@@ -34,18 +38,20 @@ npm run starter:reset
 npm run starter:reset -- --confirm=metronome-starter
 ```
 
-The same workflow is available in the app under **Settings → Admin: seed a
-new account**. The API key entered there is kept only in page memory for the
-current job and is never written to local storage or an environment file. The
-page includes an optional custom pricing-property editor, resource prefix, and
-Stripe-assisted test-billing controls. Keys remain in page memory and are never
-written to browser storage or `.env`.
+The multi-mode workflow is available under **Settings → Admin: seed a new
+account**. No mode is selected by default. If both are selected, AI Builder is
+configured and seeded before Generation. Each mode has its own prefix, review,
+preview, seed state, ownership journal, and reset controls. The API key entered
+there is kept only in page memory for the current job and is never written to
+browser storage or an environment file.
 
 ## Custom pricing property
 
-The canonical catalog includes `service_tier: standard | priority` on all
-three usage products, with `1×` and `1.25×` multipliers. The admin editor can
-review or customize this property before seeding.
+The optional custom pricing property is disabled by default for both modes.
+The Admin editor offers `time_band: off_peak | standard | peak` as an
+educational starting point with `0.8×`, `1×`, and `1.25×` multipliers. AI
+Builder appends it to its canonical `model × processing_tier` pricing;
+Generation appends it to `operation × quality × model`.
 
 The base pricing dimensions remain separate: `operation`, `quality`, and
 `model`. The custom property is appended as an additional dimension; it does
@@ -76,20 +82,20 @@ aggregation paths.
 Add `--validate-config` to the same arguments to print the resolved product
 group keys and rate variants without credentials or API calls.
 
-`time_band` can be modeled in the same way:
+`time_band` can be modeled from the Generation CLI in the same way:
 
 ```bash
 npm run starter:plan -- \
   --pricing-property=time_band \
-  --pricing-values=off_peak:0.8,peak:1.25 \
+  --pricing-values=off_peak:0.8,standard:1,peak:1.25 \
   --pricing-metrics=image
 ```
 
 The starter distributes property values deterministically across example
-events. Metronome does not infer `peak`, `priority`, or other values: a
-production event producer must classify the event and send the property.
-The Generation playground exposes Standard/Priority controls and sends the
-selected `service_tier` value on every event.
+events. Metronome does not infer `peak`, `standard`, or `off_peak`: a
+production event producer must classify the event and send the property. This
+option intentionally does not reconfigure the live playground, pricing page,
+or dashboard.
 
 Billable metric and product dimensions cannot be safely repurposed in place.
 To change or remove a property after seeding, preview and run Starter Reset
@@ -100,6 +106,21 @@ use the same reset flow before retrying. Reset archives the partial metrics;
 the shared custom pricing unit is intentionally retained and reused.
 
 ## Packages and seeded personas
+
+### AI Builder
+
+The generic `Build` catalog contains six token metrics/products for Code
+Assist, Chat, and Voice input/output. `processing_tier` remains a canonical
+pricing dimension. Model names and resource names do not use the Lora prefix.
+
+- Free: $5 one-time USD credit.
+- Pro: $20 monthly subscription with $20 recurring monthly USD credit. Only
+  the starter-seeded Pro persona receives the $5-to-$15 recharge policy.
+- Enterprise Quickstart: $2,500 prepaid commitment lasting 12 months.
+- B2B Power User: $100,000 annual prepaid commitment, five seats at
+  $2,000/month, $2,000 monthly credit per seat, and a 0.85 usage multiplier.
+
+### Generation
 
 The reusable package catalog contains Free (100 one-time credits), Pro, and
 Enterprise Quickstart. The B2B Power User is intentionally not a package; it is
@@ -151,14 +172,15 @@ because the package payment gate is part of the package definition.
 
 ## Ownership and state
 
-Ingest aliases, package uniqueness keys, and contract uniqueness keys are
-namespaced with `metronome-starter`; catalog resources are matched by the
+Ingest aliases, package uniqueness keys, and contract uniqueness keys use
+separate mode namespaces (`ai-builder-starter` and `metronome-starter`);
+catalog resources are matched by recorded ownership IDs, mode tags, or the
 configured resource prefix and exact names. Reset archives matching contracts
-and customers before archiving the starter catalog. Custom pricing units are
-retained because they are shared account resources.
+and customers before archiving the starter catalog. Generation custom pricing
+units are retained because they are shared account resources.
 
 Customer ingest aliases include the starter catalog version. Before archiving
-a customer, reset removes all `metronome-starter:` aliases so Metronome releases
+a customer, reset removes that mode's starter aliases so Metronome releases
 them for future seeds. This removal happens before customer archival because
 aliases on archived customers remain reserved.
 
@@ -175,12 +197,12 @@ are detected; it never guesses which contract to archive.
 Reset archives every active contract on a customer carrying a starter ingest
 alias, so contracts that omit their uniqueness key are still cleaned up.
 
-After a successful seed, IDs are written under
-`.metronome/starter/<account-scope>/state.json`. `.metronome/` is ignored by
-git, and the account scope is a one-way API-key fingerprint; credentials are
-never written to state. Stripe-assisted runs journal the Stripe account,
-delivery method, owned customer IDs, billing configurations, and completion
-checkpoints after each cross-system step so a partial run can resume.
+After a successful seed, IDs are written under the ignored `.metronome/`
+directory in separate mode/account-fingerprint state files. The fingerprint is
+one-way and credentials are never written to state. Stripe-assisted runs
+journal the Stripe account, delivery method, owned customer IDs, billing
+configurations, and completion checkpoints after each cross-system step so a
+partial run can resume.
 
 Reset always previews both systems. Confirmed reset archives starter-owned
 Metronome contracts/customers/catalog resources. When the matching Stripe test

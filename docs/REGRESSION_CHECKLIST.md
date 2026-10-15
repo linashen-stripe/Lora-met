@@ -167,6 +167,17 @@ Changes in these areas require both-mode review:
 
 ## Admin, starter, and inspector
 
+- [ ] No starter mode is selected by default.
+- [ ] AI Builder can plan/seed/reset on a blank target account without legacy
+      Demo Hub packages.
+- [ ] With both modes selected, AI Builder completes before Generation
+      unlocks; a failure leaves the other mode untouched and retryable.
+- [ ] AI Builder starter usage remains USD cents; Generation starter usage
+      remains Generation Credits.
+- [ ] Each mode creates exactly one Pro, Quickstart, and B2B starter customer
+      with one active starter contract.
+- [ ] Demo-data reset retains catalog/packages. Full reset removes demo data
+      before mode-owned packages, rate cards, products, and metrics.
 - [ ] Preview performs no mutation.
 - [ ] API keys remain memory-only and are never written to `.env` or state.
 - [ ] Combined group keys satisfy pricing and presentation dimensions.
@@ -174,6 +185,15 @@ Changes in these areas require both-mode review:
 - [ ] Reset preview excludes unrelated account resources.
 - [ ] Reseed works after reset despite archived uniqueness keys.
 - [ ] Duplicate active contracts stop with a clear reset/review instruction.
+- [ ] Optional custom pricing is disabled by default for both modes.
+- [ ] When enabled, the property appears on selected metric filters/group
+      keys, product pricing keys, all expected rate variants, and seeded events.
+- [ ] Custom properties never alter fixed/subscription products, credit units,
+      package terms, commits, or seat allocations.
+- [ ] Changing, enabling, or disabling a property on a completed seed requires
+      full reset; demo-data reset is insufficient.
+- [ ] `time_band` preview shows `off_peak 0.8×`, `standard 1×`, and
+      `peak 1.25×`, with clear producer-classification/live-app warnings.
 - [ ] API Inspector captures supported browser and server-side Metronome/Stripe
       calls, supports search/filtering, and redacts credentials.
 

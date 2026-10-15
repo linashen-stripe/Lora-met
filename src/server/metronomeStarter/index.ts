@@ -14,6 +14,10 @@ import {
   createMetronomeCustomer,
 } from '../../utils/metronome';
 import { STRIPE_API_VERSION } from '../../utils/stripe';
+import {
+  validateStarterPricingDimension,
+  type StarterPricingDimension,
+} from '../starterPricingDimension';
 
 const ROOT = process.cwd();
 let metronomeFetch: typeof fetch = globalThis.fetch.bind(globalThis);
@@ -70,11 +74,7 @@ function enableApiInspectorTracing(): void {
 
 type MetricKey = 'image' | 'video' | '3d';
 type PackageKey = 'free' | 'quickstart' | 'pro';
-export type PricingDimension = {
-  propertyKey: string;
-  values: Array<{ value: string; multiplier: number }>;
-  metrics: MetricKey[];
-};
+export type PricingDimension = StarterPricingDimension<MetricKey>;
 type StarterConfig = {
   version: number;
   namespace: string;
@@ -185,6 +185,7 @@ export interface StarterRunOptions {
   apiKey: string;
   mode?: 'plan' | 'seed' | 'reset' | 'validate';
   confirmReset?: boolean;
+  resetScope?: 'demo-data' | 'full';
   pricingDimension?: PricingDimension | null;
   resourcePrefix?: string;
   quickstartName?: string;
@@ -352,65 +353,11 @@ function option(name: string): string | undefined {
 }
 
 function validatePricingDimension(value: unknown): PricingDimension | null {
-  if (value == null) return null;
-  if (!value || typeof value !== 'object') {
-    throw new Error('Pricing dimension must be an object.');
-  }
-  const candidate = value as {
-    propertyKey?: unknown;
-    values?: unknown;
-    metrics?: unknown;
-  };
-  const propertyKey =
-    typeof candidate.propertyKey === 'string'
-      ? candidate.propertyKey.trim()
-      : '';
-  if (!/^[a-z][a-z0-9_]{0,63}$/.test(propertyKey)) {
-    throw new Error(
-      'Pricing property must start with a lowercase letter and contain only lowercase letters, numbers, and underscores.',
-    );
-  }
-  if (RESERVED_PROPERTY_KEYS.has(propertyKey)) {
-    throw new Error(`Pricing property "${propertyKey}" is reserved.`);
-  }
-  if (
-    !Array.isArray(candidate.values) ||
-    candidate.values.length < 2 ||
-    candidate.values.length > 4
-  ) {
-    throw new Error('Pricing property requires 2–4 values.');
-  }
-  const values = candidate.values.map((entry, index) => {
-    if (!entry || typeof entry !== 'object') {
-      throw new Error(`Pricing value ${index + 1} is invalid.`);
-    }
-    const row = entry as { value?: unknown; multiplier?: unknown };
-    const item = typeof row.value === 'string' ? row.value.trim() : '';
-    const multiplier = Number(row.multiplier);
-    if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(item)) {
-      throw new Error(
-        `Pricing value ${index + 1} must contain only letters, numbers, underscores, or hyphens.`,
-      );
-    }
-    if (!Number.isFinite(multiplier) || multiplier <= 0) {
-      throw new Error(`Multiplier for "${item}" must be greater than zero.`);
-    }
-    return { value: item, multiplier };
+  return validateStarterPricingDimension(value, {
+    metricKeys: ['image', 'video', '3d'] as const,
+    reservedPropertyKeys: RESERVED_PROPERTY_KEYS,
+    metricLabel: 'Generation',
   });
-  if (new Set(values.map((entry) => entry.value)).size !== values.length) {
-    throw new Error('Pricing property values must be unique.');
-  }
-  if (!Array.isArray(candidate.metrics)) {
-    throw new Error('Pricing property must select Image, Video, 3D, or a combination.');
-  }
-  const metrics = [...new Set(candidate.metrics)].filter(
-    (metric): metric is MetricKey =>
-      metric === 'image' || metric === 'video' || metric === '3d',
-  );
-  if (metrics.length === 0 || metrics.length !== candidate.metrics.length) {
-    throw new Error('Pricing metrics must contain Image, Video, 3D, or a combination.');
-  }
-  return { propertyKey, values, metrics };
 }
 
 function resolvePricingDimension(): PricingDimension | null {
@@ -1852,6 +1799,7 @@ async function resetStarter(
   client: Metronome,
   config: StarterConfig,
   confirmed: boolean,
+  resetScope: 'demo-data' | 'full',
   stripeState?: Pick<
     StarterState,
     'stripeAccountId' | 'stripeCustomers' | 'billingMode'
@@ -1897,18 +1845,27 @@ async function resetStarter(
       name: customer.name,
       ingestAliases: customer.ingest_aliases,
     })),
-    packages: ownedPackages.map((pkg) => ({ id: pkg.id, name: pkg.name })),
-    rateCards: found.rateCard
+    packages:
+      resetScope === 'full'
+        ? ownedPackages.map((pkg) => ({ id: pkg.id, name: pkg.name }))
+        : [],
+    rateCards: resetScope === 'full' && found.rateCard
       ? [{ id: found.rateCard.id, name: found.rateCard.name }]
       : [],
-    products: found.products.map((product) => ({
-      id: product.id,
-      name: product.current.name,
-    })),
-    metrics: found.metrics.map((metric) => ({
-      id: metric.id,
-      name: metric.name,
-    })),
+    products:
+      resetScope === 'full'
+        ? found.products.map((product) => ({
+            id: product.id,
+            name: product.current.name,
+          }))
+        : [],
+    metrics:
+      resetScope === 'full'
+        ? found.metrics.map((metric) => ({
+            id: metric.id,
+            name: metric.name,
+          }))
+        : [],
     retainedPricingUnit: found.pricingUnit
       ? { id: found.pricingUnit.id, name: found.pricingUnit.name }
       : null,
@@ -1925,6 +1882,7 @@ async function resetStarter(
       {
         mode: confirmed ? 'confirmed-reset' : 'reset-preview',
         namespace: config.namespace,
+        resetScope,
         summary,
       },
       null,
@@ -1955,20 +1913,24 @@ async function resetStarter(
     });
     await client.v1.customers.archive({ id: customer.id });
   }
-  for (const pkg of ownedPackages) {
-    await client.v1.packages.archive({ package_id: pkg.id });
-  }
-  if (found.rateCard) {
-    await client.v1.contracts.rateCards.archive({ id: found.rateCard.id });
-  }
-  for (const product of found.products) {
-    await client.v1.contracts.products.archive({ product_id: product.id });
-  }
-  for (const metric of found.metrics) {
-    await client.v1.billableMetrics.archive({ id: metric.id });
+  if (resetScope === 'full') {
+    for (const pkg of ownedPackages) {
+      await client.v1.packages.archive({ package_id: pkg.id });
+    }
+    if (found.rateCard) {
+      await client.v1.contracts.rateCards.archive({ id: found.rateCard.id });
+    }
+    for (const product of found.products) {
+      await client.v1.contracts.products.archive({ product_id: product.id });
+    }
+    for (const metric of found.metrics) {
+      await client.v1.billableMetrics.archive({ id: metric.id });
+    }
   }
   emit(
-    'Starter resources archived. The custom pricing unit is retained because Metronome pricing units are shared account resources.',
+    resetScope === 'full'
+      ? 'Starter resources archived. The custom pricing unit is retained because Metronome pricing units are shared account resources.'
+      : 'Starter demo customers and contracts archived; catalog resources were retained.',
   );
 }
 
@@ -2059,12 +2021,17 @@ export async function runStarter(
       fetch: metronomeFetch,
     });
     const previousState = await readStarterState(apiKey);
+    const previousCheckpoints = previousState?.checkpoints ?? [];
+    const stateIsActive =
+      previousCheckpoints.lastIndexOf('complete') >
+      previousCheckpoints.lastIndexOf('full-reset-complete');
     const requestedBillingMode = options.stripeSecretKey?.trim()
       ? 'stripe'
       : 'metronome-only';
     if (
       options.mode === 'seed' &&
-      previousState?.checkpoints?.includes('complete') &&
+      stateIsActive &&
+      previousState &&
       previousState.billingMode &&
       previousState.billingMode !== requestedBillingMode
     ) {
@@ -2074,12 +2041,24 @@ export async function runStarter(
     }
     if (
       options.mode === 'seed' &&
-      previousState?.checkpoints?.includes('complete') &&
+      stateIsActive &&
+      previousState &&
       previousState.resourcePrefix &&
       previousState.resourcePrefix !== config.resourcePrefix
     ) {
       throw new Error(
         `This account was seeded with prefix "${previousState.resourcePrefix}". Reset it before changing the prefix.`,
+      );
+    }
+    if (
+      options.mode === 'seed' &&
+      stateIsActive &&
+      previousState &&
+      stable(previousState.pricingDimension ?? null) !==
+        stable(pricingDimension)
+    ) {
+      throw new Error(
+        'This account was seeded with a different optional pricing property. Run a full reset before changing, enabling, or disabling it.',
       );
     }
     if (
@@ -2137,13 +2116,11 @@ export async function runStarter(
         client,
         resetConfig,
         Boolean(options.confirmReset),
+        options.resetScope ?? 'full',
         previousState,
       );
-      if (
-        options.confirmReset &&
-        stripeSeed &&
-        previousState?.stripeCustomers
-      ) {
+      let remainingStripeCustomers = previousState?.stripeCustomers ?? {};
+      if (options.confirmReset && stripeSeed && previousState?.stripeCustomers) {
         for (const customerId of Object.values(
           previousState.stripeCustomers,
         )) {
@@ -2164,12 +2141,33 @@ export async function runStarter(
             }
           }
         }
+        remainingStripeCustomers = {};
+      }
+      if (options.confirmReset && previousState) {
+        const fullReset =
+          (options.resetScope ?? 'full') === 'full' &&
+          Object.keys(remainingStripeCustomers).length === 0;
         await writeStarterState(apiKey, {
           ...previousState,
-          stripeCustomers: {},
+          ...(fullReset
+            ? {
+                metrics: {},
+                products: {},
+                rateCardId: undefined,
+                packages: {},
+              }
+            : {}),
+          customers: {},
+          contracts: {},
+          billingConfigurations: {},
+          stripeCustomers: remainingStripeCustomers,
           checkpoints: [
             ...(previousState.checkpoints ?? []),
-            'reset-complete',
+            fullReset
+              ? 'full-reset-complete'
+              : (options.resetScope ?? 'full') === 'demo-data'
+                ? 'demo-reset-complete'
+                : 'reset-pending-stripe-cleanup',
           ],
           generatedAt: new Date().toISOString(),
         });
@@ -2378,7 +2376,8 @@ export async function runStarterFromCli(): Promise<void> {
           ? 'seed'
           : 'plan',
     confirmReset: confirmation === manifest.namespace,
-    pricingDimension: dimension ?? undefined,
+    // No CLI flags means no optional pricing property, matching the Admin API.
+    pricingDimension: dimension,
     resourcePrefix:
       process.env.METRONOME_STARTER_RESOURCE_PREFIX?.trim(),
     quickstartName:

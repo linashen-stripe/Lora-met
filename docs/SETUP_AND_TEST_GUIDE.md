@@ -40,13 +40,18 @@ METRONOME_DELIVERY_METHOD_ID=...           # required with Stripe when ambiguous
 
 Open **Settings → Admin: seed a new account**.
 
-1. Enter the target Metronome API key.
-2. Review the expanded starter configuration.
-3. Keep the default prefix `Generate` unless the target account needs another
-   explicit namespace.
-4. Optionally enter a Stripe test key and delivery method for full billing.
-5. Preview before applying.
-6. Save the generated state file location/result for later scoped reset.
+1. Explicitly select AI Builder, Generation, or both; nothing is selected by
+   default.
+2. Enter the target Metronome API key.
+3. Optionally enter a Stripe test key and delivery method for full billing.
+4. Review and preview each selected mode. With both selected, complete AI
+   Builder before Generation unlocks.
+5. Keep the generic prefixes `Build` and `Generate` unless the target account
+   needs another explicit namespace.
+6. Leave the optional custom pricing property disabled unless the target is
+   specifically demonstrating event-property pricing.
+7. Seed each selected mode and save its generated state result for later
+   scoped reset.
 
 Keys entered in Admin are memory-only and are not written to browser storage or
 `.env`.
@@ -76,7 +81,6 @@ Generation:
 
 - One `Generation Credits` pricing unit.
 - Image, video, and 3D billable metrics and products.
-- Standard/Priority `service_tier` rates.
 - Free, Pro, and Enterprise Quickstart packages.
 - Enterprise Quickstart, Pro, and B2B Power User personas.
 - The B2B persona uses a direct contract, five seats, per-seat recurring
@@ -86,9 +90,18 @@ Stripe-assisted mode additionally creates one recorded Stripe test customer
 and default test card per persona, links billing configurations, enables the
 Pro invoice-gated threshold, and finalizes/pays available test invoices.
 
-AI Builder uses account-specific existing primitives to create canonical
-AI Builder Free, Pro, and Enterprise Quickstart packages. Its B2B Power User
-remains a direct negotiated contract.
+AI Builder:
+
+- Six input/output token metrics and products across Code Assist, Chat, and
+  Voice.
+- Canonical `model × processing_tier` USD-cent rates.
+- Free, Pro, and Enterprise Quickstart packages.
+- Pro, Enterprise Quickstart, and direct-contract five-seat B2B personas.
+
+When the optional custom pricing property is enabled, confirm that the
+selected metrics, products, rate variants, and starter usage events all carry
+the configured property. The live app intentionally does not emit arbitrary
+starter properties.
 
 ## 4. Clean-account smoke test
 
