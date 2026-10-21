@@ -99,6 +99,7 @@ interface CreateMetronomeCustomerParams {
   stripeCustomerId?: string;
   deliveryMethodId?: string;
   ingestAliases?: string[];
+  stripeCollectionMethod?: 'charge_automatically' | 'send_invoice';
 }
 
 type StripeDeliveryMethod = 'direct_to_billing_provider' | 'aws_sqs' | 'tackle' | 'aws_sns';
@@ -202,14 +203,14 @@ export async function createMetronomeCustomer(
 
   const billingConfiguration = (includeTax: boolean) => ({
     billing_provider: 'stripe' as const,
-    delivery_method: stripeLink!.delivery_method,
     ...(stripeLink!.delivery_method_id
       ? { delivery_method_id: stripeLink!.delivery_method_id }
-      : {}),
+      : { delivery_method: stripeLink!.delivery_method }),
     ...(includeTax ? { tax_provider: 'stripe' as const } : {}),
     configuration: {
       stripe_customer_id: params.stripeCustomerId!,
-      stripe_collection_method: 'charge_automatically' as const,
+      stripe_collection_method:
+        params.stripeCollectionMethod ?? 'charge_automatically',
     },
   });
 

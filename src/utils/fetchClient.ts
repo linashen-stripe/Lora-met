@@ -48,12 +48,18 @@ fetchClient.interceptors.request.use(function (config) {
     stripeCustomerId?: string;
   };
 
-  config.headers['demo-stripesecretkey'] = stripeSecretKey;
-  config.headers['demo-stripepublishablekey'] = stripePublishableKey;
-  config.headers['demo-metronomeapikey'] = metronomeApiKey;
-  if (metronomeDeliveryMethodId) {
-    config.headers['demo-metronomedeleivemethodid'] = metronomeDeliveryMethodId;
+  const hasAdminCredentialSource = Boolean(
+    config.headers['x-admin-credential-source'],
+  );
+  if (!hasAdminCredentialSource) {
+    config.headers['demo-stripesecretkey'] = stripeSecretKey;
+    config.headers['demo-metronomeapikey'] = metronomeApiKey;
+    if (metronomeDeliveryMethodId) {
+      config.headers['demo-metronomedeleivemethodid'] =
+        metronomeDeliveryMethodId;
+    }
   }
+  config.headers['demo-stripepublishablekey'] = stripePublishableKey;
   config.headers['demo-currency'] = currency;
   config.headers['demo-customer'] = id;
   if (stripeCustomerId) {

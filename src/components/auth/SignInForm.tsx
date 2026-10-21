@@ -19,9 +19,8 @@ import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import SeedPersonaCheckoutDialog, {
   type SeedPersonaCheckoutData,
 } from '@/components/auth/SeedPersonaCheckoutDialog';
+import { DEMO_CONTRACT_LOOKBACK_DAYS } from '@/utils/demoUsageSeedProfiles';
 
-// Keep the one-month Enterprise prepaid commit active when history is seeded.
-const QUICKSTART_DAYS_AGO = 29;
 type SeedPersona = 'quickstart' | 'pro' | 'b2b';
 
 const SignInForm = () => {
@@ -152,7 +151,7 @@ const SignInForm = () => {
           stripeCustomerId: data.stripeCustomerId,
           metronomeCustomerId: data.metronomeCustomerId,
           language: lang,
-          contractStartDaysAgo: QUICKSTART_DAYS_AGO,
+          contractStartDaysAgo: DEMO_CONTRACT_LOOKBACK_DAYS,
           contractPackage:
             persona === 'pro' ? ('premium' as const) : ('enterprise' as const),
           seedPersona: persona,

@@ -4,20 +4,25 @@
  * then ingests synthetic `ai_platform.usage` events. HTTP routes wrap {@link seedMetronomeUsage}.
  */
 import {
-  startOfMonth,
-  startOfDay,
   addDays,
   format,
   differenceInCalendarDays,
 } from 'date-fns';
 import Metronome from '@metronome/sdk';
-import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
 import { LORA_MODEL_SLUG } from '@/config/metronomeModelLabels';
 import { metronomeContractPoolCapCents } from '@/utils/metronomeContractPool';
+import {
+  preparedProConsumptionFraction,
+  quickstartConsumptionFraction,
+} from '@/utils/demoUsageSeedProfiles';
 
-export type SeedStory = 'healthy' | 'at-risk';
+export type SeedStory = 'healthy' | 'at-risk' | 'burst';
 
-export { DEMO_METRONOME_USAGE_USER_IDS };
+/**
+ * Bump only when the emitted event schema changes in a way that requires
+ * replacing previously accepted-but-unrated transactions.
+ */
+export const AI_BUILDER_SEED_EVENT_REVISION = 'v2-workspace';
 
 export interface ModelConfig {
   name: string;
@@ -28,6 +33,7 @@ export interface ModelConfig {
   /** $ / 1M tokens for `processing_tier: batch`; defaults to standard when package has no batch row. */
   batchInputRate?: number;
   batchOutputRate?: number;
+  supportsBatch?: boolean;
 }
 
 export interface ProductConfig {
@@ -39,24 +45,6 @@ export interface ProductConfig {
   models: ModelConfig[];
 }
 
-/**
- * Resolves per-seat `user_id`s for seed-usage GET.
- * - `userIds=a,b,c` wins when non-empty.
- * - Otherwise default: {@link DEMO_METRONOME_USAGE_USER_IDS} (multi-seat demo).
- * - `singleSeat=1` or `perUser=0`: legacy single-actor (customer id only; no synthetic seats).
- */
-export function usageUserIdsFromSeedQuery(searchParams: URLSearchParams): string[] | undefined {
-  const raw = searchParams.get('userIds');
-  if (raw?.trim()) {
-    const ids = raw.split(',').map((s) => s.trim()).filter(Boolean);
-    if (ids.length) return ids;
-  }
-  if (searchParams.get('singleSeat') === '1' || searchParams.get('perUser') === '0') {
-    return undefined;
-  }
-  return [...DEMO_METRONOME_USAGE_USER_IDS];
-}
-
 function djb2Hash(str: string): number {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
@@ -65,8 +53,19 @@ function djb2Hash(str: string): number {
   return hash >>> 0;
 }
 
+function startOfUtcDay(date: Date): Date {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+    ),
+  );
+}
+
 /** Default: seed synthetic spend to this fraction of pool commitment (headroom below “maxed”). */
 export const DEFAULT_COMMITMENT_SPEND_CAP_FRACTION = 0.42;
+const AI_BUILDER_PRO_MONTHLY_CREDIT_DOLLARS = 20;
 
 /**
  * Positive weights summing to 1 — stable for the same `customerId` + `userIds` so re-seeds
@@ -178,9 +177,9 @@ const FALLBACK_PRODUCTS: ProductConfig[] = [
     dailyShare: 0.6,
     supportsBatch: true,
     models: [
-      { name: LORA_MODEL_SLUG.mythic46, inputRate: 3.0, outputRate: 15.0, share: 0.5 },
-      { name: LORA_MODEL_SLUG.prime54, inputRate: 2.5, outputRate: 15.0, share: 0.3 },
-      { name: LORA_MODEL_SLUG.primeMini54, inputRate: 0.75, outputRate: 4.5, share: 0.2 },
+      { name: LORA_MODEL_SLUG.mythic46, inputRate: 3.0, outputRate: 15.0, batchInputRate: 1.5, batchOutputRate: 7.5, supportsBatch: true, share: 0.5 },
+      { name: LORA_MODEL_SLUG.prime54, inputRate: 2.5, outputRate: 15.0, batchInputRate: 1.25, batchOutputRate: 7.5, supportsBatch: true, share: 0.3 },
+      { name: LORA_MODEL_SLUG.primeMini54, inputRate: 0.75, outputRate: 4.5, batchInputRate: 0.38, batchOutputRate: 2.25, supportsBatch: true, share: 0.2 },
     ],
   },
   {
@@ -189,8 +188,8 @@ const FALLBACK_PRODUCTS: ProductConfig[] = [
     dailyShare: 0.1,
     supportsBatch: false,
     models: [
-      { name: LORA_MODEL_SLUG.spark45, inputRate: 1.0, outputRate: 5.0, share: 0.6 },
-      { name: LORA_MODEL_SLUG.echo15, inputRate: 32.0, outputRate: 64.0, share: 0.4 },
+      { name: LORA_MODEL_SLUG.spark45, inputRate: 1.0, outputRate: 5.0, batchInputRate: 0.5, batchOutputRate: 2.5, supportsBatch: true, share: 0.6 },
+      { name: LORA_MODEL_SLUG.echo15, inputRate: 32.0, outputRate: 64.0, supportsBatch: false, share: 0.4 },
     ],
   },
   {
@@ -198,8 +197,8 @@ const FALLBACK_PRODUCTS: ProductConfig[] = [
     dailyShare: 0.3,
     supportsBatch: true,
     models: [
-      { name: LORA_MODEL_SLUG.mythic46, inputRate: 3.0, outputRate: 15.0, share: 0.6 },
-      { name: LORA_MODEL_SLUG.primeMini54, inputRate: 0.75, outputRate: 4.5, share: 0.4 },
+      { name: LORA_MODEL_SLUG.mythic46, inputRate: 3.0, outputRate: 15.0, batchInputRate: 1.5, batchOutputRate: 7.5, supportsBatch: true, share: 0.6 },
+      { name: LORA_MODEL_SLUG.primeMini54, inputRate: 0.75, outputRate: 4.5, batchInputRate: 0.36, batchOutputRate: 2.25, supportsBatch: true, share: 0.4 },
     ],
   },
 ];
@@ -247,6 +246,15 @@ export interface MetronomeSeedUsageParams {
   commitmentSpendCapFraction?: number;
   /** Exact synthetic spend target for the full seed window, in major currency units. */
   targetSpendDollars?: number;
+  /**
+   * Exact list-rate spend per user/seat in major currency units. This is used
+   * for B2B so one seat spills while the other four retain distinct balances.
+   */
+  perUserTargetSpendDollars?: readonly number[];
+  /** Stable idempotency key, normally the newly-created contract id. */
+  seedRunKey?: string;
+  /** Prepared non-B2B persona used to choose safe plan-specific pacing. */
+  persona?: 'pro' | 'quickstart';
   /** When pool cap is 0, target commitment dollars for scaling (default 50). */
   defaultCommitmentDollars?: number;
   /** Single `project_id` or multi-project split for attribution only. */
@@ -289,6 +297,32 @@ export type SeedMetronomeUsageResult =
 interface RateCardBuildResult {
   products: ProductConfig[] | null;
   currency: string | null;
+}
+
+/**
+ * Maps starter-owned and legacy token product names to the `api_product`
+ * values used by the billable metric filters.
+ */
+export function eventProductKeyFromTokenProductName(
+  name: string,
+): { productKey: string; direction: 'input' | 'output' } | null {
+  const match = name.match(
+    /^(.+?)(?:\s+-\s+|\s+)(Input|Output)\s+Tokens$/i,
+  );
+  if (!match) return null;
+
+  const normalizedProductName = match[1]!.trim().toLowerCase();
+  const productKey = normalizedProductName.endsWith('code assist')
+    ? 'code_assist'
+    : normalizedProductName.endsWith('chat')
+      ? 'chat'
+      : normalizedProductName.endsWith('voice')
+        ? 'voice'
+        : normalizedProductName.replace(/\s+/g, '_');
+  return {
+    productKey,
+    direction: match[2]!.toLowerCase() as 'input' | 'output',
+  };
 }
 
 async function pickCustomerContract(
@@ -421,11 +455,14 @@ async function buildProductsFromContractRateCard(
       const pricePerUnit: number = (rate as any).rate?.price ?? 0;
       const pricePerMillion = pricePerUnit / 100;
 
-      const match = name.match(/^(.+?)\s+-\s+(Input|Output)\s+Tokens$/i);
-      if (!match) continue;
+      const parsedProduct = eventProductKeyFromTokenProductName(name);
+      if (!parsedProduct) continue;
 
-      const [, productName, direction] = match;
-      const productKey = productName.toLowerCase().replace(/\s+/g, '_');
+      // Canonical starter resources include an ownership prefix, for example
+      // "Build - Code Assist Input Tokens". Event filters still require the
+      // unprefixed api_product value. Resolve by semantic suffix so starter and
+      // legacy Demo Hub rate cards feed the exact same event generator.
+      const { productKey, direction } = parsedProduct;
       if (tierRaw === 'batch') productHasBatchTokenRates.add(productKey);
 
       if (!productMap.has(productKey)) productMap.set(productKey, new Map());
@@ -484,6 +521,8 @@ async function buildProductsFromContractRateCard(
             outputRate: outR,
             batchInputRate: bin,
             batchOutputRate: bout,
+            supportsBatch:
+              acc.batchInputRate > 0 && acc.batchOutputRate > 0,
             share: fallbackModel?.share ?? evenModelShare,
           };
         }),
@@ -503,6 +542,20 @@ function getDailyTargets(
   daysToSeed: number,
   targetTotal: number,
 ): number[] {
+  if (story === 'burst') {
+    // Keep a trace of earlier activity for the period graph, then concentrate
+    // almost all spend in the final 30% to tell a distinct late-month story.
+    const burstStart = Math.max(0, Math.floor(daysToSeed * 0.7));
+    const raw = Array.from({ length: daysToSeed }, (_, index) => {
+      if (index < burstStart) return 0.05 + Math.random() * 0.05;
+      const recentDay = index - burstStart + 1;
+      return 2 + recentDay * recentDay + Math.random();
+    });
+    const rawSum = raw.reduce((sum, value) => sum + value, 0);
+    return raw.map((value) =>
+      Math.max(0, rawSum > 0 ? (value * targetTotal) / rawSum : 0),
+    );
+  }
   const spikeChance = story === 'at-risk' ? 0.3 : 0.2;
   const spikeDays = new Set<number>();
   for (let i = 0; i < daysToSeed; i++) {
@@ -563,7 +616,7 @@ function compactSeedTransactionId(args: {
   multiProject: boolean;
   kind: 'u';
   seq: number;
-  runId: number;
+  runId: string;
 }): string {
   const pfx = args.transactionIdPrefix === 'seed-mp' ? 'mp' : 'sd';
   const cust = args.customerId.replace(/-/g, '').slice(0, 8);
@@ -596,6 +649,9 @@ export async function seedMetronomeUsage(
     storyMultipliers = { healthy: 0.7, atRisk: 1.3 },
     commitmentSpendCapFraction: commitmentSpendCapFractionRaw,
     targetSpendDollars,
+    perUserTargetSpendDollars,
+    seedRunKey,
+    persona,
     defaultCommitmentDollars = 50,
     projectAttribution,
     transactionIdPrefix,
@@ -606,6 +662,15 @@ export async function seedMetronomeUsage(
     usageUserIds?.length && usageUserIds.every((s) => typeof s === 'string' && s.length > 0)
       ? usageUserIds
       : undefined;
+  if (
+    perUserTargetSpendDollars &&
+    (!usageUserIdsResolved ||
+      perUserTargetSpendDollars.length !== usageUserIdsResolved.length)
+  ) {
+    throw new Error(
+      'perUserTargetSpendDollars must contain exactly one target per usage user.',
+    );
+  }
 
   const contract = await pickCustomerContract(metronome, customerId, params);
 
@@ -643,12 +708,17 @@ export async function seedMetronomeUsage(
   );
 
   const now = new Date();
-  const effectiveContractStart = seedStartOverride ?? contractStart ?? startOfMonth(now);
+  const effectiveContractStart =
+    seedStartOverride ??
+    contractStart ??
+    new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
   const maxLookback = addDays(now, -maxLookbackDays);
   const periodStart =
     effectiveContractStart > maxLookback ? effectiveContractStart : maxLookback;
-  const seedStartDay = startOfDay(periodStart);
-  const lastSeededDay = startOfDay(addDays(now, -trailingUnseededDays));
+  const seedStartDay = startOfUtcDay(periodStart);
+  const lastSeededDay = startOfUtcDay(
+    addDays(now, -trailingUnseededDays),
+  );
   const seedEndDay = lastSeededDay < seedStartDay ? seedStartDay : lastSeededDay;
   const daysToSeed = Math.max(
     1,
@@ -660,12 +730,32 @@ export async function seedMetronomeUsage(
 
   const commitmentDollars =
     commitmentCents > 0 ? commitmentCents / 100 : defaultCommitmentDollars;
+  // Prepared Pro pacing is based only on the current $20 monthly grant. The
+  // contract response can also include the next recurring grant and a seeded
+  // auto-top-up commit; using the total pool would exhaust the current credit.
+  const targetPoolDollars =
+    persona === 'pro'
+      ? AI_BUILDER_PRO_MONTHLY_CREDIT_DOLLARS
+      : commitmentDollars;
+  const profileSpendCap =
+    persona === 'pro'
+      ? preparedProConsumptionFraction(story)
+      : persona === 'quickstart'
+        ? quickstartConsumptionFraction({
+            story,
+            startingAt: contract?.starting_at,
+            endingBefore: contract?.ending_before,
+            now,
+          })
+        : undefined;
   const spendCap =
     commitmentSpendCapFractionRaw != null && Number.isFinite(commitmentSpendCapFractionRaw)
       ? Math.min(0.95, Math.max(0.05, commitmentSpendCapFractionRaw))
-      : DEFAULT_COMMITMENT_SPEND_CAP_FRACTION;
+      : profileSpendCap ?? DEFAULT_COMMITMENT_SPEND_CAP_FRACTION;
   const storyScale =
-    story === 'at-risk'
+    persona
+      ? 1
+      : story === 'at-risk'
       ? storyMultipliers.atRisk / Math.max(storyMultipliers.healthy, 1e-6)
       : 1;
 
@@ -673,7 +763,17 @@ export async function seedMetronomeUsage(
   // (~75% share) clearly exceeds their allocation while others stay well under.
   // Falls back to pool-based calculation if the per-seat limit can't be resolved.
   let targetTotal: number;
-  if (
+  if (perUserTargetSpendDollars) {
+    targetTotal = perUserTargetSpendDollars.reduce(
+      (sum, target) => sum + target,
+      0,
+    );
+    console.log(
+      `${logLabel} explicit per-seat list-rate targets: ${perUserTargetSpendDollars
+        .map((target) => `$${target.toFixed(2)}`)
+        .join(', ')}`,
+    );
+  } else if (
     targetSpendDollars != null &&
     Number.isFinite(targetSpendDollars) &&
     targetSpendDollars > 0
@@ -682,7 +782,16 @@ export async function seedMetronomeUsage(
     console.log(
       `${logLabel} explicit seed spend target: $${targetTotal.toFixed(2)}`,
     );
-  } else if (usageUserIdsResolved && usageUserIdsResolved.length > 0 && contract) {
+  } else if (
+    !persona &&
+    usageUserIdsResolved &&
+    usageUserIdsResolved.length > 0 &&
+    contract
+  ) {
+    // Seat-derived targeting is a legacy B2B fallback. Prepared Pro and
+    // Quickstart customers also have usage user IDs, but their pacing must come
+    // from the persona profile above. Treating a single Pro user as a seat
+    // targets the full recurring credit and incorrectly exhausts the plan.
     const perSeatLimitDollars = extractPerSeatLimitDollars(contract, logLabel);
     if (perSeatLimitDollars > 0) {
       targetTotal = perSeatLimitDollars * usageUserIdsResolved.length * storyScale;
@@ -690,15 +799,15 @@ export async function seedMetronomeUsage(
         `${logLabel} per-seat limit: $${perSeatLimitDollars}, numSeats: ${usageUserIdsResolved.length}, targetTotal: $${targetTotal.toFixed(2)} (seat-based, storyScale ${storyScale.toFixed(2)}×)`,
       );
     } else {
-      targetTotal = commitmentDollars * spendCap * storyScale;
+      targetTotal = targetPoolDollars * spendCap * storyScale;
       console.log(
         `${logLabel} no per-seat limit found — falling back to pool-based target: $${targetTotal.toFixed(2)}`,
       );
     }
   } else {
-    targetTotal = commitmentDollars * spendCap * storyScale;
+    targetTotal = targetPoolDollars * spendCap * storyScale;
     console.log(
-      `${logLabel} commitment: $${commitmentDollars}, spendCap: ${(spendCap * 100).toFixed(0)}% of pool, targetTotal: $${targetTotal.toFixed(2)} (${story}, storyScale ${storyScale.toFixed(2)}×)`,
+      `${logLabel} target pool: $${targetPoolDollars}, spendCap: ${(spendCap * 100).toFixed(0)}% of pool, targetTotal: $${targetTotal.toFixed(2)} (${story}, storyScale ${storyScale.toFixed(2)}×)`,
     );
   }
 
@@ -714,17 +823,31 @@ export async function seedMetronomeUsage(
   }
 
   const dailyTargets = getDailyTargets(story, daysToSeed, targetTotal);
-  const runId = Date.now();
+  // Contract-scoped IDs make retries safe without preventing a genuinely new
+  // contract for the same customer from receiving its own seed history.
+  const runId =
+    seedRunKey ??
+    (usedContractId
+      ? `${usedContractId}:${AI_BUILDER_SEED_EVENT_REVISION}`
+      : `${customerId}:${story}:${AI_BUILDER_SEED_EVENT_REVISION}`);
   const events: any[] = [];
   let txSeq = 0;
+  const explicitTargetTotal =
+    perUserTargetSpendDollars?.reduce((sum, target) => sum + target, 0) ?? 0;
+  const explicitUserWeights =
+    perUserTargetSpendDollars && explicitTargetTotal > 0
+      ? perUserTargetSpendDollars.map((target) => target / explicitTargetTotal)
+      : null;
   const perUserWeights =
     usageUserIdsResolved && usageUserIdsResolved.length > 0
-      ? perUserSpendWeights(customerId, usageUserIdsResolved)
+      ? explicitUserWeights ??
+        perUserSpendWeights(customerId, usageUserIdsResolved)
       : null;
 
   const perUserTailWeights =
     usageUserIdsResolved && usageUserIdsResolved.length > 1
-      ? perUserTailMonthSpendWeights(customerId, usageUserIdsResolved)
+      ? explicitUserWeights ??
+        perUserTailMonthSpendWeights(customerId, usageUserIdsResolved)
       : null;
 
   const tailMonthKey = format(seedEndDay, 'yyyy-MM');
@@ -815,7 +938,7 @@ export async function seedMetronomeUsage(
             );
       const model = product.models[modelIndex]!;
       const tier =
-        product.supportsBatch &&
+        model.supportsBatch &&
         (occurrence === 1 ||
           weightedIndex(`${selectionSeed}:tier`, [0.75, 0.25]) === 1)
           ? 'batch'
@@ -839,7 +962,7 @@ export async function seedMetronomeUsage(
       const inputTokens = tokensForDollar(dailySpend * 0.6, inputRate);
       const outputTokens = tokensForDollar(dailySpend * 0.4, outputRate);
       const timestamp = new Date(day);
-      timestamp.setHours(
+      timestamp.setUTCHours(
         9 + (djb2Hash(`${selectionSeed}:hour`) % 8),
         djb2Hash(`${selectionSeed}:minute`) % 60,
       );
@@ -870,6 +993,9 @@ export async function seedMetronomeUsage(
           processing_tier: tier,
           user_id: seatUserId,
           ...(seatSpendSlices.length > 1 ? { seat_id: seatUserId } : {}),
+          // Every canonical AI Builder billable metric filters on this field.
+          // Omitting it makes Metronome accept events without rating any usage.
+          workspace_id: customerId,
           team_id: customerId,
           project_id: projectId,
           input_tokens: inputTokens,

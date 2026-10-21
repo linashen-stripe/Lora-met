@@ -13,8 +13,15 @@ import {
   resolveMetronomeDeliveryMethodIdAsync,
 } from '@/utils/metronome';
 import { seedGenerationUsage } from '@/utils/metronomeGenerationSeedUsage';
+import {
+  assertB2bSeatTargets,
+  b2bSeatConsumptionTargets,
+  demoB2bContractStart,
+  demoB2bCurrentPeriodLookbackDays,
+  expectedB2bSpillSeatCount,
+  type DemoUsageStory,
+} from '@/utils/demoUsageSeedProfiles';
 
-const GENERATION_HISTORY_DAYS = 27;
 const GENERATION_PRODUCT_NAMES = {
   prepaidCommit: METRONOME_CATALOG.products.creditGrant,
   seatCredit: METRONOME_CATALOG.products.creditGrant,
@@ -44,6 +51,7 @@ export interface CreateGenerationPowerUserParams {
   stripe: Stripe;
   customerName: string;
   deliveryMethodId?: string | null;
+  story?: DemoUsageStory;
   onLog?: (line: string) => void;
   deferUsageSeed?: (
     customerId: string,
@@ -78,6 +86,7 @@ export async function createGenerationPowerUser(
     metronome,
     stripe,
     customerName,
+    story = 'healthy',
     onLog = () => {},
     deferUsageSeed,
   } = params;
@@ -125,16 +134,13 @@ export async function createGenerationPowerUser(
     stripeCustomerId,
     deliveryMethodId,
     ingestAliases: [ingestAlias],
+    stripeCollectionMethod: 'send_invoice',
   });
   onLog(`    ✓ Stripe customer → ${stripeCustomerId}`);
   onLog(`    ✓ Metronome customer → ${customerId}`);
 
-  // Anchor to the prior month so the historical usage is covered by the
-  // contract and monthly seat terms have a complete prior service period.
-  const now = new Date();
-  const startingAt = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
-  );
+  // Align B2B terms to calendar-month seat-credit periods.
+  const startingAt = demoB2bContractStart();
   const endingBefore = new Date(startingAt);
   endingBefore.setUTCMonth(
     endingBefore.getUTCMonth() + METRONOME_CATALOG.powerUser.durationMonths,
@@ -259,17 +265,29 @@ export async function createGenerationPowerUser(
     `    ✓ ${seats.length} seats, ${METRONOME_CATALOG.powerUser.seatMonthlyCredits.toLocaleString()} monthly credits/seat, ${Math.round((1 - METRONOME_CATALOG.powerUser.usageMultiplier) * 100)}% usage discount`,
   );
 
+  const seatConsumptionTargets = b2bSeatConsumptionTargets(
+    METRONOME_CATALOG.powerUser.seatMonthlyCredits,
+    story,
+  );
+  assertB2bSeatTargets(
+    METRONOME_CATALOG.powerUser.seatMonthlyCredits,
+    seatConsumptionTargets,
+    expectedB2bSpillSeatCount(story),
+  );
   const seedUsage = () =>
     seedGenerationUsage({
       metronome,
       customerId,
-      story: 'healthy',
-      lookbackDays: GENERATION_HISTORY_DAYS - 1,
-      trailingUnseededDays: 1,
-      commitmentSpendCapFraction: 0.05,
-      // One seat exceeds its 10k allocation and spills into the shared commit;
-      // the other four retain visibly different, below-allocation usage.
-      userWeights: [23, 5, 4, 3, 2],
+      story,
+      lookbackDays: demoB2bCurrentPeriodLookbackDays(),
+      trailingUnseededDays: 0,
+      usageUserIds: seats,
+      // Targets are post-discount Generation Credits. The seeder converts them
+      // back to list-rate event credits before applying the 0.85 contract
+      // multiplier, preserving custom-credit units end to end.
+      perUserTargetCredits: seatConsumptionTargets,
+      usageMultiplier: METRONOME_CATALOG.powerUser.usageMultiplier,
+      seedRunKey: contractId,
     });
 
   let usage:

@@ -49,9 +49,14 @@ Store secrets in the ignored `.env` or `.env.local`; never commit them.
 
 Settings → Admin → Account setup can prepare AI Builder, Generation, or both
 on a target account. Nothing is selected by default; selected modes are
-previewed and seeded sequentially with independent ownership and reset state.
-An optional custom pricing property is disabled by default and affects only
-starter-created rates and sample usage.
+previewed and seeded independently, including concurrent jobs when both are
+selected.
+AI Builder uses `model × processing_tier`; Generation uses
+`operation × quality × model × service_tier`.
+Account setup/reset always uses explicit memory-only credentials. Demo customer
+seeding and cleanup can instead deliberately select the configured demo
+environment (Tools Panel override, then deployment environment) or explicit
+credentials for another account.
 
 The npm commands retain their Generation-only behavior and use the canonical
 `config/metronome/starter-kit.json` manifest. Commands are dry-run by default:
@@ -79,7 +84,14 @@ create linked Stripe test customers, payment methods, invoice routing, and
 payment while keeping credentials memory-only.
 
 See [the Starter Kit guide](docs/METRONOME_STARTER.md) for credentials, preview,
-seed, optional custom pricing properties, and namespace-scoped reset commands.
+seed, canonical pricing dimensions, and namespace-scoped reset commands.
+
+## Billing experiments
+
+Repeatable sandbox CLI experiments live under `scripts/experiments/`. They are
+dry-run by default, use the ignored target credential file, and require
+confirmed namespaced cleanup. See
+[`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md).
 
 ## Demo paths
 

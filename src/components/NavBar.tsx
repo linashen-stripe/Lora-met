@@ -33,6 +33,13 @@ export default function NavBar() {
 
           {/* Right-aligned settings button */}
           <div className='flex-1 flex items-center justify-end'>
+            <Link
+              href={`/${locale}`}
+              type='button'
+              className='rounded-full bg-background p-1 mr-5 text-text-color'
+            >
+              <span>{t('header.main_nav.home', 'Home')}</span>
+            </Link>
             {customer && customer.id ? (
               <>
                 <Link

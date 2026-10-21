@@ -8,25 +8,27 @@ export default async function AdminPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const sections = [
+  const provisioning = [
     {
-      title: 'Account setup',
+      title: 'Target account setup',
       description:
         'Preview and seed starter-owned primitives in a target account using explicit, memory-only API keys.',
       href: `/${locale}/admin/starter`,
       icon: Sprout,
     },
+  ];
+  const customerOperations = [
     {
       title: 'Demo customers',
       description:
-        'Create Free, Pro, Enterprise Quickstart, or B2B personas and seed representative usage.',
+        'Create Pro, Enterprise Quickstart, or B2B personas in the configured demo environment or another account.',
       href: `/${locale}/admin/customers`,
       icon: Users,
     },
     {
       title: 'Customer cleanup',
       description:
-        'Archive selected Metronome customers and permanently delete selected Stripe test customers.',
+        'Choose the target, then archive selected Metronome customers and delete selected Stripe test customers.',
       href: `/${locale}/admin/cleanup-environment`,
       icon: Trash2,
     },
@@ -47,29 +49,54 @@ export default async function AdminPage({
             to browser storage or environment files.
           </p>
         </div>
-        <div className='grid gap-6 md:grid-cols-3'>
-          {sections.map(({ title, description, href, icon: Icon }) => (
-            <Link
-              key={title}
-              href={href}
-              className='rounded-2xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'
-            >
-              <Icon className='h-7 w-7 text-purple' />
-              <h2 className='mt-5 text-xl font-semibold text-foreground'>
-                {title}
-              </h2>
-              <p className='mt-3 text-sm leading-6 text-muted-foreground'>
-                {description}
-              </p>
-            </Link>
-          ))}
-        </div>
+        {[
+          {
+            title: 'Provision an account',
+            description:
+              'Always uses explicit credentials that stay only in this Admin session.',
+            items: provisioning,
+          },
+          {
+            title: 'Customer operations',
+            description:
+              'Choose the configured demo environment or provide credentials for another account.',
+            items: customerOperations,
+          },
+        ].map((group) => (
+          <section key={group.title} className='mb-8'>
+            <h2 className='text-lg font-semibold text-foreground'>
+              {group.title}
+            </h2>
+            <p className='mt-1 text-sm text-muted-foreground'>
+              {group.description}
+            </p>
+            <div className='mt-4 grid gap-6 md:grid-cols-2'>
+              {group.items.map(
+                ({ title, description, href, icon: Icon }) => (
+                  <Link
+                    key={title}
+                    href={href}
+                    className='rounded-2xl border bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md'
+                  >
+                    <Icon className='h-7 w-7 text-purple' />
+                    <h3 className='mt-5 text-xl font-semibold text-foreground'>
+                      {title}
+                    </h3>
+                    <p className='mt-3 text-sm leading-6 text-muted-foreground'>
+                      {description}
+                    </p>
+                  </Link>
+                ),
+              )}
+            </div>
+          </section>
+        ))}
         <div className='mt-8 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950'>
           <Database className='mt-0.5 h-5 w-5 flex-none' />
           <p>
-            Use environment or Tools Panel keys for this demo account. Account
-            setup and starter reset require explicit target credentials and
-            typed confirmation on the setup page.
+            Every page identifies its target. Account setup always requires
+            explicit credentials; customer operations can deliberately use the
+            configured demo environment or another account.
           </p>
         </div>
       </div>

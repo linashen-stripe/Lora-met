@@ -135,3 +135,20 @@ export function metronomeContractPoolCapCents(contractLike: {
   const { scheduleSum, balanceSum } = metronomeContractScheduleAndBalanceSums(contractLike);
   return scheduleSum || balanceSum;
 }
+
+/** Aggregated consumption in the contract credit type's native minor units. */
+export function metronomeContractConsumedUnits(contractLike: {
+  commits?: unknown[] | null;
+  credits?: unknown[] | null;
+}): number | null {
+  const { scheduleSum, balanceSum } =
+    metronomeContractScheduleAndBalanceSums(contractLike);
+  if (balanceSum <= 0) return null;
+  const poolCap = scheduleSum || balanceSum;
+  const available = normalizeMetronomeSpendableSumCents(
+    balanceSum,
+    scheduleSum,
+    poolCap,
+  );
+  return Math.max(0, poolCap - available);
+}

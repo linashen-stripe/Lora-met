@@ -1,20 +1,24 @@
 import { defaultDemoSettings } from '@/config/config';
 
 export const withFallbackHeaders = (headerList: Headers) => {
+  const explicitAdminCredentials =
+    headerList.get('x-admin-credential-source') === 'explicit';
   const headers = {
     stripeSecretKey:
       headerList.get('demo-stripesecretkey') ||
-      process.env.STRIPE_SECRET_KEY ||
+      (!explicitAdminCredentials ? process.env.STRIPE_SECRET_KEY : undefined) ||
       undefined,
     stripePublishableKey:
       headerList.get('demo-stripepublishablekey') || undefined,
     metronomeApiKey:
       headerList.get('demo-metronomeapikey') ||
-      process.env.METRONOME_API_KEY ||
+      (!explicitAdminCredentials ? process.env.METRONOME_API_KEY : undefined) ||
       undefined,
     metronomeDeliveryMethodId:
       headerList.get('demo-metronomedeleivemethodid') ||
-      process.env.METRONOME_DELIVERY_METHOD_ID ||
+      (!explicitAdminCredentials
+        ? process.env.METRONOME_DELIVERY_METHOD_ID
+        : undefined) ||
       undefined,
     currency: headerList.get('demo-currency') || undefined,
     language: headerList.get('demo-language') || undefined,

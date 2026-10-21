@@ -3,6 +3,7 @@
     "main_nav": {
       "account": "账户",
       "chat": "对话",
+      "home": "首页",
       "pricing": "定价",
       "sign-out": "退出登录",
       "sign_in": "登录"
@@ -1140,6 +1141,42 @@
       "purchase_for": "购买{{amount}}",
       "select_amount": "选择金额",
       "min_amount": "最低{{amount}}"
+    }
+  },
+  "pricing_rates": {
+    "not_available": "Not available",
+    "per_million_tokens": "Per 1M tokens",
+    "standard": "Standard",
+    "standard_processing": "Immediate processing",
+    "batch": "Batch",
+    "batch_processing": "Asynchronous discount",
+    "priority": "Priority",
+    "billed_as": "Billed as",
+    "configuration": "Configuration",
+    "ai_builder": {
+      "chat": {
+        "description": "Token pricing for interactive conversations and agent workflows."
+      },
+      "code-assist": {
+        "description": "Token pricing for code generation, completion, and review."
+      },
+      "voice": {
+        "description": "Token pricing for real-time voice input and generated audio."
+      }
+    },
+    "generation": {
+      "image": {
+        "label": "Image",
+        "description": "Per-job credit pricing for concept images and high-resolution image sets."
+      },
+      "video": {
+        "label": "Video",
+        "description": "Per-second credit pricing, shown here for the standard 10-second job."
+      },
+      "3d": {
+        "label": "3D",
+        "description": "Per-job credit pricing for textured assets and production bundles."
+      }
     }
   }
 }

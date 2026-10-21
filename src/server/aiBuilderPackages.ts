@@ -5,19 +5,15 @@ import {
   AI_BUILDER_QUICKSTART_TERMS,
 } from '@/config/aiBuilderCatalog';
 import { listPackages } from '@/utils/metronome';
+import { demoContractStart } from '@/utils/demoUsageSeedProfiles';
 
 type PackageRecord = Record<string, any>;
 
 const AI_BUILDER_USAGE_TAG = 'usage';
 
-function priorMonthStart(): string {
-  // Seeded B2B contracts and events begin in the prior month. Backdate the
-  // metadata-only tag version to the same boundary so tag-scoped commits,
-  // recurring seat credits, and discounts all cover that historical usage.
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
-  ).toISOString();
+function seededContractStart(): string {
+  // Make the tag effective at the same rolling boundary as seeded contracts.
+  return demoContractStart().toISOString();
 }
 
 export async function ensureAiBuilderUsageProductTags(
@@ -61,7 +57,7 @@ export async function ensureAiBuilderUsageProductTags(
     if (tags.includes(AI_BUILDER_USAGE_TAG)) continue;
     await metronome.v1.contracts.products.update({
       product_id: product.id,
-      starting_at: priorMonthStart(),
+        starting_at: seededContractStart(),
       tags: [...tags, AI_BUILDER_USAGE_TAG],
     });
     updated += 1;

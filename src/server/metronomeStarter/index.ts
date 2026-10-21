@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import Metronome from '@metronome/sdk';
 import Stripe from 'stripe';
 import manifest from '../../../config/metronome/starter-kit.json';
+import { DEMO_METRONOME_USAGE_USER_IDS } from '../../config/demoMetronomeUsageSeats';
 import {
   createTraceId,
   safeJsonParse,
@@ -15,9 +16,26 @@ import {
 } from '../../utils/metronome';
 import { STRIPE_API_VERSION } from '../../utils/stripe';
 import {
+  assertB2bSeatTargets,
+  b2bSeatConsumptionTargets,
+  demoB2bContractStart,
+  demoB2bCurrentPeriodLookbackDays,
+  demoContractStart,
+  expectedB2bSpillSeatCount,
+  type DemoUsageStory,
+} from '../../utils/demoUsageSeedProfiles';
+import { seedGenerationUsage } from '../../utils/metronomeGenerationSeedUsage';
+import {
   validateStarterPricingDimension,
   type StarterPricingDimension,
 } from '../starterPricingDimension';
+import {
+  logStarterResetSummary,
+  starterResetCompletionMessage,
+} from '../starterResetSummary';
+import { createStripeTestCustomer } from '../stripeTestCustomer';
+
+const STARTER_USAGE_AGGREGATION_GRACE_MS = 10_000;
 
 const ROOT = process.cwd();
 let metronomeFetch: typeof fetch = globalThis.fetch.bind(globalThis);
@@ -186,7 +204,6 @@ export interface StarterRunOptions {
   mode?: 'plan' | 'seed' | 'reset' | 'validate';
   confirmReset?: boolean;
   resetScope?: 'demo-data' | 'full';
-  pricingDimension?: PricingDimension | null;
   resourcePrefix?: string;
   quickstartName?: string;
   proName?: string;
@@ -206,10 +223,8 @@ Usage:
   npm run starter:reset
   npm run starter:reset -- --confirm=metronome-starter
 
-Optional custom pricing property:
-  --pricing-property=service_tier
-  --pricing-values=standard:1,priority:1.25
-  --pricing-metrics=image,video,3d
+Configuration:
+  Generation always uses service_tier=standard|priority from the manifest.
   --validate-config
 
 Modes:
@@ -345,55 +360,11 @@ const RESERVED_PROPERTY_KEYS = new Set([
   'customer_id',
 ]);
 
-function option(name: string): string | undefined {
-  return argv
-    .find((arg) => arg.startsWith(`--${name}=`))
-    ?.slice(name.length + 3)
-    .trim();
-}
-
 function validatePricingDimension(value: unknown): PricingDimension | null {
   return validateStarterPricingDimension(value, {
     metricKeys: ['image', 'video', '3d'] as const,
     reservedPropertyKeys: RESERVED_PROPERTY_KEYS,
     metricLabel: 'Generation',
-  });
-}
-
-function resolvePricingDimension(): PricingDimension | null {
-  const fromEnvironment =
-    process.env.METRONOME_STARTER_PRICING_DIMENSION?.trim();
-  if (fromEnvironment) {
-    try {
-      return validatePricingDimension(JSON.parse(fromEnvironment));
-    } catch (error) {
-      throw new Error(
-        `Invalid METRONOME_STARTER_PRICING_DIMENSION: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-    }
-  }
-
-  const propertyKey = option('pricing-property');
-  const rawValues = option('pricing-values');
-  const rawMetrics = option('pricing-metrics');
-  if (!propertyKey && !rawValues && !rawMetrics) return null;
-  if (!propertyKey || !rawValues || !rawMetrics) {
-    throw new Error(
-      'Custom pricing requires --pricing-property, --pricing-values, and --pricing-metrics together.',
-    );
-  }
-  return validatePricingDimension({
-    propertyKey,
-    values: rawValues.split(',').map((entry) => {
-      const separator = entry.lastIndexOf(':');
-      return {
-        value: separator > 0 ? entry.slice(0, separator) : '',
-        multiplier: separator > 0 ? entry.slice(separator + 1) : Number.NaN,
-      };
-    }),
-    metrics: rawMetrics.split(',').map((entry) => entry.trim()),
   });
 }
 
@@ -817,6 +788,17 @@ async function ensureCatalog(
     const presentationGroupKey = presentationGroupKeyForProduct();
     const existing = productsByName.get(definition.name);
     if (existing) {
+      const existingTags = existing.current.tags ?? [];
+      if (!existingTags.includes(config.namespace)) {
+        throw new Error(
+          `Product "${definition.name}" exists without the ${config.namespace} ownership tag.`,
+        );
+      }
+      assertSame(
+        `${definition.name} billable_metric_id`,
+        existing.current.billable_metric_id,
+        metricIds[definition.key],
+      );
       assertSame(
         `${definition.name} pricing_group_key`,
         existing.current.pricing_group_key,
@@ -827,6 +809,14 @@ async function ensureCatalog(
         existing.current.presentation_group_key,
         presentationGroupKey,
       );
+      if (!existingTags.includes('usage')) {
+        emit(`Adding required usage tag: ${definition.name}`);
+        await client.v1.contracts.products.update({
+          product_id: existing.id,
+          starting_at: demoContractStart().toISOString(),
+          tags: [...existingTags, 'usage'],
+        });
+      }
       productIds[definition.key] = existing.id;
       continue;
     }
@@ -849,6 +839,11 @@ async function ensureCatalog(
   ] as const) {
     const existing = productsByName.get(name);
     if (existing) {
+      if (!(existing.current.tags ?? []).includes(config.namespace)) {
+        throw new Error(
+          `Product "${name}" exists without the ${config.namespace} ownership tag.`,
+        );
+      }
       productIds[key] = existing.id;
       continue;
     }
@@ -1167,11 +1162,10 @@ async function ensureCatalog(
   };
 }
 
-function hourBoundary(): string {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() - 28);
-  date.setUTCMinutes(0, 0, 0);
-  return date.toISOString();
+function starterContractStart(): string {
+  // Keep the full seeded history within Metronome's approximately 34-day
+  // backdating window and its first active billing period.
+  return demoContractStart().toISOString();
 }
 
 type StripeSeedContext = {
@@ -1273,33 +1267,16 @@ async function createStripePersonaCustomer(
   stripe: Stripe,
   persona: StarterConfig['personas'][number],
   namespace: string,
+  email = `${persona.key}@example.com`,
 ): Promise<string> {
-  const customer = await stripe.customers.create({
+  return createStripeTestCustomer(stripe, {
     name: persona.name,
-    email: `${persona.key}@example.com`,
-    address: {
-      line1: '354 Oyster Point Blvd',
-      city: 'South San Francisco',
-      state: 'CA',
-      postal_code: '94080',
-      country: 'US',
-    },
+    email,
     metadata: {
       starter_namespace: namespace,
       starter_persona: persona.key,
     },
   });
-  const paymentMethod = await stripe.paymentMethods.create({
-    type: 'card',
-    card: { token: 'tok_visa' },
-  });
-  await stripe.paymentMethods.attach(paymentMethod.id, {
-    customer: customer.id,
-  });
-  await stripe.customers.update(customer.id, {
-    invoice_settings: { default_payment_method: paymentMethod.id },
-  });
-  return customer.id;
 }
 
 function taxProviderDisabled(error: unknown): boolean {
@@ -1313,6 +1290,7 @@ async function ensureStripeBillingConfiguration(
   customerId: string,
   stripeCustomerId: string,
   stripeSeed: StripeSeedContext,
+  collectionMethod: 'charge_automatically' | 'send_invoice',
 ): Promise<string | undefined> {
   const existing = await client.v1.customers.retrieveBillingConfigurations({
     customer_id: customerId,
@@ -1328,14 +1306,13 @@ async function ensureStripeBillingConfiguration(
   const configuration = (withTax: boolean) => ({
     customer_id: customerId,
     billing_provider: 'stripe' as const,
-    delivery_method: stripeSeed.deliveryMethod as any,
     ...(stripeSeed.deliveryMethodId
       ? { delivery_method_id: stripeSeed.deliveryMethodId }
-      : {}),
+      : { delivery_method: stripeSeed.deliveryMethod as any }),
     ...(withTax ? { tax_provider: 'stripe' as const } : {}),
     configuration: {
       stripe_customer_id: stripeCustomerId,
-      stripe_collection_method: 'charge_automatically' as const,
+      stripe_collection_method: collectionMethod,
     },
   });
   try {
@@ -1414,10 +1391,14 @@ async function ensurePersonas(
   const customerIds: Record<string, string> = {};
   const contractIds: Record<string, string> = {};
   const billingConfigurationIds: Record<string, string> = {};
-  const startingAt = hourBoundary();
+  const packageStartingAt = starterContractStart();
   const contractRunId = Date.now().toString(36);
 
   for (const persona of config.personas) {
+    const startingAt =
+      persona.directContract === 'power-user'
+        ? demoB2bContractStart().toISOString()
+        : packageStartingAt;
     const existingCustomer = found.customers.find((candidate) =>
       candidate.ingest_aliases?.includes(persona.ingestAlias),
     );
@@ -1426,6 +1407,11 @@ async function ensurePersonas(
         candidate.name === persona.name &&
         !candidate.ingest_aliases?.includes(persona.ingestAlias),
     );
+    if (existingCustomer && existingCustomer.name !== persona.name) {
+      throw new Error(
+        `Starter customer "${existingCustomer.name}" already owns the ${persona.key} alias. Run a demo-data reset before changing its name to "${persona.name}".`,
+      );
+    }
     if (!existingCustomer && nameConflict) {
       throw new Error(
         `Customer name "${persona.name}" already exists without the starter ingest alias; refusing to adopt it.`,
@@ -1440,6 +1426,10 @@ async function ensurePersonas(
             ingestAliases: [persona.ingestAlias],
             stripeCustomerId: stripeSeed.customerIds[persona.key],
             deliveryMethodId: stripeSeed.deliveryMethodId,
+            stripeCollectionMethod:
+              persona.directContract === 'power-user'
+                ? 'send_invoice'
+                : 'charge_automatically',
           })
         : (
             await client.v1.customers.create({
@@ -1456,6 +1446,9 @@ async function ensurePersonas(
           customerId,
           stripeSeed.customerIds[persona.key],
           stripeSeed,
+          persona.directContract === 'power-user'
+            ? 'send_invoice'
+            : 'charge_automatically',
         );
       if (billingConfigurationId) {
         billingConfigurationIds[persona.key] = billingConfigurationId;
@@ -1536,7 +1529,8 @@ async function ensurePersonas(
       );
       const seatIds = Array.from(
         { length: powerUser.seatCount },
-        (_, index) => `power-user-seat-${index + 1}`,
+        (_, index) =>
+          DEMO_METRONOME_USAGE_USER_IDS[index] ?? `seat-user-${index + 1}`,
       );
       response = await client.v1.contracts.create({
         customer_id: customerId,
@@ -1549,13 +1543,12 @@ async function ensurePersonas(
           ? {
               billing_provider_configuration: {
                 billing_provider: 'stripe',
-                delivery_method: stripeSeed.deliveryMethod,
                 ...(stripeSeed.deliveryMethodId
                   ? {
                       delivery_method_id:
                         stripeSeed.deliveryMethodId,
                     }
-                  : {}),
+                  : { delivery_method: stripeSeed.deliveryMethod }),
               },
             }
           : {}),
@@ -1683,116 +1676,64 @@ async function ensurePersonas(
   return { customerIds, contractIds, billingConfigurationIds };
 }
 
-function stableIndex(seed: string, length: number): number {
-  return Number.parseInt(fingerprint(seed).slice(0, 8), 16) % length;
-}
-
 async function seedUsage(
   client: Metronome,
   config: StarterConfig,
   customerIds: Record<string, string>,
+  contractIds: Record<string, string>,
+  story: DemoUsageStory = 'healthy',
 ) {
-  const now = new Date();
-  const events: any[] = [];
+  let eventsIngested = 0;
   for (const persona of config.personas) {
     const isPowerUser = persona.key === 'b2b-power-user';
-    const userCount = isPowerUser ? config.powerUser.seatCount : 2;
-    const powerUserSeatPool = [8, 6, 4, 2, 1].flatMap((weight, index) =>
-      Array.from({ length: weight }, () => index),
-    );
-    const powerUserTargets = [1.5, 0.7, 0.45, 0.25, 0.1].map(
-      (fraction) => config.powerUser.seatMonthlyCredits * fraction,
-    );
-    const powerUserSpend = Array.from({ length: userCount }, () => 0);
-    for (let day = 1; day <= 21; day += 1) {
-      for (let slot = 0; slot < persona.usageScale; slot += 1) {
-        const timestamp = new Date(now);
-        timestamp.setUTCDate(timestamp.getUTCDate() - day);
-        const dateKey = timestamp.toISOString().slice(0, 10);
-        timestamp.setUTCHours(
-          8 +
-            stableIndex(
-              `${config.namespace}:${persona.key}:${dateKey}:${slot}:hour`,
-              14,
-            ),
-          (slot * 17) % 60,
-          0,
-          0,
-        );
-        const rate =
-          config.rates[
-            stableIndex(
-              `${config.namespace}:${persona.key}:${dateKey}:${slot}:rate`,
-              config.rates.length,
-            )
-          ];
-        const customerId = customerIds[persona.key];
-        const seed = `${config.namespace}:${customerId}:${persona.key}:${dateKey}:${slot}:${rate.metric}:${rate.operation}:${rate.quality}:${rate.model}`;
-        const userIndex = isPowerUser
-          ? powerUserSeatPool[
-              stableIndex(`${seed}:seat`, powerUserSeatPool.length)
-            ]
-          : slot % userCount;
-        const quantity =
-          rate.metric === 'video'
-            ? 5 + stableIndex(`${seed}:quantity`, 20)
-            : 1;
-        const selectedPricingValue =
-          pricingDimension?.metrics.includes(rate.metric)
-            ? pricingDimension.values[
-                stableIndex(
-                  `${seed}:${pricingDimension.propertyKey}`,
-                  pricingDimension.values.length,
-                )
-              ]
-            : null;
-        if (isPowerUser) {
-          const estimatedCredits =
-            quantity *
-            rate.creditsPerUnit *
-            (selectedPricingValue?.multiplier ?? 1) *
-            config.powerUser.usageMultiplier;
-          if (
-            powerUserSpend[userIndex] + estimatedCredits >
-            powerUserTargets[userIndex]
-          ) {
-            continue;
-          }
-          powerUserSpend[userIndex] += estimatedCredits;
-        }
-        events.push({
-          transaction_id: `${config.namespace}-${fingerprint(seed)}`,
-          customer_id: customerId,
-          event_type: config.eventType,
-          timestamp: timestamp.toISOString(),
-          properties: {
-            quantity,
-            modality: rate.metric,
-            operation: rate.operation,
-            quality: rate.quality,
-            model: rate.model,
-            unit: rate.metric === 'video' ? 'second' : 'job',
-            workspace_id: `${persona.key}-workspace`,
-            project_id: `${persona.key}-project-${(slot % 3) + 1}`,
-            user_id: isPowerUser
-              ? `power-user-seat-${userIndex + 1}`
-              : `${persona.key}-user-${userIndex + 1}`,
-            ...(selectedPricingValue && pricingDimension
-              ? {
-                  [pricingDimension.propertyKey]:
-                    selectedPricingValue.value,
-                }
-              : {}),
-          },
-        });
-      }
+    const customerId = customerIds[persona.key];
+    const contractId = contractIds[persona.key];
+    if (!customerId || !contractId) {
+      throw new Error(`Missing seeded ${persona.key} customer or contract.`);
     }
+    const powerUserTargets = b2bSeatConsumptionTargets(
+      config.powerUser.seatMonthlyCredits,
+      story,
+    );
+    if (isPowerUser) {
+      assertB2bSeatTargets(
+        config.powerUser.seatMonthlyCredits,
+        powerUserTargets,
+        expectedB2bSpillSeatCount(story),
+      );
+    }
+    const result = await seedGenerationUsage({
+      metronome: client,
+      customerId,
+      story,
+      seedRunKey: contractId,
+      ...(isPowerUser
+        ? {
+            lookbackDays: demoB2bCurrentPeriodLookbackDays(),
+            trailingUnseededDays: 0,
+            usageUserIds: [
+              ...DEMO_METRONOME_USAGE_USER_IDS.slice(
+                0,
+                config.powerUser.seatCount,
+              ),
+            ],
+            perUserTargetCredits: powerUserTargets,
+            usageMultiplier: config.powerUser.usageMultiplier,
+          }
+        : {
+            persona:
+              persona.key === 'pro'
+                ? ('pro' as const)
+                : ('quickstart' as const),
+            usageUserIds: [customerId],
+          }),
+    });
+    eventsIngested += result.eventsIngested;
+    emit(
+      `Seeded ${persona.key}: ${result.eventsIngested} shared-profile events (${result.estimatedBalanceConsumption.toLocaleString()} estimated balance units).`,
+    );
   }
-  for (let offset = 0; offset < events.length; offset += 100) {
-    await client.v1.usage.ingest({ usage: events.slice(offset, offset + 100) });
-  }
-  emit(`Ingested ${events.length} deterministic usage events.`);
-  return events.length;
+  return eventsIngested;
 }
 
 async function resetStarter(
@@ -1866,7 +1807,7 @@ async function resetStarter(
             name: metric.name,
           }))
         : [],
-    retainedPricingUnit: found.pricingUnit
+    retainedPricingUnit: found.pricingUnit?.id
       ? { id: found.pricingUnit.id, name: found.pricingUnit.name }
       : null,
     stripe: stripeState?.stripeCustomers
@@ -1877,18 +1818,22 @@ async function resetStarter(
         }
       : null,
   };
-  emit(
-    JSON.stringify(
-      {
-        mode: confirmed ? 'confirmed-reset' : 'reset-preview',
-        namespace: config.namespace,
-        resetScope,
-        summary,
-      },
-      null,
-      2,
-    ),
-  );
+  logStarterResetSummary(emit, {
+    confirmed,
+    scope: resetScope,
+    summary: {
+      contracts: summary.contracts.map(({ contractId }) => ({
+        id: contractId,
+      })),
+      customers: summary.customers,
+      packages: summary.packages,
+      rateCards: summary.rateCards,
+      products: summary.products,
+      metrics: summary.metrics,
+      retainedPricingUnit: summary.retainedPricingUnit,
+      stripeCustomerIds: summary.stripe?.customerIds,
+    },
+  });
   if (!confirmed) {
     emit(
       `Preview only. Apply with --confirm=${config.namespace}. No resources were changed.`,
@@ -1928,9 +1873,10 @@ async function resetStarter(
     }
   }
   emit(
-    resetScope === 'full'
-      ? 'Starter resources archived. The custom pricing unit is retained because Metronome pricing units are shared account resources.'
-      : 'Starter demo customers and contracts archived; catalog resources were retained.',
+    starterResetCompletionMessage(
+      resetScope,
+      Boolean(summary.retainedPricingUnit),
+    ),
   );
 }
 
@@ -1978,6 +1924,155 @@ async function settleStripeInvoices(
 
 let runActive = false;
 
+export type GenerationStarterPersona =
+  | 'pro'
+  | 'enterprise-quickstart'
+  | 'b2b-power-user';
+
+export interface PrepareGenerationPersonaOptions {
+  apiKey: string;
+  persona: GenerationStarterPersona;
+  story: DemoUsageStory;
+  customerName: string;
+  customerEmail: string;
+  stripeSecretKey?: string;
+  deliveryMethodId?: string;
+  onLog?: (line: string) => void;
+  onTrace?: (entry: ApiTraceEntry) => void;
+}
+
+export interface PreparedGenerationPersona {
+  billingMode: 'metronome-only' | 'stripe';
+  customerId: string;
+  contractId: string;
+  stripeCustomerId?: string;
+  eventsIngested: number;
+}
+
+/** Uses the canonical starter catalog, contract builder, and usage seeder for one Admin persona. */
+export async function prepareGenerationPersona(
+  options: PrepareGenerationPersonaOptions,
+): Promise<PreparedGenerationPersona> {
+  if (runActive) {
+    throw new Error('Another starter operation is already running.');
+  }
+  runActive = true;
+  emit = (...values) =>
+    options.onLog?.(
+      values
+        .map((value) =>
+          typeof value === 'string' ? value : JSON.stringify(value, null, 2),
+        )
+        .join(' '),
+    );
+  traceSink = options.onTrace;
+  metronomeFetch = globalThis.fetch.bind(globalThis);
+  let createdStripeCustomerId: string | undefined;
+  try {
+    const apiKey = options.apiKey.trim();
+    if (!apiKey) throw new Error('Target Metronome API key is required.');
+    if (!options.customerName.trim()) throw new Error('Customer name is required.');
+    if (!options.customerEmail.trim()) {
+      throw new Error('Customer email is required.');
+    }
+    pricingDimension = validatePricingDimension(manifest.pricingDimension);
+    enableApiInspectorTracing();
+    const client = new Metronome({
+      bearerToken: apiKey,
+      fetch: metronomeFetch,
+    });
+    const baseConfig = applyStarterOverrides(manifest as StarterConfig);
+    const selected = baseConfig.personas.find(
+      (persona) => persona.key === options.persona,
+    );
+    if (!selected) throw new Error(`Unknown Generation persona: ${options.persona}`);
+    const identity = createHash('sha256')
+      .update(options.customerEmail.trim().toLowerCase())
+      .digest('hex')
+      .slice(0, 16);
+    const selectedConfig: StarterConfig = {
+      ...baseConfig,
+      personas: [
+        {
+          ...selected,
+          name: options.customerName.trim(),
+          ingestAlias: `prepared-persona:generation:${selected.key}:${identity}`,
+        },
+      ],
+    };
+    let stripeSeed: StripeSeedContext | undefined;
+    if (options.stripeSecretKey?.trim()) {
+      const preflight = await preflightStripe(
+        client,
+        options.stripeSecretKey.trim(),
+        options.deliveryMethodId,
+        options.onTrace,
+      );
+      createdStripeCustomerId = await createStripePersonaCustomer(
+        preflight.stripe,
+        selectedConfig.personas[0],
+        baseConfig.namespace,
+        options.customerEmail.trim(),
+      );
+      stripeSeed = {
+        ...preflight,
+        customerIds: { [selected.key]: createdStripeCustomerId },
+      };
+    }
+    const catalog = await ensureCatalog(
+      client,
+      apiKey,
+      baseConfig,
+      stripeSeed?.deliveryMethod,
+    );
+    const personas = await ensurePersonas(
+      client,
+      selectedConfig,
+      catalog,
+      stripeSeed,
+    );
+    const eventsIngested = await seedUsage(
+      client,
+      selectedConfig,
+      personas.customerIds,
+      personas.contractIds,
+      options.story,
+    );
+    emit(
+      `Waiting ${STARTER_USAGE_AGGREGATION_GRACE_MS / 1000}s for Metronome balance aggregation...`,
+    );
+    await new Promise((resolveWait) =>
+      setTimeout(resolveWait, STARTER_USAGE_AGGREGATION_GRACE_MS),
+    );
+    if (stripeSeed) {
+      await settleStripeInvoices(
+        stripeSeed.stripe,
+        stripeSeed.customerIds,
+        Math.floor(Date.now() / 1000) - 300,
+      );
+    }
+    return {
+      billingMode: stripeSeed ? 'stripe' : 'metronome-only',
+      customerId: personas.customerIds[selected.key],
+      contractId: personas.contractIds[selected.key],
+      ...(createdStripeCustomerId
+        ? { stripeCustomerId: createdStripeCustomerId }
+        : {}),
+      eventsIngested,
+    };
+  } catch (error) {
+    if (createdStripeCustomerId && options.stripeSecretKey?.trim()) {
+      const stripe = new Stripe(options.stripeSecretKey.trim(), {
+        apiVersion: STRIPE_API_VERSION,
+      });
+      await stripe.customers.del(createdStripeCustomerId).catch(() => undefined);
+    }
+    throw error;
+  } finally {
+    runActive = false;
+  }
+}
+
 export async function runStarter(
   options: StarterRunOptions,
 ): Promise<{ mode: string; statePath?: string }> {
@@ -1997,11 +2092,7 @@ export async function runStarter(
   metronomeFetch = globalThis.fetch.bind(globalThis);
   try {
     const apiKey = options.apiKey.trim();
-    pricingDimension = validatePricingDimension(
-      options.pricingDimension === undefined
-        ? manifest.pricingDimension
-        : options.pricingDimension,
-    );
+    pricingDimension = validatePricingDimension(manifest.pricingDimension);
     const config = applyStarterOverrides(manifest as StarterConfig, options);
     if (options.mode === 'validate') {
       emit(
@@ -2058,7 +2149,7 @@ export async function runStarter(
         stable(pricingDimension)
     ) {
       throw new Error(
-        'This account was seeded with a different optional pricing property. Run a full reset before changing, enabling, or disabling it.',
+        'This account was seeded with a different service_tier definition. Run a full reset before applying the canonical Generation catalog.',
       );
     }
     if (
@@ -2297,6 +2388,13 @@ export async function runStarter(
         client,
         config,
         personas.customerIds,
+        personas.contractIds,
+      );
+      emit(
+        `Waiting ${STARTER_USAGE_AGGREGATION_GRACE_MS / 1000}s for Metronome balance aggregation...`,
+      );
+      await new Promise((resolveWait) =>
+        setTimeout(resolveWait, STARTER_USAGE_AGGREGATION_GRACE_MS),
       );
       if (stripeSeed) {
         await settleStripeInvoices(
@@ -2365,7 +2463,6 @@ export async function runStarterFromCli(): Promise<void> {
       'METRONOME_API_KEY is required in .env.metronome-target.local.',
     );
   }
-  const dimension = resolvePricingDimension();
   await runStarter({
     apiKey: apiKey ?? '',
     mode: validateOnly
@@ -2376,8 +2473,6 @@ export async function runStarterFromCli(): Promise<void> {
           ? 'seed'
           : 'plan',
     confirmReset: confirmation === manifest.namespace,
-    // No CLI flags means no optional pricing property, matching the Admin API.
-    pricingDimension: dimension,
     resourcePrefix:
       process.env.METRONOME_STARTER_RESOURCE_PREFIX?.trim(),
     quickstartName:

@@ -4,7 +4,6 @@
   "resourcePrefix": "Build",
   "eventType": "ai_platform.usage",
   "fiatCurrency": "USD",
-  "pricingDimension": null,
   "rateCard": {
     "name": "Build - AI Platform Rate Card",
     "alias": "ai-builder-starter-v1"

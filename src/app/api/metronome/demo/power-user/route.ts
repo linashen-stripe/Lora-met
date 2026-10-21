@@ -12,12 +12,50 @@ import {
 } from '@/config/demoModes';
 import { setDemoUsageSeedStatus } from '@/server/demoUsageSeedStatus';
 import { ensureAiBuilderUsageProductTags } from '@/server/aiBuilderPackages';
+import {
+  b2bSeatConsumptionTargets,
+  type DemoUsageStory,
+} from '@/utils/demoUsageSeedProfiles';
+import aiBuilderManifest from '../../../../../../config/metronome/ai-builder-starter.json';
+import { METRONOME_CATALOG } from '@/config/metronomeCatalog';
+import {
+  metronomeContractConsumedUnits,
+  pickPrimaryMetronomeContract,
+} from '@/utils/metronomeContractPool';
 
-// Balance and draft-invoice aggregation complete independently. Six seconds
-// can expose the updated balance while the dashboard still has the earlier
-// subscription-only draft cached, so wait long enough for the automatic
-// post-seed refresh to include usage and applied-credit lines.
-const DEMO_USAGE_AGGREGATION_GRACE_MS = 10_000;
+const DEMO_USAGE_AGGREGATION_TIMEOUT_MS = 30_000;
+const DEMO_USAGE_AGGREGATION_POLL_MS = 5_000;
+
+async function waitForPowerUserConsumption(
+  metronome: NonNullable<ReturnType<typeof initializeMetronome>>,
+  customerId: string,
+  expectedConsumption: number,
+): Promise<void> {
+  const deadline = Date.now() + DEMO_USAGE_AGGREGATION_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) =>
+      setTimeout(resolve, DEMO_USAGE_AGGREGATION_POLL_MS),
+    );
+    const contracts = await metronome.v2.contracts.list({
+      customer_id: customerId,
+      covering_date: new Date().toISOString(),
+      include_balance: true,
+    } as any);
+    const contract = pickPrimaryMetronomeContract(contracts.data ?? []);
+    const consumed = contract
+      ? metronomeContractConsumedUnits(contract)
+      : null;
+    if (
+      consumed != null &&
+      consumed >= Math.floor(expectedConsumption * 0.98)
+    ) {
+      return;
+    }
+  }
+  throw new Error(
+    'Metronome accepted B2B usage but did not aggregate the expected balance within 30 seconds.',
+  );
+}
 
 // Creates a fully-wired power user: Stripe customer (with a tax address
 // matched to the rate card's currency), a linked Metronome customer, a
@@ -49,12 +87,16 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const customerName = (body.customerName ?? '').trim();
   const demoMode = normalizeDemoMode(body.demoMode as DemoMode);
+  const story = (body.story ?? 'healthy') as DemoUsageStory;
   const { metronomeDeliveryMethodId } = withFallbackHeaders(request.headers);
 
   return ndjsonStreamResponse(async (onLog) => {
     if (!metronome) throw new Error('Metronome not configured');
     if (!stripe) throw new Error('Stripe not configured');
     if (!customerName) throw new Error('customerName is required');
+    if (!['healthy', 'at-risk', 'burst'].includes(story)) {
+      throw new Error('Invalid usage story.');
+    }
 
     if (demoMode === 'ai-builder') {
       const tagged = await ensureAiBuilderUsageProductTags(metronome);
@@ -71,8 +113,18 @@ export async function POST(request: NextRequest) {
       after(async () => {
         try {
           await seedUsage();
-          await new Promise((resolve) =>
-            setTimeout(resolve, DEMO_USAGE_AGGREGATION_GRACE_MS),
+          const seatAllocation =
+            demoMode === 'generation'
+              ? METRONOME_CATALOG.powerUser.seatMonthlyCredits
+              : aiBuilderManifest.powerUser.seatMonthlyCreditCents;
+          const expectedConsumption = b2bSeatConsumptionTargets(
+            seatAllocation,
+            story,
+          ).reduce((sum, target) => sum + target, 0);
+          await waitForPowerUserConsumption(
+            metronome,
+            customerId,
+            expectedConsumption,
           );
           setDemoUsageSeedStatus(customerId, 'completed');
         } catch (error: any) {
@@ -91,6 +143,7 @@ export async function POST(request: NextRequest) {
         metronome,
         stripe,
         customerName,
+        story,
         deliveryMethodId: metronomeDeliveryMethodId,
         onLog,
         deferUsageSeed,
@@ -103,6 +156,7 @@ export async function POST(request: NextRequest) {
             rateCardName: body.rateCardName,
             commitDollars: body.commitDollars,
             seatMonthlyDollars: body.seatMonthlyDollars,
+            story,
             onLog,
             deferUsageSeed,
           });

@@ -14,7 +14,10 @@
     "lint": "next lint",
     "starter:plan": "tsx --env-file=.env.metronome-target.local scripts/metronome-starter.ts",
     "starter:seed": "tsx --env-file=.env.metronome-target.local scripts/metronome-starter.ts --apply",
-    "starter:reset": "tsx --env-file=.env.metronome-target.local scripts/metronome-starter.ts --reset"
+    "starter:reset": "tsx --env-file=.env.metronome-target.local scripts/metronome-starter.ts --reset",
+    "experiment:credit-lifecycle": "tsx --env-file=.env.metronome-target.local scripts/experiments/credit-lifecycle.ts",
+    "experiment:integration-qa": "tsx --env-file=.env.metronome-target.local scripts/experiments/integration-qa.ts",
+    "verify:seeding": "node --import tsx scripts/verify-seeding-invariants.ts"
   },
   "dependencies": {
     "@demoeng/utils": "github:stripe-demos/demoeng-utils#main",

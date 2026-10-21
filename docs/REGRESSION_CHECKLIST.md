@@ -59,8 +59,54 @@ Changes in these areas require both-mode review:
       events; "ready" must not reveal an empty invoice.
 - [ ] Persona seeding completes with batched usage ingestion (normally about
       10 seconds) without high-frequency dashboard polling.
+- [ ] Account Setup, checkout-created Pro/Quickstart, and deferred B2B creation
+      do not report completion immediately after ingest acceptance; they
+      verify at least 98% of expected balance consumption, polling at most
+      every five seconds for no more than 30 seconds. Generation Account Setup
+      retains its 10-second aggregation grace.
+- [ ] Account Setup and login/Admin customer creation route through the same
+      mode-specific usage seeder; there is no bootstrap-only event generator
+      with separate target, unit, or seat-distribution logic.
+- [ ] Admin Customer Seeding invokes the same mode-specific starter persona
+      and contract builders as Account Setup, changing only the selected
+      persona, customer identity, and usage profile. Login/Signup still uses
+      its interactive Checkout path.
+- [ ] Admin-prepared customer aliases use the `prepared-persona` namespace,
+      never a starter-owned namespace, so Starter Reset cannot archive them.
+- [ ] Fresh Pro and Quickstart contracts start 28 days ago at UTC midnight.
+- [ ] B2B contracts and all their terms start on the first of the previous
+      month, remain non-prorated, and seed usage only in the current calendar
+      month so the active monthly seat credits are consumed before commit.
+- [ ] AI Builder starter B2B events interleave all five seats so partial
+      aggregation cannot present only the heavy seat while others show zero.
+- [ ] Healthy/At-Risk/Late-month Spike is selected before customer creation. Admin does
+      not add a second immutable story to an already-seeded customer; a fresh
+      customer is required to compare stories.
 - [ ] Seeded usage still covers every configured product/model, both pricing
       tiers, all projects, historical dates, and the intended users/seats.
+- [ ] Every AI Builder seed event includes `api_product`, `model`,
+      `processing_tier`, `workspace_id`, `project_id`, and `user_id`; these are
+      required by the canonical billable-metric filters, not optional display
+      dimensions.
+- [ ] Re-running AI Builder seeding with the same event-schema revision is
+      idempotent and completes missing batches. A deliberate revision bump
+      produces replacement transaction IDs for previously accepted but
+      unrated event shapes.
+- [ ] AI Builder resume recognizes starter packages by saved ID, starter
+      alias, uniqueness key, or exact package name plus starter rate card;
+      a failed run must not turn its own packages into ownership conflicts.
+- [ ] Pro and Quickstart seed one actor; only B2B seeds the five contract seats.
+- [ ] AI Builder Pro Healthy consumes about $10 of the current $20 monthly
+      grant. Its future recurring grant and prepared $15 auto-top-up commit are
+      excluded from pacing and remain unused.
+- [ ] AI Builder Pro At-Risk consumes about $17 and can cross the $5 auto-top-up
+      threshold; Late-month Spike consumes about $18 with most usage late in
+      the seed window.
+- [ ] Healthy, At-Risk, and Late-month Spike are selectable for both AI Builder
+      and Generation; Account Setup still defaults every persona to Healthy.
+- [ ] Generation Pro Healthy consumes about 500 of the 1,000 monthly plan
+      credits. Its pre-created 1,500-credit auto-top-up commit is excluded from
+      pacing and remains unused.
 
 ## Contract transitions
 
@@ -131,6 +177,14 @@ Changes in these areas require both-mode review:
 - [ ] Prepared Generation Pro seeds only whole image/3D jobs and whole video
       seconds; seeded usage cannot exceed the 1,000-credit monthly grant before
       any configured auto top-up.
+- [ ] Prepared Pro Healthy consumes approximately 50% of its monthly grant but
+      leaves more than the 500-credit threshold, so Healthy does not trigger
+      auto top-up. At-Risk and Late-month Spike may trigger it.
+- [ ] Quickstart targets elapsed 12-month term pace, with demo floors of 10%
+      Healthy, 15% At-Risk, and 12% Late-month Spike inside the supported
+      backdating window.
+- [ ] Prepared Generation Pro retains a nonzero balance after every supported
+      story; Quickstart consumes only a bounded fraction of its annual commit.
 - [ ] Invoice rows split internally by credit application are coalesced by
       product, unit price, and dimensions so whole-job quantities remain whole.
 - [ ] Cancel disables the existing threshold configuration; setting it up again
@@ -148,8 +202,17 @@ Changes in these areas require both-mode review:
       contract start, end with the contract, and use no proration; per-seat
       recurring credits and seat increases follow the same boundaries.
 - [ ] Per-seat monthly credits are visible and consumed before shared commit.
-- [ ] Exactly one seat spills into commitment; the other seats have varied,
-      nonzero usage below their individual allocations.
+- [ ] Healthy and At-Risk B2B profiles have exactly one spill seat. Generation
+      Late-month Spike has exactly two post-discount spill seats. Every other
+      seat has varied, nonzero usage below its allocation.
+- [ ] B2B targets are derived from the monthly per-seat allocation, not from
+      the annual shared commitment or the sum of all contract balances.
+- [ ] AI Builder B2B targets remain USD amounts and Generation B2B targets
+      remain Generation Credits. Both account for the 0.85 usage multiplier
+      when converting desired balance consumption to list-rate events.
+- [ ] All B2B usage lands in the active monthly seat-credit period.
+- [ ] Seat IDs use neutral sample identities; “power user” is inferred from
+      usage and is not repeated in every seat name.
 - [ ] The 15% negotiated discount is present.
 - [ ] Deterministic transaction IDs prevent accidental duplicate usage.
 
@@ -157,7 +220,17 @@ Changes in these areas require both-mode review:
 
 - [ ] Metronome-only flows work without Stripe.
 - [ ] Stripe-assisted paths accept only a test key.
+- [ ] Account Setup and Admin direct provisioning create each Stripe test
+      customer in one request with a reusable test PaymentMethod, a complete
+      billing address, and `invoice_settings.default_payment_method`.
 - [ ] Delivery method and Stripe account are compatible.
+- [ ] Every Metronome billing-provider payload sends exactly one of
+      `delivery_method_id` or `delivery_method`, preferring the resolved ID.
+- [ ] Stripe-backed B2B billing configurations use `send_invoice`; Pro and
+      Quickstart continue to use `charge_automatically`.
+- [ ] Stripe-backed Quickstart and B2B commitments are not created with an
+      inline Stripe payment gate; Metronome only allows Stripe-gated commits
+      through a post-contract `contracts/edit` operation.
 - [ ] Customer billing configuration links successfully.
 - [ ] If `tax_provider: stripe` is unavailable, the supported retry removes the
       tax provider rather than abandoning customer setup.
@@ -168,10 +241,14 @@ Changes in these areas require both-mode review:
 ## Admin, starter, and inspector
 
 - [ ] No starter mode is selected by default.
+- [ ] Starter modes remain visible but disabled until an explicit Metronome key
+      is entered.
+- [ ] Account Setup, Demo Customers, and Customer Cleanup each link back to the
+      Admin tools page.
 - [ ] AI Builder can plan/seed/reset on a blank target account without legacy
       Demo Hub packages.
-- [ ] With both modes selected, AI Builder completes before Generation
-      unlocks; a failure leaves the other mode untouched and retryable.
+- [ ] With both modes selected, either mode can run independently or
+      concurrently; one mode's failure leaves the other untouched and retryable.
 - [ ] AI Builder starter usage remains USD cents; Generation starter usage
       remains Generation Credits.
 - [ ] Each mode creates exactly one Pro, Quickstart, and B2B starter customer
@@ -180,20 +257,27 @@ Changes in these areas require both-mode review:
       before mode-owned packages, rate cards, products, and metrics.
 - [ ] Preview performs no mutation.
 - [ ] API keys remain memory-only and are never written to `.env` or state.
+- [ ] Account Setup/reset accepts only explicit credentials and cannot silently
+      fall back to Tools Panel or server environment keys.
+- [ ] Entering a Stripe test key enables Stripe-assisted setup automatically;
+      explicitly unchecking it still permits a Metronome-only run.
+- [ ] Demo customer seeding and cleanup explicitly select either the configured
+      demo environment or another account.
+- [ ] Configured demo credentials resolve Tools Panel overrides before server
+      environment variables; explicit mode rejects missing explicit keys.
+- [ ] Admin target verification displays only safe identity metadata, and
+      cleanup confirmation names the selected target.
 - [ ] Combined group keys satisfy pricing and presentation dimensions.
 - [ ] Reset removes aliases before customer archival.
 - [ ] Reset preview excludes unrelated account resources.
 - [ ] Reseed works after reset despite archived uniqueness keys.
 - [ ] Duplicate active contracts stop with a clear reset/review instruction.
-- [ ] Optional custom pricing is disabled by default for both modes.
-- [ ] When enabled, the property appears on selected metric filters/group
-      keys, product pricing keys, all expected rate variants, and seeded events.
-- [ ] Custom properties never alter fixed/subscription products, credit units,
-      package terms, commits, or seat allocations.
-- [ ] Changing, enabling, or disabling a property on a completed seed requires
-      full reset; demo-data reset is insufficient.
-- [ ] `time_band` preview shows `off_peak 0.8×`, `standard 1×`, and
-      `peak 1.25×`, with clear producer-classification/live-app warnings.
+- [ ] Account Setup exposes no arbitrary custom-property editor.
+- [ ] AI Builder uses only canonical `model × processing_tier` pricing.
+- [ ] Generation always includes `service_tier=standard|priority` on metric
+      filters/group keys, product pricing keys, rates, and seeded events.
+- [ ] Fixed/subscription products, credit units, package terms, commits, and
+      seat allocations do not gain pricing dimensions.
 - [ ] API Inspector captures supported browser and server-side Metronome/Stripe
       calls, supports search/filtering, and redacts credentials.
 

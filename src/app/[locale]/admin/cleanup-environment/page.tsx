@@ -1,12 +1,16 @@
 /* eslint-disable i18next/no-literal-string */
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { buildDemoRequestHeaders } from '@/utils/demoRequestHeaders';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { inspectedFetch } from '@/utils/inspectedFetch';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
 import { useTerminalLines } from '@/utils/useTerminalLines';
 import TerminalPanel from '@/components/admin/TerminalPanel';
+import AdminCredentialPanel from '@/components/admin/AdminCredentialPanel';
+import { useAdminCredentials } from '@/contexts/AdminCredentialsContext';
+import { buildAdminCredentialHeaders } from '@/utils/adminCredentials';
 
 // 2-step destructive cleanup wizard:
 //   1. Archive Metronome customers (archive ONLY — never deletes anything)
@@ -29,6 +33,11 @@ interface StripeCustomerSummary {
   email: string | null;
   created: number;
 }
+
+type CustomerSort = {
+  field: 'name' | 'created';
+  direction: 'asc' | 'desc';
+};
 
 const STEPS = [
   { n: 1, label: 'Archive Metronome customers' },
@@ -60,6 +69,8 @@ function Stepper({ step }: { step: number }) {
 }
 
 export default function CleanupEnvironmentPage() {
+  const { locale } = useParams<{ locale: string }>();
+  const { source, explicit, resolvedTarget } = useAdminCredentials();
   const metronomeCustomersUrl = '/api/metronome/demo/customers?demoMode=all';
   const stripeCustomersUrl = '/api/stripe/demo/customers?demoMode=all';
   const [step, setStep] = useState(1);
@@ -71,6 +82,10 @@ export default function CleanupEnvironmentPage() {
   const [selectedMetronomeIds, setSelectedMetronomeIds] = useState<Set<string>>(new Set());
   const [archiveConfirming, setArchiveConfirming] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [metronomeSort, setMetronomeSort] = useState<CustomerSort>({
+    field: 'created',
+    direction: 'desc',
+  });
 
   // Step 2 — delete Stripe customers
   const [stripeCustomers, setStripeCustomers] = useState<StripeCustomerSummary[] | null>(null);
@@ -78,12 +93,72 @@ export default function CleanupEnvironmentPage() {
   const [selectedStripeIds, setSelectedStripeIds] = useState<Set<string>>(new Set());
   const [deleteConfirming, setDeleteConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [stripeSort, setStripeSort] = useState<CustomerSort>({
+    field: 'created',
+    direction: 'desc',
+  });
+  const credentialHeaders = useMemo(
+    () => buildAdminCredentialHeaders(source, explicit),
+    [explicit, source],
+  );
+  const canLoadMetronome =
+    source === 'configured' || Boolean(explicit.metronomeApiKey.trim());
+  const canLoadStripe =
+    source === 'configured' || Boolean(explicit.stripeSecretKey.trim());
+  const targetLabel =
+    resolvedTarget ??
+    (source === 'configured'
+      ? 'configured demo environment'
+      : 'unverified explicit target');
+
+  const sortedMetronomeCustomers = useMemo(() => {
+    if (!metronomeCustomers) return [];
+    return [...metronomeCustomers].sort((a, b) => {
+      const comparison =
+        metronomeSort.field === 'name'
+          ? a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+          : Date.parse(a.createdAt) - Date.parse(b.createdAt);
+      return metronomeSort.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [metronomeCustomers, metronomeSort]);
+
+  const sortedStripeCustomers = useMemo(() => {
+    if (!stripeCustomers) return [];
+    return [...stripeCustomers].sort((a, b) => {
+      const comparison =
+        stripeSort.field === 'name'
+          ? (a.name ?? '').localeCompare(b.name ?? '', undefined, {
+              sensitivity: 'base',
+            })
+          : a.created - b.created;
+      return stripeSort.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [stripeCustomers, stripeSort]);
+
+  const nextSort = (
+    current: CustomerSort,
+    field: CustomerSort['field'],
+  ): CustomerSort => ({
+    field,
+    direction:
+      current.field === field
+        ? current.direction === 'asc'
+          ? 'desc'
+          : 'asc'
+        : field === 'created'
+          ? 'desc'
+          : 'asc',
+  });
 
   const loadMetronomeCustomers = useCallback(async () => {
+    if (!canLoadMetronome) {
+      setMetronomeCustomers([]);
+      return;
+    }
     setLoadingMetronome(true);
     try {
       const res = await inspectedFetch(metronomeCustomersUrl, {
-        headers: buildDemoRequestHeaders(),
+        headers: credentialHeaders,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to list Metronome customers');
@@ -95,13 +170,22 @@ export default function CleanupEnvironmentPage() {
     } finally {
       setLoadingMetronome(false);
     }
-  }, [appendLine, metronomeCustomersUrl]);
+  }, [
+    appendLine,
+    canLoadMetronome,
+    credentialHeaders,
+    metronomeCustomersUrl,
+  ]);
 
   const loadStripeCustomers = useCallback(async () => {
+    if (!canLoadStripe) {
+      setStripeCustomers([]);
+      return;
+    }
     setLoadingStripe(true);
     try {
       const res = await inspectedFetch(stripeCustomersUrl, {
-        headers: buildDemoRequestHeaders(),
+        headers: credentialHeaders,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to list Stripe customers');
@@ -113,7 +197,16 @@ export default function CleanupEnvironmentPage() {
     } finally {
       setLoadingStripe(false);
     }
-  }, [appendLine, stripeCustomersUrl]);
+  }, [appendLine, canLoadStripe, credentialHeaders, stripeCustomersUrl]);
+
+  useEffect(() => {
+    setMetronomeCustomers(null);
+    setStripeCustomers(null);
+    setSelectedMetronomeIds(new Set());
+    setSelectedStripeIds(new Set());
+    setArchiveConfirming(false);
+    setDeleteConfirming(false);
+  }, [credentialHeaders]);
 
   useEffect(() => {
     if (step === 1 && metronomeCustomers === null) loadMetronomeCustomers();
@@ -136,11 +229,14 @@ export default function CleanupEnvironmentPage() {
     setArchiveConfirming(false);
     setArchiving(true);
     const ids = Array.from(selectedMetronomeIds);
-    appendLines(['', `$ archive ${ids.length} Metronome customer(s)`]);
+    appendLines([
+      '',
+      `$ [${targetLabel}] archive ${ids.length} Metronome customer(s)`,
+    ]);
     try {
       const res = await inspectedFetch('/api/metronome/demo/customers', {
         method: 'POST',
-        headers: buildDemoRequestHeaders(),
+        headers: credentialHeaders,
         body: JSON.stringify({ customerIds: ids }),
       });
       await consumeNdjsonStream(res, (msg) => {
@@ -164,7 +260,9 @@ export default function CleanupEnvironmentPage() {
   // Refresh the list after archiving, without re-triggering the initial-load effect noise.
   const loadMetronomeCustomersSilently = async () => {
     try {
-      const res = await inspectedFetch(metronomeCustomersUrl, { headers: buildDemoRequestHeaders() });
+      const res = await inspectedFetch(metronomeCustomersUrl, {
+        headers: credentialHeaders,
+      });
       const data = await res.json();
       if (res.ok) setMetronomeCustomers(data.customers);
     } catch {
@@ -181,11 +279,14 @@ export default function CleanupEnvironmentPage() {
     setDeleteConfirming(false);
     setDeleting(true);
     const ids = Array.from(selectedStripeIds);
-    appendLines(['', `$ delete ${ids.length} Stripe customer(s)`]);
+    appendLines([
+      '',
+      `$ [${targetLabel}] delete ${ids.length} Stripe customer(s)`,
+    ]);
     try {
       const res = await inspectedFetch('/api/stripe/demo/customers', {
         method: 'DELETE',
-        headers: buildDemoRequestHeaders(),
+        headers: credentialHeaders,
         body: JSON.stringify({ customerIds: ids }),
       });
       await consumeNdjsonStream(res, (msg) => {
@@ -208,7 +309,9 @@ export default function CleanupEnvironmentPage() {
 
   const loadStripeCustomersSilently = async () => {
     try {
-      const res = await inspectedFetch(stripeCustomersUrl, { headers: buildDemoRequestHeaders() });
+      const res = await inspectedFetch(stripeCustomersUrl, {
+        headers: credentialHeaders,
+      });
       const data = await res.json();
       if (res.ok) setStripeCustomers(data.customers);
     } catch {
@@ -218,12 +321,22 @@ export default function CleanupEnvironmentPage() {
 
   return (
     <div className='container mx-auto max-w-4xl px-4 py-8'>
+      <Link
+        href={`/${locale}/admin`}
+        className='mb-5 inline-flex text-sm font-semibold text-purple hover:underline'
+      >
+        ← Admin tools
+      </Link>
       <h1 className='mb-2 text-2xl font-bold'>Clean Up Environment</h1>
       <p className='mb-6 text-sm text-gray-600'>
         Archive Metronome customers, then delete their linked Stripe test
         customers. Both actions are irreversible and require explicit
         confirmation.
       </p>
+
+      <div className='mb-6'>
+        <AdminCredentialPanel />
+      </div>
 
       <Stepper step={step} />
 
@@ -253,13 +366,65 @@ export default function CleanupEnvironmentPage() {
                         }
                       />
                     </th>
-                    <th className='p-2'>Name</th>
+                    <th
+                      className='p-2'
+                      aria-sort={
+                        metronomeSort.field === 'name'
+                          ? metronomeSort.direction === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                    >
+                      <button
+                        type='button'
+                        className='font-semibold hover:text-indigo-600'
+                        onClick={() =>
+                          setMetronomeSort((current) =>
+                            nextSort(current, 'name'),
+                          )
+                        }
+                      >
+                        Name{' '}
+                        {metronomeSort.field === 'name'
+                          ? metronomeSort.direction === 'asc'
+                            ? '↑'
+                            : '↓'
+                          : '↕'}
+                      </button>
+                    </th>
                     <th className='p-2'>ID</th>
-                    <th className='p-2'>Created</th>
+                    <th
+                      className='p-2'
+                      aria-sort={
+                        metronomeSort.field === 'created'
+                          ? metronomeSort.direction === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                    >
+                      <button
+                        type='button'
+                        className='font-semibold hover:text-indigo-600'
+                        onClick={() =>
+                          setMetronomeSort((current) =>
+                            nextSort(current, 'created'),
+                          )
+                        }
+                      >
+                        Created{' '}
+                        {metronomeSort.field === 'created'
+                          ? metronomeSort.direction === 'asc'
+                            ? '↑'
+                            : '↓'
+                          : '↕'}
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {metronomeCustomers.map((c) => (
+                  {sortedMetronomeCustomers.map((c) => (
                     <tr key={c.id} className='border-t border-gray-100'>
                       <td className='p-2'>
                         <input
@@ -294,7 +459,7 @@ export default function CleanupEnvironmentPage() {
               {archiving
                 ? 'Archiving…'
                 : archiveConfirming
-                  ? `Confirm archive of ${selectedMetronomeIds.size}`
+                  ? `Confirm ${selectedMetronomeIds.size} on ${targetLabel}`
                   : `Archive selected (${selectedMetronomeIds.size})`}
             </button>
             <button
@@ -333,14 +498,64 @@ export default function CleanupEnvironmentPage() {
                         }
                       />
                     </th>
-                    <th className='p-2'>Name</th>
+                    <th
+                      className='p-2'
+                      aria-sort={
+                        stripeSort.field === 'name'
+                          ? stripeSort.direction === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                    >
+                      <button
+                        type='button'
+                        className='font-semibold hover:text-indigo-600'
+                        onClick={() =>
+                          setStripeSort((current) => nextSort(current, 'name'))
+                        }
+                      >
+                        Name{' '}
+                        {stripeSort.field === 'name'
+                          ? stripeSort.direction === 'asc'
+                            ? '↑'
+                            : '↓'
+                          : '↕'}
+                      </button>
+                    </th>
                     <th className='p-2'>Email</th>
                     <th className='p-2'>ID</th>
-                    <th className='p-2'>Created</th>
+                    <th
+                      className='p-2'
+                      aria-sort={
+                        stripeSort.field === 'created'
+                          ? stripeSort.direction === 'asc'
+                            ? 'ascending'
+                            : 'descending'
+                          : 'none'
+                      }
+                    >
+                      <button
+                        type='button'
+                        className='font-semibold hover:text-indigo-600'
+                        onClick={() =>
+                          setStripeSort((current) =>
+                            nextSort(current, 'created'),
+                          )
+                        }
+                      >
+                        Created{' '}
+                        {stripeSort.field === 'created'
+                          ? stripeSort.direction === 'asc'
+                            ? '↑'
+                            : '↓'
+                          : '↕'}
+                      </button>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {stripeCustomers.map((c) => (
+                  {sortedStripeCustomers.map((c) => (
                     <tr key={c.id} className='border-t border-gray-100'>
                       <td className='p-2'>
                         <input
@@ -385,7 +600,7 @@ export default function CleanupEnvironmentPage() {
               {deleting
                 ? 'Deleting…'
                 : deleteConfirming
-                  ? `Confirm delete of ${selectedStripeIds.size}`
+                  ? `Confirm ${selectedStripeIds.size} on ${targetLabel}`
                   : `Delete selected (${selectedStripeIds.size})`}
             </button>
           </div>

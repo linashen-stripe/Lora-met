@@ -1,5 +1,4 @@
 import { after, NextRequest, NextResponse } from 'next/server';
-import { subDays } from 'date-fns';
 import initializeStripe from '@/utils/stripe';
 import { getPublicOriginFromRequest } from '@/utils/getPublicOriginFromRequest';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
@@ -18,9 +17,46 @@ import { configureContractAutoTopUp } from '@/server/metronomeAutoTopUp';
 import { AI_BUILDER_PRO_TERMS } from '@/config/aiBuilderCatalog';
 import { packageByKey } from '@/config/metronomeCatalog';
 import { setDemoUsageSeedStatus } from '@/server/demoUsageSeedStatus';
+import {
+  metronomeContractConsumedUnits,
+  pickPrimaryMetronomeContract,
+} from '@/utils/metronomeContractPool';
+import { demoContractStart } from '@/utils/demoUsageSeedProfiles';
 
-const DEMO_USAGE_AGGREGATION_GRACE_MS = 6_000;
+const DEMO_USAGE_AGGREGATION_TIMEOUT_MS = 30_000;
+const DEMO_USAGE_AGGREGATION_POLL_MS = 5_000;
 const GENERATION_PRO_TERMS = packageByKey('pro')!;
+
+async function waitForSeededConsumption(
+  metronome: NonNullable<ReturnType<typeof initializeMetronome>>,
+  customerId: string,
+  expectedConsumption: number,
+): Promise<void> {
+  const deadline = Date.now() + DEMO_USAGE_AGGREGATION_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await new Promise((resolve) =>
+      setTimeout(resolve, DEMO_USAGE_AGGREGATION_POLL_MS),
+    );
+    const contracts = await metronome.v2.contracts.list({
+      customer_id: customerId,
+      covering_date: new Date().toISOString(),
+      include_balance: true,
+    } as any);
+    const contract = pickPrimaryMetronomeContract(contracts.data ?? []);
+    const consumed = contract
+      ? metronomeContractConsumedUnits(contract)
+      : null;
+    if (
+      consumed != null &&
+      consumed >= Math.floor(expectedConsumption * 0.98)
+    ) {
+      return;
+    }
+  }
+  throw new Error(
+    'Metronome accepted demo usage but did not aggregate the expected balance within 30 seconds.',
+  );
+}
 
 export async function GET(request: NextRequest) {
   const publicOrigin = getPublicOriginFromRequest(request);
@@ -49,6 +85,7 @@ export async function GET(request: NextRequest) {
       contractStartDaysAgo: contractStartDaysAgoRaw,
       seedUsageAfter,
       seedPersona,
+      seedStory = 'healthy',
     } = session.metadata ?? {};
 
     // mode: 'setup' sessions don't have payment_status — check setup_intent status
@@ -145,7 +182,7 @@ export async function GET(request: NextRequest) {
             seedUsageAfter === 'true' && contractStartDaysAgo > 0;
           let transitionAt = new Date();
           let startingAt = isQuickstart
-            ? subDays(transitionAt, contractStartDaysAgo)
+            ? demoContractStart(transitionAt, contractStartDaysAgo)
             : transitionAt;
 
           // Quickstart creates a brand-new Enterprise customer with backdated history.
@@ -210,7 +247,7 @@ export async function GET(request: NextRequest) {
               }
               transitionAt = currentMetronomeHourBoundary();
               startingAt = isQuickstart
-                ? subDays(transitionAt, contractStartDaysAgo)
+                ? demoContractStart(transitionAt, contractStartDaysAgo)
                 : transitionAt;
               endedContractIds = !isQuickstart
                 ? await endActiveCustomerContractsAt(
@@ -324,24 +361,23 @@ export async function GET(request: NextRequest) {
         publicOrigin,
       );
       seedUrl.searchParams.set('customerId', metronomeCustomerId);
-      seedUrl.searchParams.set('story', 'healthy');
+      seedUrl.searchParams.set('story', seedStory);
+      if (seedPersona) seedUrl.searchParams.set('persona', seedPersona);
       seedUrl.searchParams.set('trailingDays', '1');
-      if (demoMode === 'generation' && seedPersona === 'pro') {
-        // Generation quantities are indivisible jobs/seconds. Seven seeded
-        // days keep even the highest-cost valid jobs below the 1,000-credit
-        // monthly Pro grant without fractional scaling.
-        seedUrl.searchParams.set('lookbackDays', '8');
-        seedUrl.searchParams.set('spendCap', '0.05');
-      }
-      if (demoMode === 'ai-builder' && seedPersona === 'pro') {
-        seedUrl.searchParams.set('singleSeat', '1');
-        seedUrl.searchParams.set('singleProject', '1');
-      }
       after(async () => {
         try {
+          const seedHeaders = new Headers();
+          for (const name of [
+            'demo-metronomeapikey',
+            'x-admin-credential-source',
+          ]) {
+            const value = request.headers.get(name);
+            if (value) seedHeaders.set(name, value);
+          }
           const res = await fetch(seedUrl.toString(), {
             method: 'GET',
             cache: 'no-store',
+            headers: seedHeaders,
           });
           if (!res.ok) {
             const errorText = await res.text();
@@ -356,11 +392,26 @@ export async function GET(request: NextRequest) {
               errorText,
             );
           } else {
-            // Ingest acceptance precedes balance/invoice aggregation by a few
-            // seconds. Keep "Loading demo usage" visible until the first
-            // automatic billing refresh is likely to include those events.
-            await new Promise((resolve) =>
-              setTimeout(resolve, DEMO_USAGE_AGGREGATION_GRACE_MS),
+            const seedResult = await res.json();
+            const expectedConsumption =
+              demoMode === 'generation'
+                ? Number(seedResult.estimatedBalanceConsumption)
+                : Number(seedResult.estimatedSpendDollars) * 100;
+            if (
+              !Number.isFinite(expectedConsumption) ||
+              expectedConsumption <= 0
+            ) {
+              throw new Error(
+                'Usage seeder did not return a valid expected balance consumption.',
+              );
+            }
+            if (!metronome) {
+              throw new Error('Metronome is required to verify seeded usage.');
+            }
+            await waitForSeededConsumption(
+              metronome,
+              metronomeCustomerId,
+              expectedConsumption,
             );
             setDemoUsageSeedStatus(metronomeCustomerId, 'completed');
             console.log('[upgrade-checkout/success] seed-usage completed');

@@ -40,38 +40,22 @@ npm run starter:reset -- --confirm=metronome-starter
 
 The multi-mode workflow is available under **Settings → Admin: seed a new
 account**. No mode is selected by default. If both are selected, AI Builder is
-configured and seeded before Generation. Each mode has its own prefix, review,
-preview, seed state, ownership journal, and reset controls. The API key entered
-there is kept only in page memory for the current job and is never written to
-browser storage or an environment file.
+shown first, but both modes remain independent and may run concurrently. Each
+mode has its own prefix, review, job state, ownership journal, and reset
+controls. The API key entered there is kept only in page memory for the current
+job and is never written to browser storage or an environment file.
 
-## Custom pricing property
+## Pricing dimensions
 
-The optional custom pricing property is disabled by default for both modes.
-The Admin editor offers `time_band: off_peak | standard | peak` as an
-educational starting point with `0.8×`, `1×`, and `1.25×` multipliers. AI
-Builder appends it to its canonical `model × processing_tier` pricing;
-Generation appends it to `operation × quality × model`.
+Each mode has one fixed, reviewable pricing schema:
 
-The base pricing dimensions remain separate: `operation`, `quality`, and
-`model`. The custom property is appended as an additional dimension; it does
-not encode quality into model names.
+- AI Builder: `model × processing_tier`.
+- Generation: `operation × quality × model × service_tier`, where
+  `service_tier` is `standard` at `1×` or `priority` at `1.25×`.
 
-```bash
-npm run starter:plan -- \
-  --pricing-property=service_tier \
-  --pricing-values=standard:1,priority:1.25 \
-  --pricing-metrics=image,video,3d
-
-npm run starter:seed -- \
-  --pricing-property=service_tier \
-  --pricing-values=standard:1,priority:1.25 \
-  --pricing-metrics=image,video,3d
-```
-
-The property is added only to the selected billable metrics, usage products,
-rates, and seeded events. It does not change packages, contracts, customers,
-subscriptions, credits, or commitments.
+The starter does not offer arbitrary custom properties. This keeps target
+accounts aligned with the live demo event producers and avoids creating rates
+for properties the application does not emit.
 
 Each starter billable metric uses one combined group key containing its pricing
 dimensions plus `workspace_id`, `project_id`, and `user_id`. This keeps the
@@ -79,31 +63,12 @@ starter easy to inspect while satisfying both product pricing and presentation
 keys. Add alternate group keys later only when the account needs additional
 aggregation paths.
 
-Add `--validate-config` to the same arguments to print the resolved product
-group keys and rate variants without credentials or API calls.
-
-`time_band` can be modeled from the Generation CLI in the same way:
-
-```bash
-npm run starter:plan -- \
-  --pricing-property=time_band \
-  --pricing-values=off_peak:0.8,standard:1,peak:1.25 \
-  --pricing-metrics=image
-```
-
-The starter distributes property values deterministically across example
-events. Metronome does not infer `peak`, `standard`, or `off_peak`: a
-production event producer must classify the event and send the property. This
-option intentionally does not reconfigure the live playground, pricing page,
-or dashboard.
-
-Billable metric and product dimensions cannot be safely repurposed in place.
-To change or remove a property after seeding, preview and run Starter Reset
-with the same resource prefix, then seed the new definition.
+Use `--validate-config` to print the resolved Generation product group keys
+and `service_tier` rate variants without credentials or API calls.
 
 If a seed stops after creating billable metrics but before creating products,
 use the same reset flow before retrying. Reset archives the partial metrics;
-the shared custom pricing unit is intentionally retained and reused.
+the shared Generation pricing unit is intentionally retained and reused.
 
 ## Packages and seeded personas
 
@@ -137,7 +102,7 @@ minor units; `0.01` would mean one-hundredth of a cent.
 - B2B Power User: 1,000,000-credit / $10,000 annual prepaid commitment,
   five assigned seats at $1,000 per month, 10,000 monthly credits per seat,
   a 0.85 usage multiplier, and a seat-rate override. Seeded utilization targets
-  approximately 150%, 70%, 45%, 25%, and 10% of each seat allocation. The
+  approximately 115%, 60%, 42%, 25%, and 12% of each seat allocation. The
   busiest seat has enough headroom beyond the 15% discount to exhaust its
   monthly credits and spill into the shared annual commitment; the other seats
   retain clearly different balances.
@@ -176,8 +141,8 @@ Ingest aliases, package uniqueness keys, and contract uniqueness keys use
 separate mode namespaces (`ai-builder-starter` and `metronome-starter`);
 catalog resources are matched by recorded ownership IDs, mode tags, or the
 configured resource prefix and exact names. Reset archives matching contracts
-and customers before archiving the starter catalog. Generation custom pricing
-units are retained because they are shared account resources.
+and customers before archiving the starter catalog. The Generation pricing
+unit is retained because pricing units are shared account resources.
 
 Customer ingest aliases include the starter catalog version. Before archiving
 a customer, reset removes that mode's starter aliases so Metronome releases
@@ -211,4 +176,4 @@ Finalized Stripe test invoices remain historical and cannot be made unpaid.
 
 The admin page includes a collapsed **Review starter configuration** section
 with the resolved metrics, base rates, package terms, customer names, usage
-volume, custom-property variants, and optional JSON.
+volume, canonical pricing variants, and optional JSON.

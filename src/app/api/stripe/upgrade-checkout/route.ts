@@ -24,6 +24,7 @@ interface RequestBody {
   /** Metronome package to attach after setup (name matched case-insensitively). Default `premium`. */
   contractPackage?: 'premium' | 'enterprise';
   seedPersona?: 'pro' | 'quickstart';
+  seedStory?: 'healthy' | 'at-risk' | 'burst';
   demoMode?: DemoMode;
   uiMode?: 'embedded' | 'hosted';
 }
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
       contractStartDaysAgo: rawDaysAgo,
       contractPackage = 'premium',
       seedPersona,
+      seedStory,
       demoMode: rawDemoMode,
       uiMode = 'hosted',
     }: RequestBody = await request.json();
@@ -103,6 +105,7 @@ export async function POST(request: NextRequest) {
         language,
         demoMode,
         ...(seedPersona ? { seedPersona } : {}),
+        ...(seedStory ? { seedStory } : {}),
         ...(contractStartDaysAgo
           ? {
               contractStartDaysAgo: String(contractStartDaysAgo),

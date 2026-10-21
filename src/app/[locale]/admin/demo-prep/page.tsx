@@ -3,9 +3,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Building2, Database, ExternalLink, LoaderCircle } from 'lucide-react';
+import { Building2, ExternalLink, LoaderCircle } from 'lucide-react';
 import fetchClient from '@/utils/fetchClient';
 import { useConfigContext } from '@/contexts/ConfigContext';
+import { DEMO_CONTRACT_LOOKBACK_DAYS } from '@/utils/demoUsageSeedProfiles';
 
 type SeedStory = 'healthy' | 'at-risk' | 'burst';
 
@@ -18,6 +19,7 @@ export default function DemoPrepPage() {
   const [customerId, setCustomerId] = useState(
     customer?.metronomeCustomerId ?? customer?.id ?? '',
   );
+  const [story, setStory] = useState<SeedStory>('healthy');
 
   const prepareCustomer = async () => {
     setLoading('prepare');
@@ -38,7 +40,9 @@ export default function DemoPrepPage() {
       });
 
       if (data.hasActiveContract) {
-        setMessage('Prepared Enterprise customer loaded. You can reseed its story below.');
+        setMessage(
+          'Prepared Enterprise customer loaded without adding usage. Use a fresh email for a different immutable usage story.',
+        );
         return;
       }
 
@@ -48,39 +52,16 @@ export default function DemoPrepPage() {
           stripeCustomerId: data.stripeCustomerId,
           metronomeCustomerId: data.metronomeCustomerId,
           language,
-          contractStartDaysAgo: 30,
+          contractStartDaysAgo: DEMO_CONTRACT_LOOKBACK_DAYS,
           contractPackage: 'enterprise',
+          seedPersona: 'quickstart',
+          seedStory: story,
           demoMode: 'generation',
         },
       );
       if (checkout.url) window.location.href = checkout.url;
     } catch (error: any) {
       setMessage(error?.response?.data?.message ?? error?.message ?? 'Preparation failed');
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const seedStory = async (story: SeedStory) => {
-    if (!customerId.trim()) return;
-    setLoading(story);
-    setMessage(null);
-    try {
-      const { data } = await fetchClient.get(
-        '/api/metronome/seed-usage-multi-project',
-        {
-          params: {
-            customerId: customerId.trim(),
-            story,
-            trailingDays: 1,
-          },
-        },
-      );
-      setMessage(
-        `${data.message} ${Number(data.creditsConsumed).toLocaleString()} credits consumed.`,
-      );
-    } catch (error: any) {
-      setMessage(error?.response?.data?.error ?? error?.message ?? 'Seeding failed');
     } finally {
       setLoading(null);
     }
@@ -95,8 +76,8 @@ export default function DemoPrepPage() {
           </p>
           <h1 className='mt-2 text-4xl font-bold text-foreground'>Demo preparation</h1>
           <p className='mt-3 max-w-2xl text-muted-foreground'>
-            Prepare the existing Enterprise customer, reseed a deterministic generation
-            story, and open the presentation views.
+            Prepare one Enterprise customer with a deterministic Generation
+            story, then open the presentation views.
           </p>
         </div>
 
@@ -115,6 +96,40 @@ export default function DemoPrepPage() {
               onChange={(event) => setEmail(event.target.value)}
               className='mt-2 w-full rounded-lg border border-gray-300 px-3 py-2'
             />
+            <label className='mt-4 block text-sm font-medium text-gray-700'>
+              Usage profile
+              <select
+                value={story}
+                onChange={(event) =>
+                  setStory(event.target.value as SeedStory)
+                }
+                className='mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2'
+              >
+                <option value='healthy'>Healthy growth</option>
+                <option value='at-risk'>At risk</option>
+                <option value='burst'>Late-month spike</option>
+              </select>
+            </label>
+            <details className='mt-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-xs text-violet-950'>
+              <summary className='cursor-pointer font-semibold'>
+                How these profiles differ
+              </summary>
+              <ul className='mt-2 list-disc space-y-1 pl-5'>
+                <li>
+                  Healthy follows elapsed term pace, with a 10% demo floor.
+                </li>
+                <li>
+                  At-Risk runs at 135% of elapsed pace, with a 15% floor.
+                </li>
+                <li>
+                  Late-month Spike stays near elapsed pace, with a 12% floor
+                  and usage concentrated recently.
+                </li>
+              </ul>
+              <p className='mt-2 text-amber-900'>
+                Usage is immutable. Use a fresh customer to compare profiles.
+              </p>
+            </details>
             <button
               type='button'
               onClick={prepareCustomer}
@@ -126,32 +141,20 @@ export default function DemoPrepPage() {
             </button>
           </section>
 
-          <section className='rounded-2xl border bg-white p-6'>
-            <div className='flex items-center gap-3'>
-              <Database className='h-6 w-6 text-purple' />
-              <h2 className='text-xl font-semibold'>Historical usage</h2>
-            </div>
-            <label className='mt-5 block text-sm font-medium text-gray-700'>
-              Metronome customer ID
-            </label>
-            <input
-              value={customerId}
-              onChange={(event) => setCustomerId(event.target.value)}
-              className='mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm'
-            />
-            <div className='mt-4 grid grid-cols-3 gap-2'>
-              {(['healthy', 'at-risk', 'burst'] as SeedStory[]).map((story) => (
-                <button
-                  key={story}
-                  type='button'
-                  onClick={() => seedStory(story)}
-                  disabled={!customerId.trim() || loading !== null}
-                  className='rounded-lg border border-purple/30 bg-purple/5 px-2 py-2 text-sm font-medium text-purple disabled:opacity-50'
-                >
-                  {loading === story ? 'Seeding…' : story}
-                </button>
-              ))}
-            </div>
+          <section className='rounded-2xl border border-amber-200 bg-amber-50 p-6'>
+            <h2 className='text-xl font-semibold text-amber-950'>
+              One story per customer
+            </h2>
+            <p className='mt-3 text-sm text-amber-900'>
+              Historical usage is additive and cannot be replaced. Choose the
+              profile before preparation and use a fresh email to compare a
+              different profile.
+            </p>
+            {customerId && (
+              <p className='mt-3 break-all font-mono text-xs text-amber-900'>
+                Customer: {customerId}
+              </p>
+            )}
           </section>
         </div>
 

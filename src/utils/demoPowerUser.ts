@@ -1,32 +1,54 @@
 import Metronome from '@metronome/sdk';
 import Stripe from 'stripe';
+import aiBuilderManifest from '../../config/metronome/ai-builder-starter.json';
 import {
   createMetronomeCustomer,
   resolveMetronomeDeliveryMethodIdAsync,
 } from './metronome';
 import {
+  AI_BUILDER_SEED_EVENT_REVISION,
   SEED_USAGE_MULTI_PROJECT_IDS,
   SEED_USAGE_MULTI_PROJECT_SPEND_SHARES,
   seedMetronomeUsage,
 } from './metronomeSeedUsage';
-
-const POWER_USER_SEAT_NAMES = ['alice', 'bob', 'carol', 'dave', 'eve'];
+import {
+  assertB2bSeatTargets,
+  b2bSeatConsumptionTargets,
+  demoB2bContractStart,
+  demoB2bUsageStart,
+  listRateTargetsForConsumption,
+  type DemoUsageStory,
+} from './demoUsageSeedProfiles';
+import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
 
 async function ingestPowerUserUsageEvents(
   metronome: Metronome,
   customerId: string,
   contractId: string,
   seatIds: string[],
-  targetSpendDollars: number,
+  seatMonthlyDollars: number,
+  discount: number,
+  story: DemoUsageStory,
 ): Promise<number> {
+  const consumptionTargets = b2bSeatConsumptionTargets(
+    seatMonthlyDollars,
+    story,
+  );
+  assertB2bSeatTargets(seatMonthlyDollars, consumptionTargets);
+  const listRateTargets = listRateTargetsForConsumption(
+    consumptionTargets,
+    discount,
+  );
   const result = await seedMetronomeUsage({
     metronome,
     customerId,
     contractId,
-    story: 'healthy',
+    story,
     logLabel: '[power-user-seed]',
     trailingUnseededDays: 1,
-    targetSpendDollars,
+    seedStartOverride: demoB2bUsageStart(),
+    perUserTargetSpendDollars: listRateTargets,
+    seedRunKey: `${contractId}:${AI_BUILDER_SEED_EVENT_REVISION}`,
     projectAttribution: {
       mode: 'multi',
       projects: SEED_USAGE_MULTI_PROJECT_IDS.map((projectId, index) => ({
@@ -51,11 +73,17 @@ async function ingestPowerUserUsageEvents(
 // other four seats.
 
 export const DEFAULT_RATE_CARD_NAME = 'Lora AI Standard Rate Card';
+export const CANONICAL_RATE_CARD_NAME = aiBuilderManifest.rateCard.name;
 
 export const DEFAULT_PRODUCT_NAMES = {
   prepaidCommit: 'Prepaid Commit',
   seatCredit: 'Seat-based Credit',
   enterpriseSubscription: 'Enterprise Subscription',
+} as const;
+export const CANONICAL_PRODUCT_NAMES = {
+  prepaidCommit: aiBuilderManifest.products.prepaidCommit,
+  seatCredit: aiBuilderManifest.products.seatCredit,
+  enterpriseSubscription: aiBuilderManifest.products.enterpriseSubscription,
 } as const;
 
 export const DEFAULT_COMMIT_DOLLARS = 100_000;
@@ -108,6 +136,7 @@ function currencyCodeAndScale(creditTypeName: string): { code: string; scale: nu
 
 export interface ResolvedRateCard {
   rateCardId: string;
+  rateCardName: string;
   creditTypeId: string;
   currencyCode: string;
   scale: number;
@@ -117,19 +146,30 @@ export async function resolveRateCardByName(
   metronome: Metronome,
   rateCardName: string,
 ): Promise<ResolvedRateCard> {
+  return resolveRateCardByNames(metronome, [rateCardName]);
+}
+
+async function resolveRateCardByNames(
+  metronome: Metronome,
+  rateCardNames: readonly string[],
+): Promise<ResolvedRateCard> {
+  const acceptedNames = new Set(rateCardNames);
   for await (const rc of metronome.v1.contracts.rateCards.list({ body: {} })) {
-    if (rc.name === rateCardName) {
+    if (acceptedNames.has(rc.name)) {
       const creditType = (rc as any).fiat_credit_type;
       const { code, scale } = currencyCodeAndScale(creditType?.name ?? 'USD');
       return {
         rateCardId: rc.id,
+        rateCardName: rc.name,
         creditTypeId: creditType.id,
         currencyCode: code,
         scale,
       };
     }
   }
-  throw new Error(`No rate card named "${rateCardName}" found on this account.`);
+  throw new Error(
+    `No supported rate card found. Expected one of: ${rateCardNames.join(', ')}.`,
+  );
 }
 
 export async function resolveProductsByName(
@@ -219,6 +259,7 @@ export interface CreatePowerUserDemoCustomerParams {
   commitDollars?: number;
   seatMonthlyDollars?: number;
   discount?: number;
+  story?: DemoUsageStory;
   deliveryMethodId?: string | null;
   seatIds?: string[];
   /** Called with a line of progress output as each step completes (for terminal-style UIs). */
@@ -251,17 +292,22 @@ export async function createPowerUserDemoCustomer(
     metronome,
     stripe,
     customerName,
-    rateCardName = DEFAULT_RATE_CARD_NAME,
-    productNames = DEFAULT_PRODUCT_NAMES,
+    rateCardName,
+    productNames,
     commitDollars = DEFAULT_COMMIT_DOLLARS,
     seatMonthlyDollars = DEFAULT_SEAT_MONTHLY_DOLLARS,
     discount = DEFAULT_DISCOUNT,
+    story = 'healthy',
     onLog = () => {},
     deferUsageSeed,
   } = params;
 
-  const domain = `${customerName.toLowerCase().replace(/[^a-z0-9]+/g, '')}.ai`;
-  const seatIds = params.seatIds ?? POWER_USER_SEAT_NAMES.map((n) => `${n}@${domain}`);
+  const seatIds =
+    params.seatIds ??
+    [...DEMO_METRONOME_USAGE_USER_IDS].slice(
+      0,
+      aiBuilderManifest.powerUser.seatCount,
+    );
 
   onLog(`[1/5] Resolving Stripe delivery method on this Metronome account...`);
   const deliveryMethodId = await resolveMetronomeDeliveryMethodIdAsync(
@@ -275,17 +321,35 @@ export async function createPowerUserDemoCustomer(
   }
   onLog(`    ✓ delivery_method_id → ${deliveryMethodId}`);
 
-  onLog(`\n[2/5] Resolving rate card "${rateCardName}" + products by name...`);
-  const { rateCardId, creditTypeId, currencyCode, scale } =
-    await resolveRateCardByName(metronome, rateCardName);
-  const products = await resolveProductsByName(metronome, productNames);
+  const rateCardCandidates = rateCardName
+    ? [rateCardName]
+    : [CANONICAL_RATE_CARD_NAME, DEFAULT_RATE_CARD_NAME];
+  onLog(
+    `\n[2/5] Resolving AI Builder rate card (${rateCardCandidates.join(' or ')}) + products by name...`,
+  );
+  const {
+    rateCardId,
+    rateCardName: resolvedRateCardName,
+    creditTypeId,
+    currencyCode,
+    scale,
+  } = await resolveRateCardByNames(metronome, rateCardCandidates);
+  const resolvedProductNames =
+    productNames ??
+    (resolvedRateCardName === CANONICAL_RATE_CARD_NAME
+      ? CANONICAL_PRODUCT_NAMES
+      : DEFAULT_PRODUCT_NAMES);
+  const products = await resolveProductsByName(
+    metronome,
+    resolvedProductNames,
+  );
   const usageProductIds = await resolveUsageProductIds(
     metronome,
     rateCardId,
     Object.values(products),
   );
   onLog(
-    `    ✓ rate card → ${rateCardId}  (${usageProductIds.length} usage products, currency ${currencyCode}, credit_type ${creditTypeId}, scale x${scale})`,
+    `    ✓ ${resolvedRateCardName} → ${rateCardId}  (${usageProductIds.length} usage products, currency ${currencyCode}, credit_type ${creditTypeId}, scale x${scale})`,
   );
 
   onLog(`\n[3/5] Creating Stripe customer + Metronome customer...`);
@@ -300,31 +364,22 @@ export async function createPowerUserDemoCustomer(
     name: customerName,
     stripeCustomerId,
     deliveryMethodId,
+    stripeCollectionMethod: 'send_invoice',
   });
   onLog(`    ✓ Metronome customer '${customerName}' → ${customerId}`);
 
   const commitAmount = commitDollars * scale;
   const seatMonthlyAmount = seatMonthlyDollars * scale;
 
-  // complex_billing_demo.py hardcodes CONTRACT_START to midnight UTC on the
-  // 1st of a month ("2026-07-01T00:00:00Z") — both well in the past (so the
-  // ~27 days of seeded usage finalize inside an already-elapsed period) AND
-  // exactly on a monthly period boundary. That boundary alignment matters:
-  // it's why the $100k commit invoice (fired at starting_at) and the first
-  // month's seat subscription charge (billed in advance at the same instant)
-  // land on the same invoice instead of the commit invoicing alone and the
-  // seats invoicing separately for a short stub period. We mirror both
-  // properties by anchoring to midnight UTC on the 1st of the prior month.
-  const now = new Date();
-  const startingAt = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1, 0, 0, 0, 0),
-  );
+  // Calendar-month alignment keeps the current seeded usage inside the active
+  // monthly per-seat credit period while preserving non-prorated billing.
+  const startingAt = demoB2bContractStart();
   const endingBefore = new Date(startingAt);
   endingBefore.setUTCFullYear(endingBefore.getUTCFullYear() + 1);
 
   // B2B CREDIT ORDERING:
   // - every usage product is tagged `usage` by AI Builder account setup;
-  // - the per-seat recurring credit (priority 50, INDIVIDUAL) burns first;
+  // - the per-seat recurring credit (priority 1, INDIVIDUAL) burns first;
   // - excess seat usage then falls through to the shared annual commitment;
   // - the same tag scopes the negotiated 15% usage multiplier.
   // Do not replace this with unscoped credits or unrelated product ids.
@@ -343,6 +398,7 @@ export async function createPowerUserDemoCustomer(
         type: 'PREPAID',
         product_id: products.prepaidCommit,
         name: `$${(commitDollars / 1000).toFixed(0)}k Annual Commit`,
+        priority: 100,
         applicable_product_tags: ['usage'],
         access_schedule: {
           credit_type_id: creditTypeId,
@@ -399,7 +455,7 @@ export async function createPowerUserDemoCustomer(
         commit_duration: { value: 1, unit: 'PERIODS' },
         recurrence_frequency: 'MONTHLY',
         proration: 'NONE',
-        priority: 50,
+        priority: 1,
         rollover_fraction: 0,
         applicable_product_tags: ['usage'],
         subscription_config: {
@@ -422,11 +478,9 @@ export async function createPowerUserDemoCustomer(
       customerId,
       contractId,
       seatIds,
-      // Only the current-month slice can consume the active monthly seat
-      // allotment. This full-window target leaves enough current-month spend
-      // for the single heavy seat to cross $2k, while every other seat remains
-      // well below its individual allocation.
-      seatMonthlyDollars * 7.5,
+      seatMonthlyDollars,
+      discount,
+      story,
     );
 
   let eventsIngested: number | undefined;

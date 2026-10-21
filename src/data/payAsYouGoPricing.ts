@@ -12,6 +12,10 @@ export interface PaygModelRow {
   inputUsdPerMillion: number;
   /** USD per million output tokens */
   outputUsdPerMillion: number;
+  /** Batch-tier USD per million input tokens; omitted when unsupported. */
+  batchInputUsdPerMillion?: number;
+  /** Batch-tier USD per million output tokens; omitted when unsupported. */
+  batchOutputUsdPerMillion?: number;
 }
 
 export interface PaygProduct {
@@ -23,24 +27,6 @@ export interface PaygProduct {
 /** Standard pay-as-you-go rates (USD per million tokens). */
 export const payAsYouGoProducts: PaygProduct[] = [
   {
-    id: 'code-assist',
-    name: 'Code Assist',
-    models: [
-      {
-        provider: 'lora_mythic',
-        modelName: 'Lora Mythic 4.6',
-        inputUsdPerMillion: 3.0,
-        outputUsdPerMillion: 15.0,
-      },
-      {
-        provider: 'lora_prime',
-        modelName: 'Lora Prime Mini 5.4',
-        inputUsdPerMillion: 0.75,
-        outputUsdPerMillion: 4.5,
-      },
-    ],
-  },
-  {
     id: 'chat',
     name: 'Chat',
     models: [
@@ -49,18 +35,46 @@ export const payAsYouGoProducts: PaygProduct[] = [
         modelName: 'Lora Mythic 4.6',
         inputUsdPerMillion: 3.0,
         outputUsdPerMillion: 15.0,
+        batchInputUsdPerMillion: 1.5,
+        batchOutputUsdPerMillion: 7.5,
       },
       {
         provider: 'lora_prime',
         modelName: 'Lora Prime Mini 5.4',
         inputUsdPerMillion: 0.75,
         outputUsdPerMillion: 4.5,
+        batchInputUsdPerMillion: 0.38,
+        batchOutputUsdPerMillion: 2.25,
       },
       {
         provider: 'lora_prime',
         modelName: 'Lora Prime 5.4',
         inputUsdPerMillion: 2.5,
         outputUsdPerMillion: 15.0,
+        batchInputUsdPerMillion: 1.25,
+        batchOutputUsdPerMillion: 7.5,
+      },
+    ],
+  },
+  {
+    id: 'code-assist',
+    name: 'Code Assist',
+    models: [
+      {
+        provider: 'lora_mythic',
+        modelName: 'Lora Mythic 4.6',
+        inputUsdPerMillion: 3.0,
+        outputUsdPerMillion: 15.0,
+        batchInputUsdPerMillion: 1.5,
+        batchOutputUsdPerMillion: 7.5,
+      },
+      {
+        provider: 'lora_prime',
+        modelName: 'Lora Prime Mini 5.4',
+        inputUsdPerMillion: 0.75,
+        outputUsdPerMillion: 4.5,
+        batchInputUsdPerMillion: 0.36,
+        batchOutputUsdPerMillion: 2.25,
       },
     ],
   },
@@ -73,6 +87,8 @@ export const payAsYouGoProducts: PaygProduct[] = [
         modelName: 'Lora Spark 4.5',
         inputUsdPerMillion: 1.0,
         outputUsdPerMillion: 5.0,
+        batchInputUsdPerMillion: 0.5,
+        batchOutputUsdPerMillion: 2.5,
       },
       {
         provider: 'lora_prime',

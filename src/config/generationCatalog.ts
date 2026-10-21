@@ -164,6 +164,8 @@ export interface GenerationUsageEventInput {
   taskId: string;
   customerId: string;
   sku: GenerationSku;
+  /** Positive whole-number aggregation multiplier used by bulk demo seeding. */
+  quantityMultiplier?: number;
   userId: string;
   workspaceId: string;
   projectId: string;
@@ -173,7 +175,12 @@ export interface GenerationUsageEventInput {
 
 export function buildGenerationUsageEvent(input: GenerationUsageEventInput) {
   const serviceTier = input.serviceTier ?? 'standard';
-  const creditsConsumed = generationCreditsForTier(input.sku, serviceTier);
+  const quantityMultiplier = Math.max(
+    1,
+    Math.floor(input.quantityMultiplier ?? 1),
+  );
+  const creditsConsumed =
+    generationCreditsForTier(input.sku, serviceTier) * quantityMultiplier;
   return {
     transactionId: `${input.taskId}:completed`,
     customerId: input.customerId,
@@ -181,7 +188,9 @@ export function buildGenerationUsageEvent(input: GenerationUsageEventInput) {
     timestamp: input.timestamp ?? new Date().toISOString(),
     properties: {
       credits_consumed: creditsConsumed,
-      quantity: input.sku.quantity,
+      // Generation quantities are always whole jobs or whole seconds. Bulk
+      // seed events aggregate many valid units; they never use fractional jobs.
+      quantity: input.sku.quantity * quantityMultiplier,
       modality: input.sku.modality,
       operation: input.sku.operation,
       model: input.sku.model,

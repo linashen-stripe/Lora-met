@@ -10,16 +10,14 @@ import { LoadingOverlay } from '@/components';
 import { formatPrice } from '@/utils/helpers';
 import PricingCard, { type Plan } from '@/components/pricing/PricingCard';
 import PayAsYouGoPricingTable from '@/components/pricing/PayAsYouGoPricingTable';
+import GenerationPricingTable from '@/components/pricing/GenerationPricingTable';
 import FaqSection from '@/components/pricing/FaqSection';
 import SubscribePricingPlanEmbeddedDialog from '@/components/subscribe/SubscribePricingPlanEmbeddedDialog';
 import SubscribeMetronomePackageDialog from '@/components/subscribe/SubscribeMetronomePackageDialog';
 import { PricingPlan } from '@/utils/types';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import {
-  generationCreditsForTier,
   GENERATION_PLANS,
-  GENERATION_SERVICE_TIERS,
-  GENERATION_SKUS,
   QUICKSTART_ENTERPRISE_TERMS,
 } from '@/config/generationCatalog';
 import { DEMO_MODES } from '@/config/demoModes';
@@ -935,76 +933,7 @@ function PricingPageContent() {
                 : t('pricing.pay_as_you_go.description')}
             </p>
             {demoMode === 'generation' ? (
-              <div className='mt-8 overflow-x-auto rounded-xl border border-border bg-card text-left shadow-sm'>
-                <table className='w-full min-w-[980px] border-collapse'>
-                  <thead className='bg-muted/60 text-xs uppercase tracking-wide text-muted-foreground'>
-                    <tr>
-                      <th className='px-5 py-3 font-semibold'>Product</th>
-                      <th className='px-5 py-3 font-semibold'>Model</th>
-                      <th className='px-5 py-3 font-semibold'>Operation</th>
-                      <th className='px-5 py-3 font-semibold'>Quality</th>
-                      <th className='px-5 py-3 font-semibold'>Billed as</th>
-                      {GENERATION_SERVICE_TIERS.map((tier) => (
-                        <th
-                          key={tier.value}
-                          className='px-5 py-3 text-right font-semibold'
-                        >
-                          <span className='capitalize'>{tier.value}</span>{' '}
-                          service ({tier.multiplier}×)
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className='divide-y divide-border'>
-                    {GENERATION_SKUS.map((sku) => (
-                      <tr key={sku.id} className='align-top hover:bg-muted/30'>
-                        <td className='px-5 py-4'>
-                          <div className='flex items-center gap-2'>
-                            <span className='rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold capitalize text-violet-800'>
-                              {sku.modality}
-                            </span>
-                            <span className='font-semibold text-foreground'>
-                              {sku.label}
-                            </span>
-                          </div>
-                          <p className='mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground'>
-                            {sku.description}
-                          </p>
-                        </td>
-                        <td className='whitespace-nowrap px-5 py-4 font-mono text-sm text-foreground'>
-                          {sku.model}
-                        </td>
-                        <td className='px-5 py-4 text-sm capitalize text-foreground'>
-                          {sku.operation.replaceAll('_', ' ')}
-                        </td>
-                        <td className='px-5 py-4 text-sm capitalize text-foreground'>
-                          {sku.quality}
-                        </td>
-                        <td className='whitespace-nowrap px-5 py-4 text-sm text-foreground'>
-                          {sku.quantity} {sku.unit}
-                          {sku.quantity === 1 ? '' : 's'}
-                        </td>
-                        {GENERATION_SERVICE_TIERS.map((tier) => {
-                          const credits = generationCreditsForTier(
-                            sku,
-                            tier.value,
-                          );
-                          return (
-                            <td
-                              key={tier.value}
-                              className='whitespace-nowrap px-5 py-4 text-right text-foreground'
-                            >
-                              <span className='block font-bold'>
-                                {credits} {t('common.credits', 'credits')}
-                              </span>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <GenerationPricingTable />
             ) : (
               <PayAsYouGoPricingTable />
             )}

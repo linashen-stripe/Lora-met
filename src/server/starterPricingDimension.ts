@@ -10,17 +10,14 @@ type ValidationOptions<Metric extends string> = {
   metricLabel: string;
 };
 
-/**
- * Shared validation for the one optional starter-only pricing property.
- * Individual starters still own their canonical dimensions and metric names.
- */
+/** Validates a mode manifest's canonical pricing dimension. */
 export function validateStarterPricingDimension<Metric extends string>(
   value: unknown,
   options: ValidationOptions<Metric>,
 ): StarterPricingDimension<Metric> | null {
   if (value == null) return null;
   if (!value || typeof value !== 'object') {
-    throw new Error('Custom pricing property must be an object.');
+    throw new Error('Pricing dimension must be an object.');
   }
   const candidate = value as {
     propertyKey?: unknown;
@@ -44,7 +41,7 @@ export function validateStarterPricingDimension<Metric extends string>(
     candidate.values.length < 2 ||
     candidate.values.length > 4
   ) {
-    throw new Error('Custom pricing property requires 2–4 values.');
+    throw new Error('Pricing dimension requires 2–4 values.');
   }
   const values = candidate.values.map((entry, index) => {
     const row =
@@ -54,7 +51,7 @@ export function validateStarterPricingDimension<Metric extends string>(
     const item = typeof row.value === 'string' ? row.value.trim() : '';
     const multiplier = Number(row.multiplier);
     if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(item)) {
-      throw new Error(`Custom pricing value ${index + 1} is invalid.`);
+      throw new Error(`Pricing dimension value ${index + 1} is invalid.`);
     }
     if (!Number.isFinite(multiplier) || multiplier <= 0) {
       throw new Error(`Multiplier for "${item}" must be greater than zero.`);
@@ -62,7 +59,7 @@ export function validateStarterPricingDimension<Metric extends string>(
     return { value: item, multiplier };
   });
   if (new Set(values.map(({ value: item }) => item)).size !== values.length) {
-    throw new Error('Custom pricing property values must be unique.');
+    throw new Error('Pricing dimension values must be unique.');
   }
   if (!Array.isArray(candidate.metrics)) {
     throw new Error(`Select at least one ${options.metricLabel} usage metric.`);

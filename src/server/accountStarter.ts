@@ -1,12 +1,6 @@
 import type { ApiTraceEntry } from '@/utils/apiInspector';
-import {
-  runStarter as runGenerationStarter,
-  type PricingDimension as GenerationPricingDimension,
-} from '@/server/metronomeStarter';
-import {
-  runAiBuilderStarter,
-  type AiBuilderPricingDimension,
-} from '@/server/aiBuilderStarter';
+import { runStarter as runGenerationStarter } from '@/server/metronomeStarter';
+import { runAiBuilderStarter } from '@/server/aiBuilderStarter';
 
 export type AccountStarterMode = 'ai-builder' | 'generation';
 export type AccountStarterAction = 'plan' | 'seed' | 'reset';
@@ -24,10 +18,6 @@ export type AccountStarterOptions = {
   powerUserName?: string;
   stripeSecretKey?: string;
   deliveryMethodId?: string;
-  pricingDimension?:
-    | GenerationPricingDimension
-    | AiBuilderPricingDimension
-    | null;
   onLog?: (line: string) => void;
   onTrace?: (entry: ApiTraceEntry) => void;
 };
@@ -43,8 +33,6 @@ export async function runAccountStarter(options: AccountStarterOptions) {
       mode: options.action,
       confirmReset: options.confirmReset,
       resetScope: options.resetScope,
-      pricingDimension:
-        (options.pricingDimension as AiBuilderPricingDimension | null) ?? null,
       resourcePrefix: options.resourcePrefix,
       quickstartName: options.quickstartName,
       proName: options.proName,
@@ -61,8 +49,6 @@ export async function runAccountStarter(options: AccountStarterOptions) {
     mode: options.action,
     confirmReset: options.confirmReset,
     resetScope: options.resetScope,
-    pricingDimension:
-      (options.pricingDimension as GenerationPricingDimension | null) ?? null,
     resourcePrefix: options.resourcePrefix,
     quickstartName: options.quickstartName,
     proName: options.proName,

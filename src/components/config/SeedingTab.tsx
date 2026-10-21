@@ -12,6 +12,7 @@ export default function SeedingTab() {
 
   const [customerId, setCustomerId] = useState('');
   const [story, setStory] = useState<'healthy' | 'at-risk' | 'burst'>('healthy');
+  const [persona, setPersona] = useState<'pro' | 'quickstart'>('pro');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
@@ -22,8 +23,8 @@ export default function SeedingTab() {
     setResult(null);
     const q = new URLSearchParams({
       customerId: cid,
-      story:
-        demoMode === 'ai-builder' && story === 'burst' ? 'at-risk' : story,
+      story,
+      persona,
     });
     try {
       const endpoint =
@@ -54,16 +55,44 @@ export default function SeedingTab() {
     } finally {
       setLoading(false);
     }
-  }, [customerId, story, demoMode, bumpInvoicePacingChart]);
+  }, [customerId, story, persona, demoMode, bumpInvoicePacingChart]);
 
   return (
     <div className='space-y-4'>
       <p className='text-xs text-gray-600'>
         Seed deterministic {demoMode === 'generation' ? 'generation jobs' : 'token usage'}{' '}
-        across multiple users and projects. Events use{' '}
+        for one Pro or Quickstart actor across representative dimensions. Events use{' '}
         <code className='rounded bg-gray-100 px-0.5'>model</code> and{' '}
         <code className='rounded bg-gray-100 px-0.5'>user_id</code>.
       </p>
+      <p className='text-xs text-amber-700'>
+        Retrying the same story is idempotent. Selecting a different story adds
+        immutable usage; use a fresh customer when comparing stories.
+      </p>
+
+      <div>
+        <label
+          htmlFor='tools-seed-persona'
+          className='mb-1.5 block text-sm font-medium text-gray-700'
+        >
+          Customer persona
+        </label>
+        <select
+          id='tools-seed-persona'
+          value={persona}
+          onChange={(e) =>
+            setPersona(e.target.value as 'pro' | 'quickstart')
+          }
+          className='w-full rounded-md border border-gray-300 bg-white p-2 text-sm text-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500'
+        >
+          <option value='pro'>Pro</option>
+          <option value='quickstart'>Enterprise Quickstart</option>
+        </select>
+        <p className='mt-1 text-xs text-amber-700'>
+          B2B usage is intentionally unavailable here because changing its
+          immutable seat history would corrupt the one-spill-seat story.
+        </p>
+      </div>
 
       <div>
         <label
@@ -87,7 +116,7 @@ export default function SeedingTab() {
           htmlFor='tools-seed-story'
           className='mb-1.5 block text-sm font-medium text-gray-700'
         >
-          Usage story
+          Usage profile
         </label>
         <select
           id='tools-seed-story'
@@ -99,9 +128,7 @@ export default function SeedingTab() {
         >
           <option value='healthy'>Healthy growth</option>
           <option value='at-risk'>At risk of exceeding commitment</option>
-          {demoMode === 'generation' && (
-            <option value='burst'>Late-month burst</option>
-          )}
+          <option value='burst'>Late-month spike</option>
         </select>
       </div>
 

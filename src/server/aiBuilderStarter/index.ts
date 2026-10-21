@@ -9,11 +9,35 @@ import {
   safeJsonParse,
   type ApiTraceEntry,
 } from '@/utils/apiInspector';
+import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
 import { STRIPE_API_VERSION } from '@/utils/stripe';
 import {
-  validateStarterPricingDimension,
-  type StarterPricingDimension,
-} from '@/server/starterPricingDimension';
+  assertB2bSeatTargets,
+  b2bSeatConsumptionTargets,
+  demoB2bContractStart,
+  demoB2bUsageStart,
+  demoContractStart,
+  expectedB2bSpillSeatCount,
+  listRateTargetsForConsumption,
+  type DemoUsageStory,
+} from '@/utils/demoUsageSeedProfiles';
+import {
+  AI_BUILDER_SEED_EVENT_REVISION,
+  SEED_USAGE_MULTI_PROJECT_IDS,
+  SEED_USAGE_MULTI_PROJECT_SPEND_SHARES,
+  seedMetronomeUsage,
+} from '@/utils/metronomeSeedUsage';
+import {
+  metronomeContractConsumedUnits,
+} from '@/utils/metronomeContractPool';
+import {
+  logStarterResetSummary,
+  starterResetCompletionMessage,
+} from '@/server/starterResetSummary';
+import { createStripeTestCustomer } from '@/server/stripeTestCustomer';
+
+const STARTER_USAGE_AGGREGATION_TIMEOUT_MS = 30_000;
+const STARTER_USAGE_AGGREGATION_POLL_MS = 5_000;
 
 export type AiBuilderMetricKey =
   | 'code_assist_input'
@@ -23,20 +47,12 @@ export type AiBuilderMetricKey =
   | 'voice_input'
   | 'voice_output';
 
-export type PricingDimension =
-  StarterPricingDimension<AiBuilderMetricKey>;
-
-export type AiBuilderPricingDimension = Omit<PricingDimension, 'metrics'> & {
-  metrics: string[];
-};
-
 type StarterManifest = {
   version: number;
   namespace: string;
   resourcePrefix: string;
   eventType: 'ai_platform.usage';
   fiatCurrency: 'USD';
-  pricingDimension: PricingDimension | null;
   rateCard: { name: string; alias: string };
   metrics: Array<{
     key: AiBuilderMetricKey;
@@ -140,7 +156,6 @@ type StarterState = {
   manifestVersion: number;
   resourcePrefix: string;
   runId: string;
-  pricingDimension: PricingDimension | null;
   billingMode: 'metronome-only' | 'stripe';
   generatedAt: string;
   checkpoints: string[];
@@ -161,7 +176,6 @@ export interface AiBuilderStarterOptions {
   mode?: 'plan' | 'seed' | 'reset';
   resetScope?: 'demo-only' | 'demo-data' | 'full';
   confirmReset?: boolean;
-  pricingDimension?: AiBuilderPricingDimension | null;
   resourcePrefix?: string;
   quickstartName?: string;
   proName?: string;
@@ -197,19 +211,6 @@ type StripeContext = {
 const METRIC_KEYS = new Set<AiBuilderMetricKey>(
   AI_BUILDER_STARTER_MANIFEST.metrics.map((metric) => metric.key),
 );
-const RESERVED_DIMENSIONS = new Set([
-  'customer_id',
-  'quantity',
-  'api_product',
-  'model',
-  'processing_tier',
-  'input_tokens',
-  'output_tokens',
-  'workspace_id',
-  'project_id',
-  'user_id',
-  'seat_id',
-]);
 
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
@@ -262,21 +263,7 @@ async function listAll<T>(source: AsyncIterable<T>): Promise<T[]> {
   return rows;
 }
 
-function validatePricingDimension(
-  input: AiBuilderPricingDimension | PricingDimension | null | undefined,
-): PricingDimension | null {
-  return validateStarterPricingDimension(input, {
-    metricKeys: [...METRIC_KEYS],
-    reservedPropertyKeys: RESERVED_DIMENSIONS,
-    metricLabel: 'AI Builder',
-  });
-}
-
-function reviewConfig(
-  manifest: StarterManifest,
-  pricingDimension: PricingDimension | null,
-) {
-  const dimension = validatePricingDimension(pricingDimension);
+function reviewConfig(manifest: StarterManifest) {
   const names = [
     manifest.resourcePrefix,
     manifest.rateCard.name,
@@ -316,17 +303,6 @@ function reviewConfig(
   ) {
     errors.push('B2B economics do not match the AI Builder requirements.');
   }
-  const rates = manifest.rates.map((rate) => ({
-    ...rate,
-    dimensionVariants:
-      dimension?.metrics.includes(rate.metric)
-        ? dimension.values.map((value) => ({
-            [dimension.propertyKey]: value.value,
-            centsPerMillionTokens:
-              rate.centsPerMillionTokens * value.multiplier,
-          }))
-        : [{ centsPerMillionTokens: rate.centsPerMillionTokens }],
-  }));
   return {
     valid: errors.length === 0,
     errors,
@@ -336,26 +312,19 @@ function reviewConfig(
       customerAliasPrefix: `${manifest.namespace}:customer:`,
       resourceTag: manifest.namespace,
     },
-    pricingDimension: dimension,
     metrics: manifest.metrics,
-    rates,
+    rates: manifest.rates,
     packages: manifest.packages,
     powerUser: manifest.powerUser,
   };
 }
 
-export function reviewAiBuilderStarterConfig(
-  pricingDimension: PricingDimension | null =
-    AI_BUILDER_STARTER_MANIFEST.pricingDimension,
-) {
-  return reviewConfig(AI_BUILDER_STARTER_MANIFEST, pricingDimension);
+export function reviewAiBuilderStarterConfig() {
+  return reviewConfig(AI_BUILDER_STARTER_MANIFEST);
 }
 
-function assertConfig(
-  manifest: StarterManifest,
-  dimension: PricingDimension | null,
-): void {
-  const review = reviewConfig(manifest, dimension);
+function assertConfig(manifest: StarterManifest): void {
+  const review = reviewConfig(manifest);
   if (!review.valid) throw new Error(review.errors.join(' '));
 }
 
@@ -438,17 +407,11 @@ async function resolveFiatCreditType(client: any): Promise<string> {
   );
 }
 
-function metricGroupKeys(
-  metric: AiBuilderMetricKey,
-  dimension: PricingDimension | null,
-): string[][] {
+function metricGroupKeys(): string[][] {
   return [
     [
       'model',
       'processing_tier',
-      ...(dimension?.metrics.includes(metric)
-        ? [dimension.propertyKey]
-        : []),
       'workspace_id',
       'project_id',
       'user_id',
@@ -456,17 +419,8 @@ function metricGroupKeys(
   ];
 }
 
-function pricingGroupKey(
-  metric: AiBuilderMetricKey,
-  dimension: PricingDimension | null,
-): string[] {
-  return [
-    'model',
-    'processing_tier',
-    ...(dimension?.metrics.includes(metric)
-      ? [dimension.propertyKey]
-      : []),
-  ];
+function pricingGroupKey(): string[] {
+  return ['model', 'processing_tier'];
 }
 
 async function discover(client: any) {
@@ -497,8 +451,8 @@ function assertEquivalent(
 async function ensureCatalog(
   client: any,
   manifest: StarterManifest,
-  dimension: PricingDimension | null,
   runId: string,
+  knownPackageIds: Record<string, string>,
   deliveryMethod: string | undefined,
   log: (message: string) => void,
 ): Promise<Catalog> {
@@ -507,7 +461,7 @@ async function ensureCatalog(
   const metricIds: Record<string, string> = {};
 
   for (const definition of manifest.metrics) {
-    const groupKeys = metricGroupKeys(definition.key, dimension);
+    const groupKeys = metricGroupKeys();
     const propertyFilters = [
       { name: definition.aggregationKey, exists: true },
       {
@@ -520,15 +474,6 @@ async function ensureCatalog(
       { name: 'workspace_id', exists: true },
       { name: 'project_id', exists: true },
       { name: 'user_id', exists: true },
-      ...(dimension?.metrics.includes(definition.key)
-        ? [
-            {
-              name: dimension.propertyKey,
-              exists: true,
-              in_values: dimension.values.map(({ value }) => value),
-            },
-          ]
-        : []),
     ];
     const existing = found.metrics.find(
       (metric: any) => metric.name === definition.name,
@@ -563,8 +508,19 @@ async function ensureCatalog(
   const productIds: Record<string, string> = {};
   for (const metric of manifest.metrics) {
     const existing: any = productsByName.get(metric.name);
-    const pricing = pricingGroupKey(metric.key, dimension);
+    const pricing = pricingGroupKey();
     if (existing) {
+      const existingTags = existing.current.tags ?? [];
+      if (!existingTags.includes(manifest.namespace)) {
+        throw new Error(
+          `Product "${metric.name}" exists without the ${manifest.namespace} ownership tag.`,
+        );
+      }
+      assertEquivalent(
+        `${metric.name} billable metric`,
+        existing.current.billable_metric_id,
+        metricIds[metric.key],
+      );
       assertEquivalent(
         `${metric.name} pricing group key`,
         existing.current.pricing_group_key,
@@ -579,6 +535,14 @@ async function ensureCatalog(
           name: 'tokens to million tokens',
         },
       );
+      if (!existingTags.includes('usage')) {
+        log(`Adding required usage tag: ${metric.name}`);
+        await client.v1.contracts.products.update({
+          product_id: existing.id,
+          starting_at: contractStart(),
+          tags: [...existingTags, 'usage'],
+        });
+      }
       productIds[metric.key] = existing.id;
       continue;
     }
@@ -613,6 +577,11 @@ async function ensureCatalog(
   for (const [key, name, type] of fixedProducts) {
     const existing: any = productsByName.get(name);
     if (existing) {
+      if (!(existing.current.tags ?? []).includes(manifest.namespace)) {
+        throw new Error(
+          `Product "${name}" exists without the ${manifest.namespace} ownership tag.`,
+        );
+      }
       productIds[key] = existing.id;
       continue;
     }
@@ -648,40 +617,31 @@ async function ensureCatalog(
   );
   const ratesToAdd: any[] = [];
   for (const rate of manifest.rates) {
-    const variants = dimension?.metrics.includes(rate.metric)
-      ? dimension.values
-      : [{ value: null, multiplier: 1 }];
-    for (const variant of variants) {
-      const values = {
-        model: rate.model,
-        processing_tier: rate.processingTier,
-        ...(variant.value && dimension
-          ? { [dimension.propertyKey]: variant.value }
-          : {}),
-      };
-      const price = rate.centsPerMillionTokens * variant.multiplier;
-      const existing = currentRates.find(
-        (candidate) =>
-          candidate.product_id === productIds[rate.metric] &&
-          stable(candidate.pricing_group_values ?? {}) === stable(values),
+    const values = {
+      model: rate.model,
+      processing_tier: rate.processingTier,
+    };
+    const existing = currentRates.find(
+      (candidate) =>
+        candidate.product_id === productIds[rate.metric] &&
+        stable(candidate.pricing_group_values ?? {}) === stable(values),
+    );
+    if (existing) {
+      assertEquivalent(
+        `${rate.metric}/${rate.model}/${rate.processingTier} price`,
+        Number(existing.rate?.price),
+        rate.centsPerMillionTokens,
       );
-      if (existing) {
-        assertEquivalent(
-          `${rate.metric}/${rate.model}/${rate.processingTier} price`,
-          Number(existing.rate?.price),
-          price,
-        );
-      } else {
-        ratesToAdd.push({
-          product_id: productIds[rate.metric],
-          rate_type: 'FLAT',
-          price,
-          credit_type_id: fiatCreditTypeId,
-          pricing_group_values: values,
-          starting_at: '2020-01-01T00:00:00.000Z',
-          entitled: true,
-        });
-      }
+    } else {
+      ratesToAdd.push({
+        product_id: productIds[rate.metric],
+        rate_type: 'FLAT',
+        price: rate.centsPerMillionTokens,
+        credit_type_id: fiatCreditTypeId,
+        pricing_group_values: values,
+        starting_at: '2020-01-01T00:00:00.000Z',
+        entitled: true,
+      });
     }
   }
   const subscriptionRates = [
@@ -835,26 +795,33 @@ async function ensureCatalog(
                 },
               ],
             },
-            ...(deliveryMethod
-              ? {
-                  payment_gate_config: {
-                    payment_gate_type: 'STRIPE',
-                    stripe_config: { payment_type: 'INVOICE' },
-                  },
-                }
-              : {}),
           },
         ],
       },
     },
   ];
   for (const definition of packageDefinitions) {
+    let replacedPackageId: string | undefined;
     const owned = found.packages.filter(
-      (pkg: any) =>
-        !pkg.archived_at &&
-        String(pkg.uniqueness_key ?? '').startsWith(
-          `${manifest.namespace}:package:${definition.key}:`,
-        ),
+      (pkg: any) => {
+        if (pkg.archived_at) return false;
+        const hasOwnedAlias = (pkg.aliases ?? []).some(
+          (alias: { name?: string } | string) =>
+            String(
+              typeof alias === 'string' ? alias : alias.name ?? '',
+            ).startsWith(
+              `${manifest.namespace}-package-${definition.key}-`,
+            ),
+        );
+        return (
+          knownPackageIds[definition.key] === pkg.id ||
+          String(pkg.uniqueness_key ?? '').startsWith(
+            `${manifest.namespace}:package:${definition.key}:`,
+          ) ||
+          hasOwnedAlias ||
+          (pkg.name === definition.name && pkg.rate_card_id === rateCardId)
+        );
+      },
     );
     if (owned.length > 1) {
       throw new Error(
@@ -862,11 +829,37 @@ async function ensureCatalog(
       );
     }
     if (owned.length === 1) {
-      packageIds[definition.key] = owned[0].id;
-      continue;
+      const existing = owned[0];
+      if (definition.key === 'quickstart') {
+        const detail = await client.v1.packages.retrieve({
+          package_id: existing.id,
+        });
+        const hasInlineStripePaymentGate = (
+          (detail.data as any).commits ?? []
+        ).some(
+          (commit: any) =>
+            commit.payment_gate_config?.payment_gate_type === 'STRIPE',
+        );
+        if (hasInlineStripePaymentGate) {
+          log(
+            `Replacing incompatible payment-gated package: ${definition.name}`,
+          );
+          await client.v1.packages.archive({ package_id: existing.id });
+          replacedPackageId = existing.id;
+        } else {
+          packageIds[definition.key] = existing.id;
+          continue;
+        }
+      } else {
+        packageIds[definition.key] = existing.id;
+        continue;
+      }
     }
     const nameConflict = found.packages.find(
-      (pkg: any) => !pkg.archived_at && pkg.name === definition.name,
+      (pkg: any) =>
+        !pkg.archived_at &&
+        pkg.id !== replacedPackageId &&
+        pkg.name === definition.name,
     );
     if (nameConflict) {
       throw new Error(
@@ -966,34 +959,17 @@ async function createStripeCustomer(
   persona: StarterManifest['personas'][number],
   namespace: string,
   runId: string,
+  email = `${persona.key}.${runId}@example.com`,
 ): Promise<string> {
-  const customer = await stripe.customers.create({
+  return createStripeTestCustomer(stripe, {
     name: persona.name,
-    email: `${persona.key}.${runId}@example.com`,
-    address: {
-      line1: '354 Oyster Point Blvd',
-      city: 'South San Francisco',
-      state: 'CA',
-      postal_code: '94080',
-      country: 'US',
-    },
+    email,
     metadata: {
       starter_namespace: namespace,
       starter_persona: persona.key,
       starter_run: runId,
     },
   });
-  const paymentMethod = await stripe.paymentMethods.create({
-    type: 'card',
-    card: { token: 'tok_visa' },
-  });
-  await stripe.paymentMethods.attach(paymentMethod.id, {
-    customer: customer.id,
-  });
-  await stripe.customers.update(customer.id, {
-    invoice_settings: { default_payment_method: paymentMethod.id },
-  });
-  return customer.id;
 }
 
 async function ensureBillingConfiguration(
@@ -1001,6 +977,7 @@ async function ensureBillingConfiguration(
   customerId: string,
   stripeCustomerId: string,
   stripeContext: StripeContext,
+  collectionMethod: 'charge_automatically' | 'send_invoice',
 ): Promise<string | undefined> {
   const current =
     await client.v1.customers.retrieveBillingConfigurations({
@@ -1016,13 +993,12 @@ async function ensureBillingConfiguration(
   const base = {
     customer_id: customerId,
     billing_provider: 'stripe',
-    delivery_method: stripeContext.deliveryMethod,
     ...(stripeContext.deliveryMethodId
       ? { delivery_method_id: stripeContext.deliveryMethodId }
-      : {}),
+      : { delivery_method: stripeContext.deliveryMethod }),
     configuration: {
       stripe_customer_id: stripeCustomerId,
-      stripe_collection_method: 'charge_automatically',
+      stripe_collection_method: collectionMethod,
     },
   };
   try {
@@ -1045,10 +1021,7 @@ async function ensureBillingConfiguration(
 }
 
 function contractStart(): string {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
-  ).toISOString();
+  return demoContractStart().toISOString();
 }
 
 async function ensureProAutoTopUp(
@@ -1100,22 +1073,31 @@ async function ensurePersonas(
   stripeContext: StripeContext | undefined,
   stripeCustomerIds: Record<string, string>,
   log: (message: string) => void,
+  customerAliases: Record<string, string> = {},
 ) {
   const found = await discover(client);
   const customerIds: Record<string, string> = {};
   const contractIds: Record<string, string> = {};
   const billingConfigurationIds: Record<string, string> = {};
-  const startingAt = contractStart();
+  const packageStartingAt = contractStart();
 
   for (const persona of manifest.personas) {
-    const alias = `${manifest.namespace}:customer:${persona.key}:run-${runId}`;
+    const startingAt = persona.directContract
+      ? demoB2bContractStart().toISOString()
+      : packageStartingAt;
+    const explicitAlias = customerAliases[persona.key];
+    const alias =
+      explicitAlias ??
+      `${manifest.namespace}:customer:${persona.key}:run-${runId}`;
     const ownedCustomers = found.customers.filter(
       (customer: any) =>
         !customer.archived_at &&
         (customer.ingest_aliases ?? []).some((candidate: string) =>
-          candidate.startsWith(
-            `${manifest.namespace}:customer:${persona.key}:`,
-          ),
+          explicitAlias
+            ? candidate === explicitAlias
+            : candidate.startsWith(
+                `${manifest.namespace}:customer:${persona.key}:`,
+              ),
         ),
     );
     if (ownedCustomers.length > 1) {
@@ -1124,6 +1106,11 @@ async function ensurePersonas(
       );
     }
     let customer = ownedCustomers[0];
+    if (customer && customer.name !== persona.name) {
+      throw new Error(
+        `Starter customer "${customer.name}" already owns the ${persona.key} alias. Run a demo-data reset before changing its name to "${persona.name}".`,
+      );
+    }
     if (!customer) {
       const conflict = found.customers.find(
         (candidate: any) =>
@@ -1150,6 +1137,9 @@ async function ensurePersonas(
           customer.id,
           stripeCustomerIds[persona.key],
           stripeContext,
+          persona.directContract === 'power-user'
+            ? 'send_invoice'
+            : 'charge_automatically',
         )) ?? '';
     }
 
@@ -1213,7 +1203,8 @@ async function ensurePersonas(
       );
       const seats = Array.from(
         { length: b2b.seatCount },
-        (_, index) => `power-user-seat-${index + 1}`,
+        (_, index) =>
+          DEMO_METRONOME_USAGE_USER_IDS[index] ?? `seat-user-${index + 1}`,
       );
       created = await client.v1.contracts.create({
         customer_id: customer.id,
@@ -1226,10 +1217,9 @@ async function ensurePersonas(
           ? {
               billing_provider_configuration: {
                 billing_provider: 'stripe',
-                delivery_method: stripeContext.deliveryMethod,
                 ...(stripeContext.deliveryMethodId
                   ? { delivery_method_id: stripeContext.deliveryMethodId }
-                  : {}),
+                  : { delivery_method: stripeContext.deliveryMethod }),
               },
             }
           : {}),
@@ -1261,14 +1251,6 @@ async function ensurePersonas(
                 },
               ],
             },
-            ...(stripeContext
-              ? {
-                  payment_gate_config: {
-                    payment_gate_type: 'STRIPE',
-                    stripe_config: { payment_type: 'INVOICE' },
-                  },
-                }
-              : {}),
           },
         ],
         overrides: [
@@ -1341,108 +1323,152 @@ async function ensurePersonas(
   return { customerIds, contractIds, billingConfigurationIds };
 }
 
-function hashIndex(seed: string, length: number): number {
-  return Number.parseInt(fingerprint(seed).slice(0, 8), 16) % length;
-}
-
 async function seedUsage(
   client: any,
   manifest: StarterManifest,
-  dimension: PricingDimension | null,
-  runId: string,
   customerIds: Record<string, string>,
+  contractIds: Record<string, string>,
   log: (message: string) => void,
-): Promise<number> {
-  const now = new Date();
-  const ratesByPair = new Map<string, StarterManifest['rates']>();
-  for (const rate of manifest.rates) {
-    const pair = rate.metric.replace(/_(input|output)$/, '');
-    const key = `${pair}:${rate.model}:${rate.processingTier}`;
-    const rows = ratesByPair.get(key) ?? [];
-    rows.push(rate);
-    ratesByPair.set(key, rows);
-  }
-  const pairs = [...ratesByPair.entries()].filter(
-    ([, rates]) => rates.length === 2,
-  );
-  const events: any[] = [];
+  story: DemoUsageStory = 'healthy',
+): Promise<{
+  eventsIngested: number;
+  expectedConsumptionCents: Record<string, number>;
+}> {
+  const projects = SEED_USAGE_MULTI_PROJECT_IDS.map((projectId, index) => ({
+    projectId,
+    spendShare: SEED_USAGE_MULTI_PROJECT_SPEND_SHARES[index]!,
+  }));
+  let eventsIngested = 0;
+  const expectedConsumptionCents: Record<string, number> = {};
+
   for (const persona of manifest.personas) {
     const isB2b = persona.key === 'b2b-power-user';
-    const users = isB2b ? 5 : 2;
-    const eventCount = isB2b ? 50 : persona.key === 'pro' ? 18 : 30;
-    for (let index = 0; index < eventCount; index += 1) {
-      const [pairKey, rates] =
-        pairs[index < pairs.length ? index : hashIndex(
-          `${persona.key}:${index}:pair`,
-          pairs.length,
-        )];
-      const [productKey, model, processingTier] = pairKey.split(':');
-      const inputRate = rates.find((rate) =>
-        rate.metric.endsWith('_input'),
-      )!;
-      const outputRate = rates.find((rate) =>
-        rate.metric.endsWith('_output'),
-      )!;
-      const userIndex = isB2b
-        ? [0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 4][index % 12]
-        : index % users;
-      const timestamp = new Date(now);
-      timestamp.setUTCDate(timestamp.getUTCDate() - 1 - (index % 27));
-      timestamp.setUTCHours(8 + (index % 12), (index * 17) % 60, 0, 0);
-      const dimensionValue =
-        dimension?.metrics.some((metric) =>
-          rates.some((rate) => rate.metric === metric),
+    const customerId = customerIds[persona.key];
+    const contractId = contractIds[persona.key];
+    if (!customerId || !contractId) {
+      throw new Error(`Missing seeded ${persona.key} customer or contract.`);
+    }
+    const b2bConsumptionTargets = isB2b
+      ? b2bSeatConsumptionTargets(
+          manifest.powerUser.seatMonthlyCreditCents,
+          story,
         )
-          ? dimension.values[index % dimension.values.length]
-          : null;
-      // Scale is target spend in cents for the input side of this paired
-      // event; output adds roughly another 60%. Keep Pro below its $20 grant,
-      // show meaningful Quickstart utilization, and drive only the busiest
-      // B2B seat beyond its $2,000 allocation into the annual commitment.
-      const scale =
-        persona.key === 'pro' ? 40 : isB2b ? 10_000 : 2_000;
-      const inputTokens = Math.round(
-        (1_000_000 * scale) /
-          Math.max(1, inputRate.centsPerMillionTokens),
+      : [];
+    if (isB2b) {
+      assertB2bSeatTargets(
+        manifest.powerUser.seatMonthlyCreditCents,
+        b2bConsumptionTargets,
+        expectedB2bSpillSeatCount(story),
       );
-      const outputTokens = Math.round(
-        (1_000_000 * scale * 0.6) /
-          Math.max(1, outputRate.centsPerMillionTokens),
+      log(
+        `Expected post-discount B2B seat consumption: ${b2bConsumptionTargets
+          .map((target) => `$${(target / 100).toFixed(2)}`)
+          .join(', ')}.`,
       );
-      const seed = `${manifest.namespace}:${runId}:${persona.key}:${index}:${pairKey}`;
-      events.push({
-        transaction_id: `abs-${runId}-${fingerprint(seed)}`,
-        customer_id: customerIds[persona.key],
-        event_type: manifest.eventType,
-        timestamp: timestamp.toISOString(),
-        properties: {
-          api_product:
-            productKey === 'voice' ? 'realtime_voice' : productKey,
-          model,
-          processing_tier: processingTier,
-          input_tokens: inputTokens,
-          output_tokens: outputTokens,
-          workspace_id: `${persona.key}-workspace`,
-          project_id: `${persona.key}-project-${(index % 3) + 1}`,
-          user_id: isB2b
-            ? `power-user-seat-${userIndex + 1}`
-            : `${persona.key}-user-${userIndex + 1}`,
-          ...(dimensionValue && dimension
-            ? { [dimension.propertyKey]: dimensionValue.value }
-            : {}),
+    }
+    const result = await seedMetronomeUsage({
+      metronome: client,
+      customerId,
+      contractId,
+      story,
+      logLabel: `[ai-builder-starter:${persona.key}]`,
+      trailingUnseededDays: 1,
+      ...(isB2b
+        ? {
+            seedStartOverride: demoB2bUsageStart(),
+            perUserTargetSpendDollars: listRateTargetsForConsumption(
+              b2bConsumptionTargets.map((target) => target / 100),
+              manifest.powerUser.usageMultiplier,
+            ),
+            usageUserIds: [
+              ...DEMO_METRONOME_USAGE_USER_IDS.slice(
+                0,
+                manifest.powerUser.seatCount,
+              ),
+            ],
+          }
+        : {
+            persona:
+              persona.key === 'pro'
+                ? ('pro' as const)
+                : ('quickstart' as const),
+          }),
+      projectAttribution: { mode: 'multi', projects },
+      transactionIdPrefix: 'seed-mp',
+      seedRunKey: `${contractId}:${AI_BUILDER_SEED_EVENT_REVISION}`,
+    });
+    if (!result.ok) throw new Error(result.error);
+    eventsIngested += result.eventsIngested;
+    expectedConsumptionCents[persona.key] = isB2b
+      ? Math.round(
+          b2bConsumptionTargets.reduce((sum, target) => sum + target, 0),
+        )
+      : Math.round(result.estimatedSpendDollars * 100);
+    log(
+      `Seeded ${persona.key}: ${result.eventsIngested} shared-profile events (${result.estimatedSpendDollars.toFixed(2)} ${result.currency.toUpperCase()} list-rate spend).`,
+    );
+  }
+  return { eventsIngested, expectedConsumptionCents };
+}
+
+async function waitForSeededBalances(
+  client: any,
+  customerIds: Record<string, string>,
+  contractIds: Record<string, string>,
+  expectedConsumptionCents: Record<string, number>,
+  log: (message: string) => void,
+): Promise<void> {
+  const deadline = Date.now() + STARTER_USAGE_AGGREGATION_TIMEOUT_MS;
+  let firstCheck = true;
+
+  while (Date.now() < deadline) {
+    if (!firstCheck) {
+      await new Promise((resolveWait) =>
+        setTimeout(resolveWait, STARTER_USAGE_AGGREGATION_POLL_MS),
+      );
+    }
+    firstCheck = false;
+
+    const statuses = await Promise.all(
+      Object.entries(expectedConsumptionCents).map(
+        async ([personaKey, expected]) => {
+          const retrieved = await client.v2.contracts.retrieve({
+            customer_id: customerIds[personaKey],
+            contract_id: contractIds[personaKey],
+            include_balance: true,
+          });
+          const contract = retrieved.data ?? retrieved;
+          const consumed = metronomeContractConsumedUnits(contract);
+          return {
+            personaKey,
+            expected,
+            consumed: consumed ?? 0,
+            ready:
+              consumed != null &&
+              consumed >= Math.floor(expected * 0.98),
+          };
         },
-      });
+      ),
+    );
+
+    if (statuses.every((status) => status.ready)) {
+      log(
+        `Metronome balances aggregated: ${statuses
+          .map(
+            ({ personaKey, consumed, expected }) =>
+              `${personaKey} $${(consumed / 100).toFixed(2)}/$${(
+                expected / 100
+              ).toFixed(2)}`,
+          )
+          .join(', ')}.`,
+      );
+      return;
     }
   }
-  for (let offset = 0; offset < events.length; offset += 100) {
-    await client.v1.usage.ingest({
-      usage: events.slice(offset, offset + 100),
-    });
-  }
-  log(
-    `Ingested ${events.length} deterministic events in ${Math.ceil(events.length / 100)} bulk call(s).`,
+
+  throw new Error(
+    'Metronome accepted seeded usage but did not aggregate the expected balances within 30 seconds. Setup remains incomplete; retry after Metronome finishes processing.',
   );
-  return events.length;
 }
 
 async function settleInvoicesBestEffort(
@@ -1502,21 +1528,26 @@ async function resetOwned(
       include_archived: false,
     });
     for (const contract of listed.data ?? []) {
-      if (
-        String(contract.uniqueness_key ?? '').startsWith(
-          `${manifest.namespace}:contract:`,
-        )
-      ) {
-        contracts.push({ customerId: customer.id, id: contract.id });
-      }
+      // The customer alias is the ownership boundary. Package-provisioned
+      // contracts do not consistently expose the requested uniqueness key, so
+      // reset must remove every active contract before archiving this
+      // starter-owned customer, matching the Generation starter.
+      contracts.push({ customerId: customer.id, id: contract.id });
     }
   }
+  const ownedPackageIds = new Set(Object.values(state?.packageIds ?? {}));
   const packages = found.packages.filter(
     (pkg: any) =>
       !pkg.archived_at &&
-      String(pkg.uniqueness_key ?? '').startsWith(
-        `${manifest.namespace}:package:`,
-      ),
+      (ownedPackageIds.has(pkg.id) ||
+        String(pkg.uniqueness_key ?? '').startsWith(
+          `${manifest.namespace}:package:`,
+        ) ||
+        (pkg.aliases ?? []).some((alias: { name?: string } | string) =>
+          String(typeof alias === 'string' ? alias : alias.name ?? '').startsWith(
+            `${manifest.namespace}-package-`,
+          ),
+        )),
   );
   const ownedMetricIds = new Set(Object.values(state?.metricIds ?? {}));
   const ownedMetricNames = new Set(
@@ -1539,16 +1570,44 @@ async function resetOwned(
   );
   const summary = {
     scope,
-    contracts: contracts.map(({ id }) => id),
-    customers: customers.map(({ id }: any) => id),
-    packages: scope === 'full' ? packages.map(({ id }: any) => id) : [],
-    rateCards: scope === 'full' ? rateCards.map(({ id }: any) => id) : [],
-    products: scope === 'full' ? products.map(({ id }: any) => id) : [],
-    metrics: scope === 'full' ? metrics.map(({ id }: any) => id) : [],
+    contracts: contracts.map(({ id }) => ({ id })),
+    customers: customers.map(({ id, name }: any) => ({ id, name })),
+    packages:
+      scope === 'full'
+        ? packages.map(({ id, name }: any) => ({ id, name }))
+        : [],
+    rateCards:
+      scope === 'full'
+        ? rateCards.map(({ id, name }: any) => ({ id, name }))
+        : [],
+    products:
+      scope === 'full'
+        ? products.map(({ id, current }: any) => ({
+            id,
+            name: current.name,
+          }))
+        : [],
+    metrics:
+      scope === 'full'
+        ? metrics.map(({ id, name }: any) => ({ id, name }))
+        : [],
     stripeCustomers: state?.stripeCustomerIds
       ? Object.values(state.stripeCustomerIds)
       : [],
   };
+  logStarterResetSummary(log, {
+    confirmed,
+    scope: scope === 'demo-only' ? 'demo-data' : 'full',
+    summary: {
+      contracts: summary.contracts,
+      customers: summary.customers,
+      packages: summary.packages,
+      rateCards: summary.rateCards,
+      products: summary.products,
+      metrics: summary.metrics,
+      stripeCustomerIds: summary.stripeCustomers,
+    },
+  });
   if (!confirmed) return summary;
 
   for (const contract of contracts) {
@@ -1599,11 +1658,161 @@ async function resetOwned(
       }
     }
   }
-  log(`Reset ${scope} starter-owned resources.`);
+  log(
+    starterResetCompletionMessage(
+      scope === 'demo-only' ? 'demo-data' : 'full',
+    ),
+  );
   return summary;
 }
 
 let running = false;
+
+export type AiBuilderStarterPersona =
+  | 'pro'
+  | 'enterprise-quickstart'
+  | 'b2b-power-user';
+
+export interface PrepareAiBuilderPersonaOptions {
+  apiKey: string;
+  persona: AiBuilderStarterPersona;
+  story: DemoUsageStory;
+  customerName: string;
+  customerEmail: string;
+  stripeSecretKey?: string;
+  deliveryMethodId?: string;
+  onLog?: (line: string) => void;
+  onTrace?: (entry: ApiTraceEntry) => void;
+}
+
+export interface PreparedAiBuilderPersona {
+  billingMode: 'metronome-only' | 'stripe';
+  customerId: string;
+  contractId: string;
+  stripeCustomerId?: string;
+  eventsIngested: number;
+}
+
+/** Uses the canonical starter catalog, contract builder, and usage seeder for one Admin persona. */
+export async function prepareAiBuilderPersona(
+  options: PrepareAiBuilderPersonaOptions,
+): Promise<PreparedAiBuilderPersona> {
+  if (running) throw new Error('Another AI Builder starter run is active.');
+  running = true;
+  const log = (message: string) => options.onLog?.(message);
+  let createdStripeCustomerId: string | undefined;
+  try {
+    const apiKey = options.apiKey.trim();
+    if (!apiKey) throw new Error('A target Metronome API key is required.');
+    if (!options.customerName.trim()) throw new Error('Customer name is required.');
+    if (!options.customerEmail.trim()) {
+      throw new Error('Customer email is required.');
+    }
+    const fullManifest = applyStarterOverrides(
+      AI_BUILDER_STARTER_MANIFEST,
+      { apiKey },
+    );
+    assertConfig(fullManifest);
+    const selected = fullManifest.personas.find(
+      (persona) => persona.key === options.persona,
+    );
+    if (!selected) throw new Error(`Unknown AI Builder persona: ${options.persona}`);
+    const runId = randomUUID().slice(0, 12);
+    const identity = createHash('sha256')
+      .update(options.customerEmail.trim().toLowerCase())
+      .digest('hex')
+      .slice(0, 16);
+    const selectedManifest: StarterManifest = {
+      ...fullManifest,
+      personas: [{ ...selected, name: options.customerName.trim() }],
+    };
+    const client: any = new Metronome({
+      bearerToken: apiKey,
+      fetch: tracedFetch(options.onTrace),
+    });
+    let stripeContext: StripeContext | undefined;
+    const stripeCustomerIds: Record<string, string> = {};
+    if (options.stripeSecretKey?.trim()) {
+      stripeContext = await preflightStripe(
+        client,
+        options.stripeSecretKey.trim(),
+        options.deliveryMethodId,
+        options.onTrace,
+      );
+      createdStripeCustomerId = await createStripeCustomer(
+        stripeContext.stripe,
+        selectedManifest.personas[0],
+        fullManifest.namespace,
+        runId,
+        options.customerEmail.trim(),
+      );
+      stripeCustomerIds[selected.key] = createdStripeCustomerId;
+    }
+    const catalog = await ensureCatalog(
+      client,
+      fullManifest,
+      runId,
+      {},
+      stripeContext?.deliveryMethod,
+      log,
+    );
+    const personas = await ensurePersonas(
+      client,
+      selectedManifest,
+      catalog,
+      runId,
+      stripeContext,
+      stripeCustomerIds,
+      log,
+      {
+        [selected.key]: `prepared-persona:ai-builder:${selected.key}:${identity}`,
+      },
+    );
+    const seededUsage = await seedUsage(
+      client,
+      selectedManifest,
+      personas.customerIds,
+      personas.contractIds,
+      log,
+      options.story,
+    );
+    log('Waiting for Metronome to aggregate the expected seeded balances...');
+    await waitForSeededBalances(
+      client,
+      personas.customerIds,
+      personas.contractIds,
+      seededUsage.expectedConsumptionCents,
+      log,
+    );
+    if (stripeContext) {
+      await settleInvoicesBestEffort(
+        stripeContext.stripe,
+        stripeCustomerIds,
+        Math.floor(Date.now() / 1000) - 300,
+        log,
+      );
+    }
+    return {
+      billingMode: stripeContext ? 'stripe' : 'metronome-only',
+      customerId: personas.customerIds[selected.key],
+      contractId: personas.contractIds[selected.key],
+      ...(createdStripeCustomerId
+        ? { stripeCustomerId: createdStripeCustomerId }
+        : {}),
+      eventsIngested: seededUsage.eventsIngested,
+    };
+  } catch (error) {
+    if (createdStripeCustomerId && options.stripeSecretKey?.trim()) {
+      const stripe = new Stripe(options.stripeSecretKey.trim(), {
+        apiVersion: STRIPE_API_VERSION,
+      });
+      await stripe.customers.del(createdStripeCustomerId).catch(() => undefined);
+    }
+    throw error;
+  } finally {
+    running = false;
+  }
+}
 
 export async function runAiBuilderStarter(
   options: AiBuilderStarterOptions,
@@ -1612,21 +1821,29 @@ export async function runAiBuilderStarter(
   running = true;
   try {
     const log = (message: string) => options.onLog?.(message);
-    const manifest = applyStarterOverrides(
+    let manifest = applyStarterOverrides(
       AI_BUILDER_STARTER_MANIFEST,
       options,
     );
     const mode = options.mode ?? 'plan';
-    const dimension = validatePricingDimension(
-      options.pricingDimension === undefined
-        ? manifest.pricingDimension
-        : options.pricingDimension,
-    );
-    assertConfig(manifest, dimension);
+    assertConfig(manifest);
     const apiKey = options.apiKey.trim();
     if (!apiKey) throw new Error('A target Metronome API key is required.');
     const path = statePath(options);
     const prior = await readState(path);
+    if (
+      mode === 'reset' &&
+      prior?.resourcePrefix &&
+      prior.resourcePrefix !== manifest.resourcePrefix
+    ) {
+      // A failed catalog run may have created resources before their IDs were
+      // checkpointed. Reset with the journaled prefix so those exact-name
+      // resources remain discoverable even if the form was edited afterward.
+      manifest = applyStarterOverrides(AI_BUILDER_STARTER_MANIFEST, {
+        ...options,
+        resourcePrefix: prior.resourcePrefix,
+      });
+    }
     const fullyReset = prior?.checkpoints.includes('reset:full') ?? false;
     if (
       mode === 'seed' &&
@@ -1634,16 +1851,6 @@ export async function runAiBuilderStarter(
     ) {
       throw new Error(
         'The Metronome reset completed, but starter-owned Stripe customers still require cleanup with the matching Stripe test key.',
-      );
-    }
-    if (
-      prior &&
-      !fullyReset &&
-      stable(prior.pricingDimension) !== stable(dimension) &&
-      mode !== 'reset'
-    ) {
-      throw new Error(
-        'PricingDimension changed. Run a confirmed full reset before seeding with the new dimension.',
       );
     }
     if (
@@ -1707,7 +1914,6 @@ export async function runAiBuilderStarter(
           resourcePrefix:
             prior?.resourcePrefix ?? manifest.resourcePrefix,
           runId: prior?.runId ?? randomUUID().slice(0, 12),
-          pricingDimension: prior?.pricingDimension ?? dimension,
           billingMode:
             prior?.billingMode ??
             (stripeContext ? 'stripe' : 'metronome-only'),
@@ -1742,7 +1948,7 @@ export async function runAiBuilderStarter(
     }
 
     const found = await discover(client);
-    const review = reviewConfig(manifest, dimension);
+    const review = reviewConfig(manifest);
     if (mode === 'plan') {
       return {
         mode: 'plan',
@@ -1783,17 +1989,21 @@ export async function runAiBuilderStarter(
         `Starter state uses ${prior.billingMode}; run a full reset before switching to ${requestedBillingMode}.`,
       );
     }
+    const priorCheckpoints = prior?.checkpoints ?? [];
+    const lastCompletedRun = priorCheckpoints.lastIndexOf('complete');
+    const lastReset = Math.max(
+      priorCheckpoints.lastIndexOf('reset:demo-only'),
+      priorCheckpoints.lastIndexOf('reset:full'),
+    );
+    const startsNewRun = lastReset > lastCompletedRun;
     const runId =
-      prior && !prior.checkpoints.includes('reset:full')
-        ? prior.runId
-        : randomUUID().slice(0, 12);
+      prior && !startsNewRun ? prior.runId : randomUUID().slice(0, 12);
     let state: StarterState = {
       apiKeyFingerprint: fingerprint(apiKey),
       namespace: manifest.namespace,
       manifestVersion: manifest.version,
       resourcePrefix: manifest.resourcePrefix,
       runId,
-      pricingDimension: dimension,
       billingMode: requestedBillingMode,
       generatedAt: new Date().toISOString(),
       checkpoints: ['preflight'],
@@ -1833,8 +2043,8 @@ export async function runAiBuilderStarter(
       const catalog = await ensureCatalog(
         client,
         manifest,
-        dimension,
         runId,
+        prior?.packageIds ?? {},
         stripeContext?.deliveryMethod,
         log,
       );
@@ -1864,12 +2074,21 @@ export async function runAiBuilderStarter(
         checkpoints: [...state.checkpoints, 'customers-contracts'],
       };
       await writeState(path, state);
-      const eventsIngested = await seedUsage(
+      const seededUsage = await seedUsage(
         client,
         manifest,
-        dimension,
-        runId,
         personas.customerIds,
+        personas.contractIds,
+        log,
+      );
+      log(
+        'Waiting for Metronome to aggregate the expected seeded balances...',
+      );
+      await waitForSeededBalances(
+        client,
+        personas.customerIds,
+        personas.contractIds,
+        seededUsage.expectedConsumptionCents,
         log,
       );
       if (stripeContext) {
@@ -1895,7 +2114,7 @@ export async function runAiBuilderStarter(
           billingMode: requestedBillingMode,
           customers: personas.customerIds,
           contracts: personas.contractIds,
-          eventsIngested,
+          eventsIngested: seededUsage.eventsIngested,
         },
       };
     } catch (error) {

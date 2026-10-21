@@ -44,17 +44,30 @@ Open **Settings → Admin: seed a new account**.
    default.
 2. Enter the target Metronome API key.
 3. Optionally enter a Stripe test key and delivery method for full billing.
-4. Review and preview each selected mode. With both selected, complete AI
-   Builder before Generation unlocks.
+4. Review and preview each selected mode. With both selected, either mode may
+   run first or both may run concurrently.
 5. Keep the generic prefixes `Build` and `Generate` unless the target account
    needs another explicit namespace.
-6. Leave the optional custom pricing property disabled unless the target is
-   specifically demonstrating event-property pricing.
+6. Confirm AI Builder shows `processing_tier` and Generation shows
+   Standard/Priority `service_tier`.
 7. Seed each selected mode and save its generated state result for later
    scoped reset.
 
 Keys entered in Admin are memory-only and are not written to browser storage or
 `.env`.
+
+### Demo customers and customer cleanup
+
+These frequent operations require an explicit account choice:
+
+- **Configured demo environment** uses a Tools Panel override when present,
+  otherwise the server/deployment environment variables.
+- **Another account** uses credentials entered for the current Admin session.
+  They survive Admin-page navigation but are cleared by a refresh.
+
+Verify the displayed Metronome fingerprint and Stripe account ID before
+creating, reseeding, archiving, or deleting customers. Account Setup and starter
+reset never fall back to configured demo credentials.
 
 ### CLI
 
@@ -98,10 +111,8 @@ AI Builder:
 - Free, Pro, and Enterprise Quickstart packages.
 - Pro, Enterprise Quickstart, and direct-contract five-seat B2B personas.
 
-When the optional custom pricing property is enabled, confirm that the
-selected metrics, products, rate variants, and starter usage events all carry
-the configured property. The live app intentionally does not emit arbitrary
-starter properties.
+Confirm Generation metrics, products, rate variants, and starter usage events
+carry `service_tier`; AI Builder uses `processing_tier`.
 
 ## 4. Clean-account smoke test
 
@@ -212,6 +223,9 @@ semantics.
 
 ### B2B Power User
 
+- Select Healthy, At-Risk, or Late-month Spike before creating the customer. Do not apply
+  another story to the same customer: accepted usage is immutable and the
+  totals would be cumulative.
 - One direct contract, not a package-created contract.
 - `$10,000` / 1,000,000-credit annual commitment.
 - Five assigned seats.
@@ -220,6 +234,20 @@ semantics.
 - One seat spills into shared commitment; other seats have distinct remaining
   balances.
 - Invoice/usage applies the `0.85` multiplier.
+- Validate with a fresh customer. Previously saturated seat balances cannot be
+  repaired by reseeding; archive that customer after comparison if desired.
+
+For both AI Builder and Generation, verify the five post-discount seat
+consumption targets as fractions of one monthly allocation:
+
+- Healthy: `115% / 60% / 42% / 25% / 12%`
+- At-Risk: `145% / 78% / 58% / 36% / 20%`
+- Late-month Spike (Generation only): `175% / 110% / 68% / 48% / 28%`
+
+Healthy and At-Risk have one seat above 100%; Generation Late-month Spike has
+two. These are post-discount balance effects, so the corresponding list-rate
+usage is divided by `0.85`. AI Builder evaluates the fractions in USD credit
+amounts; Generation evaluates them in Generation Credits.
 
 ## 9. Admin and reset test
 

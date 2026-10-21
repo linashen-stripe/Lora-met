@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeMetronome } from '@/utils/metronome';
 import {
+  AI_BUILDER_SEED_EVENT_REVISION,
   SEED_USAGE_MULTI_PROJECT_IDS,
   SEED_USAGE_MULTI_PROJECT_SPEND_SHARES,
   seedMetronomeUsage,
   type SeedStory,
 } from '@/utils/metronomeSeedUsage';
-import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
 
-// Seed realistic multi-product, multi-model, multi-project usage for a Metronome customer
-// with per-seat user_id attribution. One seat is seeded as the heavy user (over their
-// per-seat allocation); the remaining seats get clearly distinct, lower amounts.
-// Intended for manual use via the Tools → Seeding tab.
+// Seed realistic multi-product, multi-model usage for one prepared AI Builder
+// Pro or Quickstart actor. B2B is deliberately excluded: its five explicit
+// per-seat targets are seeded once by /demo/power-user at customer creation.
 //
-// Usage: GET /api/metronome/seed-usage-multi-seat?customerId=<id>&contractId=<id>
+// Usage: GET /api/metronome/seed-usage-multi-seat?customerId=<id>&persona=pro
 // Optional:
-//   &story=at-risk       (default: healthy)
-//   &spendCap=0.45       — fraction of commitment pool to simulate (default 0.42)
+//   &story=at-risk|burst (default: healthy)
+//   &spendCap=0.45       — advanced override for the persona/profile target
 
 export async function GET(request: NextRequest) {
   const metronome = initializeMetronome(request.headers);
@@ -30,8 +29,7 @@ export async function GET(request: NextRequest) {
   const story = (searchParams.get('story') ?? 'healthy') as SeedStory;
   const spendCapRaw = searchParams.get('spendCap');
   const trailingDaysRaw = searchParams.get('trailingDays');
-  const singleSeat = searchParams.get('singleSeat') === '1';
-  const singleProject = searchParams.get('singleProject') === '1';
+  const persona = searchParams.get('persona');
   let commitmentSpendCapFraction: number | undefined;
   let trailingUnseededDays: number | undefined;
   if (spendCapRaw != null && spendCapRaw !== '') {
@@ -48,13 +46,23 @@ export async function GET(request: NextRequest) {
   if (!customerId) {
     return NextResponse.json({ error: 'customerId is required' }, { status: 400 });
   }
+  if (!['healthy', 'at-risk', 'burst'].includes(story)) {
+    return NextResponse.json({ error: 'Invalid seed story' }, { status: 400 });
+  }
+  if (!persona || !['pro', 'quickstart'].includes(persona)) {
+    return NextResponse.json(
+      {
+        error:
+          'A non-B2B persona (pro or quickstart) is required. B2B usage is seeded once at customer creation with explicit per-seat targets.',
+      },
+      { status: 400 },
+    );
+  }
 
-  const projects = singleProject
-    ? [{ projectId: SEED_USAGE_MULTI_PROJECT_IDS[0], spendShare: 1 }]
-    : SEED_USAGE_MULTI_PROJECT_IDS.map((projectId, i) => ({
-        projectId,
-        spendShare: SEED_USAGE_MULTI_PROJECT_SPEND_SHARES[i] ?? 0,
-      }));
+  const projects = SEED_USAGE_MULTI_PROJECT_IDS.map((projectId, i) => ({
+    projectId,
+    spendShare: SEED_USAGE_MULTI_PROJECT_SPEND_SHARES[i] ?? 0,
+  }));
 
   const result = await seedMetronomeUsage({
     metronome,
@@ -66,9 +74,11 @@ export async function GET(request: NextRequest) {
     trailingUnseededDays,
     projectAttribution: { mode: 'multi', projects },
     transactionIdPrefix: 'seed-mp',
-    usageUserIds: singleSeat
-      ? undefined
-      : [...DEMO_METRONOME_USAGE_USER_IDS],
+    seedRunKey: contractId
+      ? `${contractId}:${AI_BUILDER_SEED_EVENT_REVISION}`
+      : undefined,
+    persona: persona as 'pro' | 'quickstart',
+    usageUserIds: [customerId],
   });
 
   if (!result.ok) {

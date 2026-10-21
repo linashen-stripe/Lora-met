@@ -71,7 +71,7 @@ boundary so Free usage cannot reduce the new Pro allowance.
 2. Load `bufo-studios@example.com`.
 3. If it is new, complete setup Checkout once to prepare the Enterprise
    contract. Otherwise the prepared customer loads directly.
-4. Seed **Healthy growth**, **At risk**, or **Late-month burst** usage.
+4. Seed **Healthy growth**, **At risk**, or **Late-month spike** usage.
 5. Open the usage dashboard and filter by generation product, model, quality,
    service tier, project, and user.
 6. Open the Stripe customer delivered through Metronome.
@@ -86,8 +86,9 @@ Quickstart never creates or transitions from a Free contract.
 2. Explain that it is a direct negotiated contract, not a reusable package.
 3. Show the 1,000,000 Generation Credit / `$10,000` annual commitment.
 4. Show five `$1,000/month` seats with 10,000 recurring monthly credits each.
-5. Compare per-seat usage: one seat spills into the shared commitment while
-   the others retain different balances.
+5. Compare per-seat usage: Healthy and At-Risk spill one seat into shared
+   commitment; Late-month Spike spills two. The other seats retain different
+   nonzero balances.
 6. Show the 15% negotiated usage discount.
 
 ## Reset and fallback

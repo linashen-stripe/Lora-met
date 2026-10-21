@@ -6,16 +6,27 @@ import {
   GENERATION_SKUS,
   type GenerationServiceTier,
 } from '@/config/generationCatalog';
-import { DEMO_METRONOME_USAGE_USER_IDS } from '@/config/demoMetronomeUsageSeats';
+import { packageByKey } from '@/config/metronomeCatalog';
 import {
   metronomeContractPoolCapCents,
   pickPrimaryMetronomeContract,
 } from '@/utils/metronomeContractPool';
+import {
+  DEMO_CONTRACT_LOOKBACK_DAYS,
+  preparedProConsumptionFraction,
+  quickstartConsumptionFraction,
+} from '@/utils/demoUsageSeedProfiles';
 
 export type GenerationSeedStory = 'healthy' | 'at-risk' | 'burst';
 
 const PROJECTS = ['project-atlas', 'project-borealis', 'project-cipher'] as const;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const GENERATION_PRO_PACKAGE = packageByKey('pro');
+const GENERATION_PRO_MONTHLY_CREDITS =
+  GENERATION_PRO_PACKAGE?.monthlyCredits ?? 1_000;
+const GENERATION_PRO_AUTO_TOP_UP_THRESHOLD =
+  GENERATION_PRO_PACKAGE?.autoTopUpThresholdCredits ?? 500;
+const GENERATION_PRO_HEALTHY_SAFETY_BUFFER_CREDITS = 10;
 
 function stableIndex(seed: string, length: number): number {
   let hash = 2166136261;
@@ -24,12 +35,6 @@ function stableIndex(seed: string, length: number): number {
     hash = Math.imul(hash, 16777619);
   }
   return (hash >>> 0) % length;
-}
-
-function eventsPerDay(story: GenerationSeedStory, dayIndex: number): number {
-  if (story === 'at-risk') return 9 + (dayIndex % 4);
-  if (story === 'burst') return dayIndex > 22 ? 16 : 3 + (dayIndex % 2);
-  return 4 + (dayIndex % 3);
 }
 
 export interface SeedGenerationUsageParams {
@@ -41,6 +46,19 @@ export interface SeedGenerationUsageParams {
   commitmentSpendCapFraction?: number;
   /** Optional relative per-user weights for uneven enterprise seat usage. */
   userWeights?: readonly number[];
+  /** Explicit user/seat identities. Non-B2B callers default to one actor. */
+  usageUserIds?: readonly string[];
+  /**
+   * Desired credit consumption per user after contract pricing overrides.
+   * Supplying this bypasses commitment-pool sizing and is required for B2B.
+   */
+  perUserTargetCredits?: readonly number[];
+  /** Contract multiplier applied to usage (for example 0.85 for B2B). */
+  usageMultiplier?: number;
+  /** Stable idempotency key, normally the newly-created contract id. */
+  seedRunKey?: string;
+  /** Prepared non-B2B persona used to choose safe plan-specific pacing. */
+  persona?: 'pro' | 'quickstart';
 }
 
 export interface SeedGenerationUsageResult {
@@ -49,6 +67,7 @@ export interface SeedGenerationUsageResult {
   daysSeeded: number;
   eventsIngested: number;
   creditsConsumed: number;
+  estimatedBalanceConsumption: number;
   products: string[];
   models: string[];
   projectIds: string[];
@@ -63,10 +82,15 @@ export async function seedGenerationUsage({
   metronome,
   customerId,
   story = 'healthy',
-  lookbackDays = 30,
+  lookbackDays = DEMO_CONTRACT_LOOKBACK_DAYS,
   trailingUnseededDays = 1,
   commitmentSpendCapFraction,
   userWeights,
+  usageUserIds,
+  perUserTargetCredits,
+  usageMultiplier = 1,
+  seedRunKey,
+  persona,
 }: SeedGenerationUsageParams): Promise<SeedGenerationUsageResult> {
   const safeLookback = Math.min(32, Math.max(1, Math.floor(lookbackDays)));
   const safeTrailing = Math.min(
@@ -74,20 +98,20 @@ export async function seedGenerationUsage({
     Math.max(0, Math.floor(trailingUnseededDays)),
   );
   const users =
-    DEMO_METRONOME_USAGE_USER_IDS.length > 0
-      ? DEMO_METRONOME_USAGE_USER_IDS
-      : ['creator@example.com'];
-  const weightedUsers = users.flatMap((user, index) =>
-    Array.from(
-      {
-        length: Math.max(
-          1,
-          Math.round(Number(userWeights?.[index] ?? 1)),
-        ),
-      },
-      () => user,
-    ),
-  );
+    usageUserIds?.length
+      ? [...usageUserIds]
+      : [customerId];
+  if (
+    perUserTargetCredits &&
+    perUserTargetCredits.length !== users.length
+  ) {
+    throw new Error(
+      'perUserTargetCredits must contain exactly one target per usage user.',
+    );
+  }
+  if (!Number.isFinite(usageMultiplier) || usageMultiplier <= 0) {
+    throw new Error('usageMultiplier must be positive.');
+  }
   const now = new Date();
   const events: ReturnType<typeof buildGenerationUsageEvent>[] = [];
   const contracts = await metronome.v2.contracts.list({
@@ -96,6 +120,17 @@ export async function seedGenerationUsage({
     include_balance: true,
   } as any);
   const contract = pickPrimaryMetronomeContract(contracts.data ?? []);
+  const parsedContractStartMs = contract?.starting_at
+    ? new Date(contract.starting_at).getTime()
+    : Number.NaN;
+  const contractStartMs = Number.isFinite(parsedContractStartMs)
+    ? parsedContractStartMs
+    : Number.NEGATIVE_INFINITY;
+  const utcTodayMs = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  );
   const poolCredits = contract
     ? metronomeContractPoolCapCents({
         commits: contract.commits,
@@ -103,7 +138,20 @@ export async function seedGenerationUsage({
       })
     : 0;
   const defaultSpendFraction =
-    story === 'at-risk' ? 0.82 : story === 'burst' ? 0.65 : 0.42;
+    persona === 'pro'
+      ? preparedProConsumptionFraction(story)
+      : persona === 'quickstart'
+        ? quickstartConsumptionFraction({
+            story,
+            startingAt: contract?.starting_at,
+            endingBefore: contract?.ending_before,
+            now,
+          })
+        : story === 'at-risk'
+          ? 0.82
+          : story === 'burst'
+            ? 0.65
+            : 0.42;
   const spendFraction =
     commitmentSpendCapFraction != null &&
     Number.isFinite(commitmentSpendCapFraction)
@@ -113,57 +161,135 @@ export async function seedGenerationUsage({
   // USD cents. Do not apply fiat x100 conversions or fractional quantity
   // scaling here. buildGenerationUsageEvent emits whole image/3D jobs and
   // whole video seconds. See the Generation matrix in the regression checklist.
-  const targetCredits = poolCredits > 0 ? poolCredits * spendFraction : 0;
+  // Prepared Pro pacing is based on the monthly plan grant only. The contract
+  // may also contain an unused auto-top-up commit; counting it would make a
+  // Healthy seed exhaust the entire 1,000-credit monthly grant.
+  const targetPoolCredits =
+    persona === 'pro' ? GENERATION_PRO_MONTHLY_CREDITS : poolCredits;
+  const uncappedTargetCredits =
+    targetPoolCredits > 0 ? targetPoolCredits * spendFraction : 0;
+  // A 50% target would leave exactly 500 credits, which satisfies the seeded
+  // Pro auto-top-up threshold. Keep Healthy one smallest whole-job step above
+  // that boundary so it remains a near-50% story without triggering recharge.
+  const targetCredits =
+    persona === 'pro' && story === 'healthy'
+      ? Math.min(
+          uncappedTargetCredits,
+          GENERATION_PRO_MONTHLY_CREDITS -
+            GENERATION_PRO_AUTO_TOP_UP_THRESHOLD -
+            GENERATION_PRO_HEALTHY_SAFETY_BUFFER_CREDITS,
+        )
+      : uncappedTargetCredits;
   const dayOffsets = Array.from(
     { length: safeLookback - safeTrailing },
     (_, index) => safeLookback - index,
   );
-  const totalWeight = dayOffsets.reduce(
-    (total, _dayOffset, dayIndex) =>
-      total + eventsPerDay(story, dayIndex),
-    0,
+  const normalizedWeights = users.map((_, index) =>
+    Math.max(0, Number(userWeights?.[index] ?? 1)),
   );
-
-  for (const [dayIndex, dayOffset] of dayOffsets.entries()) {
-    const baseCount = eventsPerDay(story, dayIndex);
-    const dailyTarget =
-      targetCredits > 0
-        ? (targetCredits * baseCount) / Math.max(totalWeight, 1)
-        : 0;
-    let dailyCredits = 0;
-    const count = targetCredits > 0 ? 500 : baseCount;
-
-    for (let slot = 0; slot < count; slot += 1) {
-      if (targetCredits > 0 && dailyCredits >= dailyTarget) break;
-      const seed = `${customerId}:${story}:${dayOffset}:${slot}`;
-      const sku = GENERATION_SKUS[stableIndex(`${seed}:sku`, GENERATION_SKUS.length)];
-      const serviceTier = GENERATION_SERVICE_TIERS[
-        stableIndex(`${seed}:service-tier`, GENERATION_SERVICE_TIERS.length)
-      ].value as GenerationServiceTier;
-      const userId =
-        weightedUsers[
-          stableIndex(`${seed}:user`, weightedUsers.length)
-        ];
-      const projectId = PROJECTS[stableIndex(`${seed}:project`, PROJECTS.length)];
-      const timestamp = new Date(
-        now.getTime() -
-          dayOffset * MS_PER_DAY +
-          (8 * 60 + slot * 43) * 60 * 1000,
+  const weightSum =
+    normalizedWeights.reduce((sum, weight) => sum + weight, 0) || users.length;
+  const desiredConsumptionTargets = perUserTargetCredits
+    ? [...perUserTargetCredits]
+    : users.map(
+        (_, index) =>
+          (targetCredits *
+            (normalizedWeights[index] || (userWeights ? 0 : 1))) /
+          weightSum,
       );
+  const listRateTargets = desiredConsumptionTargets.map(
+    (target) => target / usageMultiplier,
+  );
+  const candidates = GENERATION_SKUS.flatMap((sku) =>
+    GENERATION_SERVICE_TIERS.map((tier) => ({
+      sku,
+      serviceTier: tier.value as GenerationServiceTier,
+      credits: generationCreditsForTier(
+        sku,
+        tier.value as GenerationServiceTier,
+      ),
+    })),
+  );
+  const coverageSkus = GENERATION_SKUS.filter(
+    (sku, index, all) =>
+      all.findIndex((candidate) => candidate.modality === sku.modality) ===
+      index,
+  );
+  const coverageCandidates = coverageSkus.flatMap((sku) =>
+    GENERATION_SERVICE_TIERS.map((tier) => ({
+      sku,
+      serviceTier: tier.value as GenerationServiceTier,
+      credits: generationCreditsForTier(
+        sku,
+        tier.value as GenerationServiceTier,
+      ),
+    })),
+  );
+  const smallestFirst = [...candidates].sort(
+    (left, right) => left.credits - right.credits,
+  );
+  const runHash = stableIndex(
+    seedRunKey ?? contract?.id ?? `${customerId}:${story}`,
+    1_000_000_000,
+  ).toString(36);
+  let sequence = 0;
 
+  for (const [userIndex, userId] of users.entries()) {
+    let remaining = listRateTargets[userIndex] ?? 0;
+    let userCandidateIndex = 0;
+    while (remaining >= (smallestFirst[0]?.credits ?? Infinity)) {
+      const coverageCandidate =
+        userCandidateIndex < coverageCandidates.length
+          ? coverageCandidates[
+              (userCandidateIndex + userIndex) % coverageCandidates.length
+            ]
+          : undefined;
+      const candidate =
+        coverageCandidate && coverageCandidate.credits <= remaining
+          ? coverageCandidate
+          : smallestFirst.find((item) => item.credits <= remaining);
+      if (!candidate) break;
+
+      // First cover every modality/model in both service tiers with individual
+      // events. Afterwards aggregate whole jobs/seconds into larger events so
+      // even a large Quickstart history remains a small number of ingest calls.
+      const quantityMultiplier =
+        userCandidateIndex < coverageCandidates.length
+          ? 1
+          : Math.max(
+              1,
+              Math.min(100, Math.floor(remaining / candidate.credits)),
+            );
+      const dayIndex =
+        story === 'burst' && sequence >= coverageCandidates.length
+          ? Math.max(0, dayOffsets.length - 1 - (sequence % 4))
+          : (sequence * 7) % dayOffsets.length;
+      const dayOffset = dayOffsets[dayIndex] ?? 1;
+      const timeOfDayMs =
+        (8 * 60 + (sequence * 43) % (12 * 60)) * 60 * 1000;
+      const timestamp = new Date(
+        Math.max(
+          utcTodayMs - dayOffset * MS_PER_DAY + timeOfDayMs,
+          contractStartMs + timeOfDayMs,
+        ),
+      );
+      const projectId = PROJECTS[sequence % PROJECTS.length];
       events.push(
         buildGenerationUsageEvent({
-          taskId: `seed-${story}-${dayOffset}-${slot}-${sku.id}-${serviceTier}-${userId}`,
+          taskId: `seed-${story}-${runHash}-u${userIndex}-e${sequence}-${candidate.sku.id}-${candidate.serviceTier}`,
           customerId,
-          sku,
+          sku: candidate.sku,
+          quantityMultiplier,
           userId,
           workspaceId: `workspace-${customerId}`,
           projectId,
-          serviceTier,
+          serviceTier: candidate.serviceTier,
           timestamp: timestamp.toISOString(),
         }),
       );
-      dailyCredits += generationCreditsForTier(sku, serviceTier);
+      remaining -= candidate.credits * quantityMultiplier;
+      userCandidateIndex += 1;
+      sequence += 1;
     }
   }
 
@@ -187,9 +313,17 @@ export async function seedGenerationUsage({
       (total, event) => total + Number(event.properties.credits_consumed),
       0,
     ),
+    estimatedBalanceConsumption:
+      events.reduce(
+        (total, event) =>
+          total + Number(event.properties.credits_consumed),
+        0,
+      ) * usageMultiplier,
     products: Array.from(new Set(events.map((event) => String(event.properties.modality)))),
     models: Array.from(new Set(events.map((event) => String(event.properties.model)))),
     projectIds: [...PROJECTS],
-    message: `Seeded ${events.length} synthetic generation jobs across ${safeLookback - safeTrailing} days, targeting ${(spendFraction * 100).toFixed(0)}% of the ${poolCredits.toLocaleString()} credit pool.`,
+    message: perUserTargetCredits
+      ? `Seeded ${events.length} aggregated generation events with explicit per-seat targets.`
+      : `Seeded ${events.length} aggregated generation events across ${safeLookback - safeTrailing} days, targeting ${(spendFraction * 100).toFixed(0)}% of the ${targetPoolCredits.toLocaleString()} credit pool.`,
   };
 }
