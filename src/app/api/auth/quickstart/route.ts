@@ -13,11 +13,16 @@ import {
   normalizeDemoMode,
   type DemoMode,
 } from '@/config/demoModes';
+import {
+  formatDemoCustomerName,
+  type DemoCustomerPersona,
+} from '@/utils/demoCustomerName';
 
 type RequestBody = {
   email?: string;
   name?: string;
   demoMode?: DemoMode;
+  persona?: Extract<DemoCustomerPersona, 'pro' | 'quickstart'>;
 };
 
 /** Loads the prepared customer by email, or creates it during demo preparation. */
@@ -47,11 +52,16 @@ export async function POST(request: NextRequest) {
   const email = typeof body.email === 'string' ? body.email.trim() : '';
   const demoMode = normalizeDemoMode(body.demoMode);
   const modeDefinition = DEMO_MODES[demoMode];
+  const persona = body.persona === 'pro' ? 'pro' : 'quickstart';
   const baseName =
     typeof body.name === 'string' && body.name.trim()
       ? body.name.trim()
       : deriveCustomerNameFromEmail(email);
-  const name = `[${modeDefinition.label}] ${baseName}`;
+  const name = formatDemoCustomerName({
+    demoMode,
+    persona,
+    baseName,
+  });
   const ingestAlias = `${modeDefinition.customerPrefix}:${email}`;
 
   if (!email) {

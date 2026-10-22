@@ -83,7 +83,7 @@ const SignUpForm = ({ defaultCountry = 'US' }: SignUpFormProps) => {
         case 'free':
           router.push(`/${language}/demos/${demoMode}`);
           break;
-        case 'pricing-plan-pro':
+        case 'pro':
           router.push(
             `/${language}/subscribe/metronome-package?demoMode=${demoMode}`,
           );

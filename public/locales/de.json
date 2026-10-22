@@ -605,8 +605,7 @@
     "errors": {
       "general": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
       "unexpected": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
-      "checkout_session": "Die eingebettete Checkout-Sitzung konnte nicht erstellt werden. Möglicherweise sind Sie nicht angemeldet.",
-      "legacy_api": "Die Legacy-Abonnement-API ist nicht mehr verfügbar. Bitte verwenden Sie Preisplan-Abonnements."
+      "checkout_session": "Die eingebettete Checkout-Sitzung konnte nicht erstellt werden. Möglicherweise sind Sie nicht angemeldet."
     }
   },
   "simulations": {
@@ -888,7 +887,7 @@
       "project_storage": {
         "title": "Nutzung nach Projekt",
         "used": "Genutzt",
-        "capacity": "Commitment",
+        "capacity": "Aktive Guthaben gesamt",
         "available": "Verfügbar",
         "no_metrics": "Keine abrechenbaren Metriken gefunden.",
         "no_project_dimension": "Diese Metrik hat keine project_id-Gruppierung — Multi-Projekt-Seeding nutzen oder Gruppenschlüssel in Metronome konfigurieren.",
@@ -957,21 +956,32 @@
     },
     "usage_pacing": {
       "title": "Verbrauchsverlauf",
-      "description": "Abgerechnete Nutzung seit Monatsbeginn im Vergleich zu Ihrem monatlichen Kontingent.",
+      "description": "Abgerechnete Nutzung im Abrechnungszeitraum im Vergleich zu Ihrem monatlichen Kontingent.",
+      "description_b2b": "Nutzung im Abrechnungszeitraum im Vergleich zu monatlichen Sitzguthaben; das gemeinsame Vertragskontingent wird separat angezeigt.",
+      "description_commit": "Nutzung und Prognose im Abrechnungszeitraum im Vergleich zum vorausbezahlten Vertragskontingent.",
       "all_products": "Alle Produkte",
       "all_models": "Alle Modelle",
       "all_qualities": "Alle Qualitätsstufen",
       "all_tiers": "Alle Stufen",
-      "month_to_date": "Seit Monatsbeginn",
+      "month_to_date": "Abrechnungszeitraum bis heute",
+      "pct_of_budget": "{{pct}}% von {{label}}",
+      "monthly_seat_credits": "Monatliche Sitzguthaben",
+      "prepaid_commitment": "Vorausbezahltes Vertragskontingent",
+      "monthly_credit_balance": "Monatliches Guthaben",
+      "available_this_period": "für diesen Zeitraum verfügbar",
+      "prepaid_contract_term": "für die Vertragslaufzeit vorausbezahlt",
       "pct_of_monthly": "{{pct}}% des monatlichen {{label}}",
       "monthly_label": "Monatliches {{label}}",
       "prepaid_period": "vorausbezahlt für diesen Zeitraum",
-      "projected_month_end": "Prognostiziertes Monatsende",
+      "projected_month_end": "Prognostiziertes Periodenende",
       "within_prepaid": "Innerhalb des vorausbezahlten Betrags",
+      "uses_shared_commitment": "Voraussichtliche Nutzung des gemeinsamen Kontingents",
       "above_prepaid": "Über dem Vorauszahlungsbetrag — Überschreitung wird berechnet",
-      "commitment_cap": "Monatliches {{label}} (Limit): {{amount}}",
-      "series_spend": "Seit Monatsbeginn (kumulativ)",
-      "series_projected": "Prognose Monatsende (Trend)",
+      "commitment_cap": "{{label}}: {{amount}}",
+      "shared_commitment": "Verbleibendes gemeinsames Vertragskontingent",
+      "of_total": "von insgesamt {{total}}",
+      "series_spend": "Abrechnungszeitraum bis heute (kumulativ)",
+      "series_projected": "Prognose Periodenende (Trend)",
       "commitment": "Kontingent",
       "credit_balance": "Guthaben",
       "error_load": "Rechnungsaufschlüsselung konnte nicht geladen werden:"
@@ -1033,8 +1043,21 @@
     },
     "hero": {
       "build_command": "erstellen",
-      "ai_builder": {"main_title": "Build Production Apps with AI", "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.", "button_logged_in": "Open AI Builder", "button_not_logged_in": "Start building for free"},
-      "generation": {"command": "generate", "typewriter": {"text1": "a cinematic product launch video", "text2": "a campaign image set in three visual styles", "text3": "a textured 3D product asset", "text4": "a storyboard with matching video clips"}},
+      "ai_builder": {
+        "main_title": "Build Production Apps with AI",
+        "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.",
+        "button_logged_in": "Open AI Builder",
+        "button_not_logged_in": "Start building for free"
+      },
+      "generation": {
+        "command": "generate",
+        "typewriter": {
+          "text1": "a cinematic product launch video",
+          "text2": "a campaign image set in three visual styles",
+          "text3": "a textured 3D product asset",
+          "text4": "a storyboard with matching video clips"
+        }
+      },
       "main_title": "Vom Prompt zu Bild, Video und 3D",
       "description": "Erstellen Sie produktionsreife Medien mit transparenter, kreditbasierter Preisgestaltung.",
       "button_logged_in": "Lora Generate öffnen",
@@ -1065,9 +1088,18 @@
   "faq": {
     "title": "Häufig gestellte Fragen",
     "generation": {
-      "credits": {"question": "How do Generation Credits work?", "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."},
-      "service_tier": {"question": "What changes with Priority service?", "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."},
-      "top_up": {"question": "What happens when credits run low?", "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."}
+      "credits": {
+        "question": "How do Generation Credits work?",
+        "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."
+      },
+      "service_tier": {
+        "question": "What changes with Priority service?",
+        "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."
+      },
+      "top_up": {
+        "question": "What happens when credits run low?",
+        "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."
+      }
     },
     "questions": {
       "credits": {
@@ -1140,7 +1172,16 @@
       "processing": "Wird verarbeitet...",
       "purchase_for": "Kaufen für {{amount}}",
       "select_amount": "Betrag auswählen",
-      "min_amount": "Min {{amount}}"
+      "min_amount": "Min {{amount}}",
+      "invoice_flow": "Rechnungskauf",
+      "checkout_flow": "Checkout-Kauf",
+      "checkout_loading": "Sicherer Checkout wird geladen...",
+      "checkout_waiting_for_commit": "Zahlung erhalten. Metronome erstellt Ihre Credits...",
+      "checkout_missing_contract": "Ein aktiver Metronome-Vertrag ist erforderlich.",
+      "checkout_create_failed": "Der Checkout-Creditkauf konnte nicht gestartet werden.",
+      "checkout_verify_failed": "Der abgeschlossene Creditkauf konnte nicht bestätigt werden.",
+      "checkout_commit_pending": "Die Zahlung ist abgeschlossen, aber der Metronome-Commit steht noch aus. Ihr Guthaben wird nach der Erstellung aktualisiert.",
+      "checkout_retry": "Erneut versuchen"
     }
   },
   "pricing_rates": {

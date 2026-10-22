@@ -38,7 +38,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!metronome) {
-      return NextResponse.json({ error: 'Metronome API key not configured' }, { status: 503 });
+      return NextResponse.json(
+        { error: 'Metronome API key not configured' },
+        { status: 503 },
+      );
     }
     if (demoMode === 'generation' && !creditTypeId) {
       return NextResponse.json(
@@ -52,53 +55,94 @@ export async function POST(request: NextRequest) {
     // Ensure Stripe billing config is linked — Metronome needs it to create the Stripe invoice.
     const { metronomeDeliveryMethodId } = withFallbackHeaders(request.headers);
     try {
-      const { data: billingConfigs } = await metronome.v1.customers.retrieveBillingConfigurations({ customer_id: metronomeCustomerId });
-      const hasStripe = billingConfigs?.some((c: any) => c.billing_provider === 'stripe' && !c.archived_at) ?? false;
+      const { data: billingConfigs } =
+        await metronome.v1.customers.retrieveBillingConfigurations({
+          customer_id: metronomeCustomerId,
+        });
+      const hasStripe =
+        billingConfigs?.some(
+          (c: any) => c.billing_provider === 'stripe' && !c.archived_at,
+        ) ?? false;
       if (!hasStripe && metronomeDeliveryMethodId) {
         await metronome.v1.customers.setBillingConfigurations({
-          data: [{
-            customer_id: metronomeCustomerId,
-            billing_provider: 'stripe',
-            delivery_method_id: metronomeDeliveryMethodId,
-            configuration: {
-              stripe_customer_id: customerId,
-              stripe_collection_method: 'charge_automatically',
-              tax_provider: 'stripe',
-            } as any,
-          }],
+          data: [
+            {
+              customer_id: metronomeCustomerId,
+              billing_provider: 'stripe',
+              delivery_method_id: metronomeDeliveryMethodId,
+              configuration: {
+                stripe_customer_id: customerId,
+                stripe_collection_method: 'charge_automatically',
+                tax_provider: 'stripe',
+              } as any,
+            },
+          ],
         });
-        console.log(`[credit-grant] Linked Stripe billing config for ${metronomeCustomerId}`);
+        console.log(
+          `[credit-grant] Linked Stripe billing config for ${metronomeCustomerId}`,
+        );
       }
     } catch (bcErr: any) {
-      console.warn(`[credit-grant] Could not verify/link billing config:`, bcErr?.message);
+      console.warn(
+        `[credit-grant] Could not verify/link billing config:`,
+        bcErr?.message,
+      );
     }
 
-    const accessAmount =
-      usesCustomCredit ? Math.round(amount) : Math.round(amount * 100);
-    const invoiceAmountCents =
-      usesCustomCredit
-        ? Math.round(
-            amount *
-              METRONOME_CATALOG.pricingUnit
-                .fiatMinorUnitsPerCustomCredit,
-          )
-        : Math.round(amount * 100);
+    const accessAmount = usesCustomCredit
+      ? Math.round(amount)
+      : Math.round(amount * 100);
+    const invoiceAmountCents = usesCustomCredit
+      ? Math.round(
+          amount * METRONOME_CATALOG.pricingUnit.fiatMinorUnitsPerCustomCredit,
+        )
+      : Math.round(amount * 100);
 
-    const contractsRes = await metronome.v2.contracts.list({ customer_id: metronomeCustomerId });
+    const contractsRes = await metronome.v2.contracts.list({
+      customer_id: metronomeCustomerId,
+    });
     const contract = pickPrimaryMetronomeContract(contractsRes.data ?? []);
 
     if (!contract) {
-      return NextResponse.json({ error: 'No active Metronome contract found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'No active Metronome contract found' },
+        { status: 404 },
+      );
     }
 
-    const existingCommit = (contract.commits ?? [])[0] ?? (contract.credits ?? [])[0];
-    if (!existingCommit) {
-      return NextResponse.json({ error: 'No commit or credit found on contract' }, { status: 404 });
+    const contractBalances = [
+      ...(contract.credits ?? []),
+      ...(contract.commits ?? []),
+    ];
+    const isPurchasedBalance = (item: any) =>
+      /top[\s-]?up|recharge|purchase|checkout/i.test(item.name ?? '');
+    const hasUsageApplicability = (item: any) =>
+      (item.applicable_product_ids?.length ?? 0) > 0 ||
+      (item.applicable_product_tags?.length ?? 0) > 0;
+    const sourceBalance =
+      contractBalances.find(
+        (item: any) =>
+          !isPurchasedBalance(item) &&
+          hasUsageApplicability(item) &&
+          item.product?.id,
+      ) ??
+      contractBalances.find(
+        (item: any) => !isPurchasedBalance(item) && item.product?.id,
+      );
+    if (!sourceBalance) {
+      return NextResponse.json(
+        { error: 'No commit or credit found on contract' },
+        { status: 404 },
+      );
     }
 
-    const productId: string = existingCommit.product?.id ?? (existingCommit as any).product_id;
+    const productId: string =
+      sourceBalance.product?.id ?? (sourceBalance as any).product_id;
     if (!productId) {
-      return NextResponse.json({ error: 'Could not resolve product_id from contract' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Could not resolve product_id from contract' },
+        { status: 500 },
+      );
     }
 
     const now = new Date();
@@ -116,37 +160,47 @@ export async function POST(request: NextRequest) {
     await (metronome.v2.contracts as any).edit({
       customer_id: metronomeCustomerId,
       contract_id: contract.id,
-      add_commits: [{
-        type: 'PREPAID',
-        product_id: productId,
-        name: 'Credit Purchase',
-        access_schedule: {
-          credit_type_id:
-            usesCustomCredit ? creditTypeId : USD_CREDIT_TYPE_ID,
-          schedule_items: [{
-            amount: accessAmount,
-            starting_at: now.toISOString(),
-            ending_before: farFuture.toISOString(),
-          }],
-        },
-        invoice_schedule: {
-          credit_type_id: USD_CREDIT_TYPE_ID,
-          schedule_items: [{
-            timestamp: now.toISOString(),
-            amount: invoiceAmountCents,
-          }],
-        },
-        payment_gate_config: {
-          payment_gate_type: 'STRIPE',
-          tax_type: 'NONE',
-          stripe_config: {
-            payment_type: 'INVOICE',
+      add_commits: [
+        {
+          type: 'PREPAID',
+          product_id: productId,
+          name: 'Credit Purchase',
+          applicable_product_tags: ['usage'],
+          access_schedule: {
+            credit_type_id: usesCustomCredit
+              ? creditTypeId
+              : USD_CREDIT_TYPE_ID,
+            schedule_items: [
+              {
+                amount: accessAmount,
+                starting_at: now.toISOString(),
+                ending_before: farFuture.toISOString(),
+              },
+            ],
+          },
+          invoice_schedule: {
+            credit_type_id: USD_CREDIT_TYPE_ID,
+            schedule_items: [
+              {
+                timestamp: now.toISOString(),
+                amount: invoiceAmountCents,
+              },
+            ],
+          },
+          payment_gate_config: {
+            payment_gate_type: 'STRIPE',
+            tax_type: 'NONE',
+            stripe_config: {
+              payment_type: 'INVOICE',
+            },
           },
         },
-      }],
+      ],
     });
 
-    console.log(`✅ Metronome commit added for customer ${metronomeCustomerId}`);
+    console.log(
+      `✅ Metronome commit added for customer ${metronomeCustomerId}`,
+    );
 
     // Invoice finalization + payment runs in the background — don't block the modal.
     const createdAfter = Math.floor(Date.now() / 1000) - 15;

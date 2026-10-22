@@ -1,17 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { addDays, endOfMonth, format, startOfMonth } from 'date-fns';
 import fetchClient from '@/utils/fetchClient';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import { formatMetronomeAmount } from '@/utils/metronomeAmount';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Skeleton from '@/components/ui/Skeleton';
 import { useTranslation } from 'react-i18next';
 import { findGroupKeyDefinitionContaining } from '@/utils/metronomeBillableMetrics';
@@ -23,6 +17,8 @@ import {
 import type { MetronomeInvoice } from '@/utils/types';
 import { HardDrive } from 'lucide-react';
 import useAnimatedNumber from '@/components/hooks/useAnimatedNumber';
+import { resolveMetronomeUsageBudget } from '@/utils/metronomeUsageBudget';
+import { currentMetronomeMonthlyPeriod } from '@/utils/metronomeBillingPeriod';
 
 interface UsageGroupRow {
   group?: Record<string, string | null>;
@@ -115,10 +111,16 @@ export default function ProjectUsageStorageBar({
   const [tokenOnlyMode, setTokenOnlyMode] = useState(false);
 
   const capCents = useMemo(() => {
-    const c = metronomeContract?.commitTotal ?? 0;
-    if (c > 0) return c;
-    return metronomeContract?.creditBalance?.totalAmount ?? 0;
-  }, [metronomeContract]);
+    const budget = resolveMetronomeUsageBudget(metronomeContract);
+    const isB2BContract = /b2b|power user/i.test(metronomeContract?.name ?? '');
+    if (isB2BContract) return budget.amount;
+    const available = metronomeContract?.creditBalance.totalAvailable ?? 0;
+    return Math.max(
+      budget.amount,
+      usedCents + available,
+      budget.amount + budget.addOnAvailable,
+    );
+  }, [metronomeContract, usedCents]);
   const displayedUsedCents = useAnimatedNumber(
     usedCents,
     700,
@@ -145,7 +147,9 @@ export default function ProjectUsageStorageBar({
 
     (async () => {
       try {
-        const { data: mRes } = await fetchClient.get('/api/metronome/billable-metrics');
+        const { data: mRes } = await fetchClient.get(
+          '/api/metronome/billable-metrics',
+        );
         const metrics: { id?: string; name?: string; group_keys?: unknown }[] =
           mRes.metrics ?? [];
         const withProject = metrics.find(
@@ -157,18 +161,21 @@ export default function ProjectUsageStorageBar({
           metrics[0];
 
         if (!metric?.id) {
-          if (!cancelled) setError(t('dashboard.usage.project_storage.no_metrics'));
+          if (!cancelled)
+            setError(t('dashboard.usage.project_storage.no_metrics'));
           return;
         }
 
-        const projectGroupKey = findGroupKeyDefinitionContaining(metric, 'project_id');
-        const metricSupportsProject = projectGroupKey != null;
-        const now = new Date();
-        const startingOn = format(startOfMonth(now), "yyyy-MM-dd'T'00:00:00'Z'");
-        const endingBefore = format(
-          addDays(endOfMonth(now), 1),
-          "yyyy-MM-dd'T'00:00:00'Z'",
+        const projectGroupKey = findGroupKeyDefinitionContaining(
+          metric,
+          'project_id',
         );
+        const metricSupportsProject = projectGroupKey != null;
+        const billingPeriod = currentMetronomeMonthlyPeriod(
+          metronomeContract?.startingAt,
+        );
+        const startingOn = billingPeriod.startingAt.toISOString();
+        const endingBefore = billingPeriod.endingBefore.toISOString();
 
         const basePayload: Record<string, unknown> = {
           billableMetricId: metric.id,
@@ -212,17 +219,29 @@ export default function ProjectUsageStorageBar({
           fetchClient.get(
             `/api/metronome/customer/${metronomeCustomerId}/invoices?status=DRAFT&sort=date_desc`,
           ),
-          fetchClient.get(
-            `/api/metronome/customer/${metronomeCustomerId}/invoice-breakdowns`,
-            { params: { starting_on: startingOn, ending_before: endingBefore, window_size: 'day' } },
-          ).catch(() => ({ data: { data: [] } })),
+          fetchClient
+            .get(
+              `/api/metronome/customer/${metronomeCustomerId}/invoice-breakdowns`,
+              {
+                params: {
+                  starting_on: startingOn,
+                  ending_before: endingBefore,
+                  window_size: 'day',
+                },
+              },
+            )
+            .catch(() => ({ data: { data: [] } })),
         ]);
 
         // Sum current-month usage from daily breakdowns (same source as pacing chart).
-        const currentMonthCents: number = (breakdownsRes.data?.data ?? []).reduce(
+        const currentMonthCents: number = (
+          breakdownsRes.data?.data ?? []
+        ).reduce(
           (sum: number, bd: any) =>
-            sum + (bd.line_items ?? []).reduce(
-              (s: number, li: any) => s + (li.type === 'usage' ? (li.subtotal ?? 0) : 0),
+            sum +
+            (bd.line_items ?? []).reduce(
+              (s: number, li: any) =>
+                s + (li.type === 'usage' ? (li.subtotal ?? 0) : 0),
               0,
             ),
           0,
@@ -243,9 +262,10 @@ export default function ProjectUsageStorageBar({
         const invoice: MetronomeInvoice | null = pick;
 
         // Prefer current-month breakdown total; fall back to full-period invoice subtotal.
-        const subtotal = currentMonthCents > 0
-          ? currentMonthCents
-          : getMetronomeInvoiceUsageSubtotalCents(invoice);
+        const subtotal =
+          currentMonthCents > 0
+            ? currentMonthCents
+            : getMetronomeInvoiceUsageSubtotalCents(invoice);
         if (pairs.length === 0 && subtotal > 0 && invoice) {
           const invBuckets =
             aggregateMeteredUsageCentsByProjectFromInvoice(invoice);
@@ -275,7 +295,9 @@ export default function ProjectUsageStorageBar({
             // project_id rows — aggregate bar + aggregate_bar_note, skip errors.
             if (subtotal <= 0) {
               if (rows.length > 0 && !metricSupportsProject) {
-                setError(t('dashboard.usage.project_storage.no_project_dimension'));
+                setError(
+                  t('dashboard.usage.project_storage.no_project_dimension'),
+                );
               } else if (rows.length === 0 && metricSupportsProject) {
                 setError(t('dashboard.usage.project_storage.no_usage_rows'));
               }
@@ -353,17 +375,12 @@ export default function ProjectUsageStorageBar({
     tokenOnlyMode && segments.length > 0
       ? 1
       : displayedCapCents > 0
-        ? Math.min(
-            1,
-            displayedUsedCents / Math.max(displayedCapCents, 1),
-          )
+        ? Math.min(1, displayedUsedCents / Math.max(displayedCapCents, 1))
         : segments.length > 0
           ? 1
           : 0;
   const freeRatio =
-    displayedCapCents > 0 && !tokenOnlyMode
-      ? Math.max(0, 1 - usedRatio)
-      : 0;
+    displayedCapCents > 0 && !tokenOnlyMode ? Math.max(0, 1 - usedRatio) : 0;
 
   if (!metronomeCustomerId) return null;
 
@@ -384,10 +401,7 @@ export default function ProjectUsageStorageBar({
     <Card className='bg-white border-border'>
       <CardHeader className='space-y-1.5 p-4 pb-2'>
         <CardTitle className='flex items-center gap-2 text-lg font-semibold leading-tight'>
-          <HardDrive
-            className='h-5 w-5 shrink-0 text-gray-900'
-            aria-hidden
-          />
+          <HardDrive className='h-5 w-5 shrink-0 text-gray-900' aria-hidden />
           {t('dashboard.usage.project_storage.title')}
         </CardTitle>
         {tokenOnlyMode && segments.length > 0 && (
@@ -413,9 +427,7 @@ export default function ProjectUsageStorageBar({
             <span>
               {t('dashboard.usage.project_storage.used')}{' '}
               <span className='font-semibold text-foreground tabular-nums'>
-                {tokenOnlyMode
-                  ? '—'
-                  : formatAmount(displayedUsedCents)}
+                {tokenOnlyMode ? '—' : formatAmount(displayedUsedCents)}
               </span>
             </span>
             {capCents > 0 && (
@@ -448,9 +460,13 @@ export default function ProjectUsageStorageBar({
                       : s.frac * 100;
                   const label =
                     s.id === AGGREGATE_SEGMENT_ID
-                      ? t('dashboard.usage.project_storage.aggregated_usage_label')
+                      ? t(
+                          'dashboard.usage.project_storage.aggregated_usage_label',
+                        )
                       : s.id === UNALLOCATED_SEGMENT_ID
-                        ? t('dashboard.usage.project_storage.unallocated_usage_label')
+                        ? t(
+                            'dashboard.usage.project_storage.unallocated_usage_label',
+                          )
                         : s.id;
                   const title =
                     s.id === AGGREGATE_SEGMENT_ID
@@ -490,9 +506,13 @@ export default function ProjectUsageStorageBar({
                 />
                 <span className='font-medium text-gray-800'>
                   {s.id === AGGREGATE_SEGMENT_ID
-                    ? t('dashboard.usage.project_storage.aggregated_usage_label')
+                    ? t(
+                        'dashboard.usage.project_storage.aggregated_usage_label',
+                      )
                     : s.id === UNALLOCATED_SEGMENT_ID
-                      ? t('dashboard.usage.project_storage.unallocated_usage_label')
+                      ? t(
+                          'dashboard.usage.project_storage.unallocated_usage_label',
+                        )
                       : s.id}
                 </span>
                 <span className='tabular-nums'>

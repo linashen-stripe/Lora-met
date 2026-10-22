@@ -1,13 +1,8 @@
-import {
-  Cog6ToothIcon,
-  KeyIcon,
-  SparklesIcon,
-} from '@heroicons/react/24/outline';
+import { KeyIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
 const TabSelector = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { name: 'Demo', href: '#', icon: SparklesIcon },
-    { name: 'Appearance', href: '#', icon: Cog6ToothIcon },
     { name: 'Account', href: '#', icon: KeyIcon },
   ];
 

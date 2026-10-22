@@ -46,6 +46,9 @@ resource, this document and the canonical configuration files win.
   `Enterprise Quickstart`, and `Enterprise`. Do not expose internal catalog
   versions such as `v3`, the old `Premium` name, or unexplained `Lora` prefixes
   in generic seeded resources.
+- New demo customers include a compact mode-and-persona prefix:
+  `[Generate - Free|Pro|Quickstart|B2B]` or
+  `[AI Builder - Free|Pro|Quickstart|B2B]`. Existing customers are not renamed.
 
 ## AI Builder model
 
@@ -135,11 +138,12 @@ Priority applies the `1.25×` multiplier.
   - 100 one-time Generation Credits.
 - **Pro**
   - `$20/month`.
-  - 1,000 recurring monthly Generation Credits.
+  - 2,000 recurring monthly Generation Credits.
   - Ordinary Pro customers do not receive auto top-up automatically.
 - **Enterprise Quickstart**
   - A predefined package, not generic “Custom price”.
-  - `$1,000` prepaid commitment for 100,000 Generation Credits.
+  - `$1,000` prepaid commitment for 110,000 Generation Credits, a 10% credit
+    bonus over pay-as-you-go value.
   - Twelve-month term starting at contract start.
 - **Enterprise**
   - A custom sales-led presentation for negotiated terms.
@@ -222,10 +226,42 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
 
 ## Credit purchase and auto top-up
 
-- Credit purchase uses the Metronome invoiced commit flow and refreshes the
-  contract after completion.
+- Credit purchase keeps the Metronome invoiced-commit option and also offers
+  Stripe Checkout using a `metronome_commit` item. The Tools panel selects
+  `form` or `hosted_page`; Form layout is independently selectable as
+  `compact` (multi-step, default) or `expanded` (single page). `elements` and
+  `embedded_page` remain selectable for future demos but fall back to `form`
+  until supported by this preview. Checkout purchases start on the current UTC
+  hour, expire after 90 days, and provide preset plus custom amounts and volume
+  discounts.
+- Checkout completion is not itself an entitlement signal. The UI waits until
+  the purchased commit is visible on the Metronome contract before refreshing
+  the balance or reporting completion.
+- Both purchase paths restrict purchased credits to Metronome products tagged
+  `usage`; purchased credits must never offset subscription or other recurring
+  invoice lines.
+- Purchased and auto-top-up balances augment the wallet without replacing the
+  underlying monthly plan-credit category. Non-B2B Usage Pacing and project
+  capacity compare against total active credits and show available top-up
+  credits separately. B2B keeps monthly seat credits as its chart baseline and
+  the shared commitment as a separate off-scale category.
+- Usage Pacing and project breakdowns use the same active monthly period,
+  anchored to the contract start date rather than calendar-month boundaries.
+  Usage Pacing shows the current available balance instead of extrapolating a
+  forecast from intentionally shaped demo history.
+- Checkout enables automatic tax, uses automatic billing-address collection,
+  exclusive tax behavior, and a tax code. Tax collection still depends on
+  Stripe Tax being configured with an applicable active registration.
+- Checkout redisplays eligible saved payment methods and enables saving and
+  removing them so the Stripe-rendered replacement experience can be tested.
+  Removing a method detaches it from the Stripe customer and can affect later
+  invoice collection.
 - Generation purchase minimum is 500 credits; presets are 1,000 for `$10` and
   2,500 for `$25`.
+- Checkout credit purchases apply 5% from 2,000 units and 10% from 5,000
+  units. Because tier upper bounds are inclusive, the API boundaries are 1,999
+  and 4,999. The same boundaries apply to Generation Credits and AI Builder
+  USD cents because each unit represents `$0.01`.
 - AI Builder uses USD amounts.
 - The effective contract credit type determines semantics. A legacy Generation
   contract using `USD (cents)` must keep fiat behavior rather than being treated
@@ -238,6 +274,9 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
   starter mode uses no payment gate.
 - Setup and cancellation must visibly report API failures and refresh the
   contract state.
+- The dashboard Payment Method card allows replacement through a setup
+  Payment Element. A successful replacement becomes the Stripe customer's
+  invoice default before the prior default method is detached.
 
 ## Account starter and Admin
 
@@ -268,6 +307,8 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
   product/model/tier/project history and retain a nonzero plan balance.
   B2B uses the five contract seat IDs and explicit per-seat targets. Generic
   pool-percentage seeding must never be applied to a B2B commitment.
+- Generation historical usage is distributed across bounded daily events;
+  aggregation must not place most of a persona's consumption in one event.
 - Account Setup and login/Admin customer creation call the same mode-specific
   historical usage seeders. Account bootstrap must not maintain a second event
   generator with independent target, unit, or seat-distribution logic.
@@ -286,21 +327,29 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
   the currently active monthly per-seat credits before spilling into commit.
   B2B subscriptions remain non-prorated.
 - Account Setup defaults every prepared customer to Healthy. Prepared Pro
-  Healthy targets about 50% of its current monthly grant and must not trigger
-  auto top-up. At-Risk targets about 85%, crossing AI Builder Pro's `$5`
-  threshold; Late-month Spike targets about 90% with usage concentrated near
-  the end of the seed window. All three profiles are available for AI Builder
-  and Generation.
+  Healthy deterministically varies between 46–49% of its current monthly grant
+  and must not trigger auto top-up. At-Risk varies between 81–87%, crossing AI
+  Builder Pro's `$5` threshold; Late-month Spike varies between 89–94% with
+  usage concentrated near the end of the seed window. Variation is stable per
+  customer so retries remain idempotent. All three profiles are available for
+  AI Builder and Generation.
 - Quickstart is a 12-month commitment, so its target follows elapsed term
   progress rather than a fixed pool percentage. Because demo usage can only be
-  backdated about 34 days, the visible floors are 10% Healthy, 15% At-Risk, and
-  12% Late-month Spike.
+  backdated about 34 days, the visible floors start at 10% Healthy, 15% At-Risk,
+  and 12% Late-month Spike, with a stable per-customer 0.4–2 percentage-point
+  offset to avoid unnaturally round totals.
 - AI Builder Pro pacing uses only its current `$20` monthly grant. Future
   recurring grants and the prepared `$15` auto-top-up commit can appear in the
   same contract response but must not increase the seed target.
-- Generation Pro pacing uses only its 1,000-credit monthly plan grant. The
+- Generation Pro pacing uses only its 2,000-credit monthly plan grant. The
   pre-created 1,500-credit auto-top-up commit is excluded from the seed target
   and remains untouched until the monthly grant is depleted by later usage.
+- Usage Pacing labels contract-term commitments as prepaid commitments, never
+  monthly commitments. For B2B, monthly usage is compared with the active
+  per-seat monthly credits while the shared contract commitment is displayed
+  separately. A distant term-level commitment must not flatten the usage chart
+  Y-axis; off-scale commitments remain in summary cards rather than reference
+  lines.
 - Account Setup does not add arbitrary pricing properties. AI Builder keeps
   canonical `processing_tier`; Generation keeps canonical `service_tier`.
 - Power-user creation asks which mode to seed; cleanup does not need a mode.
@@ -309,6 +358,10 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
 - Metronome-only is the default. When a valid `sk_test_` key and matching
   delivery method are supplied, seed linked Stripe test customers, default
   payment methods, billing configurations, and test invoices.
+- Plans and subscriptions are represented by Metronome packages and contracts.
+  The app must not query or create Stripe Billing V2 pricing plans or pricing
+  plan subscriptions. Stripe remains responsible for customers, payment
+  methods, and invoices exported by Metronome.
 - Only Stripe test keys are accepted.
 - Starter operations support preview, apply, restart-safe state, and scoped
   reset.

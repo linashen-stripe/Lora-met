@@ -2,6 +2,25 @@ export type DemoUsageStory = 'healthy' | 'at-risk' | 'burst';
 
 export const DEMO_CONTRACT_LOOKBACK_DAYS = 28;
 
+function stableUnitInterval(seed: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 0xffffffff;
+}
+
+function stableRange(
+  variationKey: string,
+  story: DemoUsageStory,
+  minimum: number,
+  maximum: number,
+): number {
+  const unit = stableUnitInterval(`${variationKey}:${story}:consumption`);
+  return minimum + unit * (maximum - minimum);
+}
+
 /** Keeps seeded usage in the first active billing period and the ~34-day ingest window. */
 export function demoContractStart(
   now = new Date(),
@@ -15,9 +34,7 @@ export function demoContractStart(
 
 /** B2B monthly seat terms stay aligned to calendar-month billing periods. */
 export function demoB2bContractStart(now = new Date()): Date {
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
-  );
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
 }
 
 /** Seed B2B usage only into the currently active monthly seat-credit period. */
@@ -112,7 +129,17 @@ export function expectedB2bSpillSeatCount(story: DemoUsageStory): number {
 
 export function preparedProConsumptionFraction(
   story: DemoUsageStory,
+  variationKey?: string,
 ): number {
+  if (variationKey) {
+    if (story === 'healthy') {
+      return stableRange(variationKey, story, 0.46, 0.49);
+    }
+    if (story === 'at-risk') {
+      return stableRange(variationKey, story, 0.81, 0.87);
+    }
+    return stableRange(variationKey, story, 0.89, 0.94);
+  }
   if (story === 'healthy') return 0.5;
   if (story === 'at-risk') return 0.85;
   return 0.9;
@@ -122,23 +149,31 @@ export function preparedProConsumptionFraction(
  * Quickstart is a 12-month commitment, while Metronome accepts only about
  * 34 days of backdated demo usage. Pace against elapsed contract time, with
  * small demo floors so a roughly one-month-old contract still has a readable
- * graph: 10% Healthy, 15% At-Risk, and 12% Late-month Spike.
+ * graph: 10% Healthy, 15% At-Risk, and 12% Late-month Spike. Prepared
+ * customers add a stable, customer-specific offset so totals are not round.
  */
 export function quickstartConsumptionFraction({
   story,
   startingAt,
   endingBefore,
   now = new Date(),
+  variationKey,
 }: {
   story: DemoUsageStory;
   startingAt?: string | Date | null;
   endingBefore?: string | Date | null;
   now?: Date;
+  variationKey?: string;
 }): number {
   const start = startingAt ? new Date(startingAt) : null;
   const parsedEnd = endingBefore ? new Date(endingBefore) : null;
   if (!start || Number.isNaN(start.getTime())) {
-    return story === 'healthy' ? 0.1 : story === 'at-risk' ? 0.15 : 0.12;
+    const fallback =
+      story === 'healthy' ? 0.1 : story === 'at-risk' ? 0.15 : 0.12;
+    if (!variationKey) return fallback;
+    return (
+      fallback + stableRange(`${variationKey}:quickstart`, story, 0.004, 0.02)
+    );
   }
   const fallbackEnd = new Date(start);
   fallbackEnd.setUTCFullYear(fallbackEnd.getUTCFullYear() + 1);
@@ -149,11 +184,19 @@ export function quickstartConsumptionFraction({
     1,
     Math.max(0, (now.getTime() - start.getTime()) / durationMs),
   );
-  if (story === 'healthy') {
-    return Math.min(0.9, Math.max(0.1, elapsedFraction));
-  }
-  if (story === 'at-risk') {
-    return Math.min(0.95, Math.max(0.15, elapsedFraction * 1.35));
-  }
-  return Math.min(0.9, Math.max(0.12, elapsedFraction * 1.1));
+  const base =
+    story === 'healthy'
+      ? Math.min(0.9, Math.max(0.1, elapsedFraction))
+      : story === 'at-risk'
+        ? Math.min(0.95, Math.max(0.15, elapsedFraction * 1.35))
+        : Math.min(0.9, Math.max(0.12, elapsedFraction * 1.1));
+  if (!variationKey) return base;
+  const naturalOffset = stableRange(
+    `${variationKey}:quickstart`,
+    story,
+    0.004,
+    0.02,
+  );
+  const maximum = story === 'at-risk' ? 0.95 : 0.9;
+  return Math.min(maximum, base + naturalOffset);
 }

@@ -4,6 +4,8 @@ export interface MetronomeCreditItem {
   name: string;
   available: number;
   total: number;
+  kind?: 'commit' | 'credit';
+  isActive?: boolean;
 }
 
 export interface MetronomeAutoTopUp {
@@ -69,21 +71,6 @@ export interface MetronomeInvoice {
   stripeStatus?: string | null;
 }
 
-export interface PricingPlan {
-  id: string;
-  display_name: string;
-  currency: string;
-  live_version: string;
-  lookup_key: string;
-  expandedComponents?: any[];
-  components: {
-    license_fee: {
-      id: string;
-      unit_price: number;
-    };
-  };
-}
-
 export interface MeteredItem {
   id: string;
   display_name: string;
@@ -102,7 +89,6 @@ export interface DashboardData {
     currency: string;
   };
   billingCadence: Stripe.V2.Billing.Cadence;
-  pricingPlan: PricingPlan;
   meteredItems: MeteredItem[];
   meters: Stripe.Billing.Meter[];
 }

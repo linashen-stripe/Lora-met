@@ -15,6 +15,7 @@ import {
   normalizeDemoMode,
   type DemoMode,
 } from '@/config/demoModes';
+import { formatDemoCustomerName } from '@/utils/demoCustomerName';
 
 interface RequestBody {
   email: string;
@@ -78,7 +79,11 @@ export async function POST(request: NextRequest) {
 
     const baseCustomerName =
       companyName || name || deriveCustomerNameFromEmail(email);
-    const customerName = `[${modeDefinition.label}] ${baseCustomerName}`;
+    const customerName = formatDemoCustomerName({
+      demoMode,
+      persona: 'free',
+      baseName: baseCustomerName,
+    });
     const ingestAlias = `${modeDefinition.customerPrefix}:${email}`;
 
     // Resolve rate card currency from the package so the Stripe customer is created

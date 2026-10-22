@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { setupCreditBalanceAlert } from '@/utils/stripe/alerts';
 import initializeStripe from '@/utils/stripe';
 import { CUSTOMER_METADATA_KEYS } from '@/utils/constants';
-import { getSubscriptionAndPlan } from '@/utils/stripe/subscriptions';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
 
 export async function POST(req: Request) {
@@ -26,10 +25,7 @@ export async function POST(req: Request) {
   try {
     const stripe = initializeStripe(req.headers);
 
-    // Get the customer's subscription to determine the currency
-    const { plan } = await getSubscriptionAndPlan(customerId);
-    const currency =
-      plan?.currency || withFallbackHeaders(req.headers).currency || 'usd';
+    const currency = withFallbackHeaders(req.headers).currency || 'usd';
 
     // Convert dollar inputs to cents on the server to keep Stripe usage consistent
     const thresholdCents = Math.round(Number(threshold));

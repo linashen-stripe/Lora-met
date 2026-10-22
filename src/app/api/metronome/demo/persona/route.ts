@@ -8,6 +8,7 @@ import {
   prepareAiBuilderPersona,
   type AiBuilderStarterPersona,
 } from '@/server/aiBuilderStarter';
+import { formatDemoCustomerName } from '@/utils/demoCustomerName';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
 import { withFallbackHeaders } from '@/utils/withFallbackHeaders';
 import { deriveCustomerNameFromEmail } from '@/utils/helpers';
@@ -22,12 +23,6 @@ const PERSONA_KEYS: Record<
   pro: 'pro',
   quickstart: 'enterprise-quickstart',
   b2b: 'b2b-power-user',
-};
-
-const PERSONA_LABELS: Record<AdminPersona, string> = {
-  pro: 'Pro',
-  quickstart: 'Enterprise Quickstart',
-  b2b: 'B2B Power User',
 };
 
 const STORY_LABELS: Record<DemoUsageStory, string> = {
@@ -57,9 +52,12 @@ export async function POST(request: NextRequest) {
     }
 
     const baseName = deriveCustomerNameFromEmail(email);
-    const modeLabel =
-      demoMode === 'ai-builder' ? 'AI Builder' : 'Lora Generate';
-    const customerName = `[${modeLabel}] ${baseName} · ${PERSONA_LABELS[persona]} · ${STORY_LABELS[story]}`;
+    const customerName = formatDemoCustomerName({
+      demoMode,
+      persona,
+      baseName,
+      suffix: STORY_LABELS[story],
+    });
     const common = {
       apiKey: credentials.metronomeApiKey.trim(),
       persona: PERSONA_KEYS[persona],

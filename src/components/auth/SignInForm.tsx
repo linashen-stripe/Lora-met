@@ -12,7 +12,8 @@ import {
 } from '@/utils/helpers';
 import { loadFromStorage } from '@/utils/clientStorage';
 import ErrorBanner from '../ui/ErrorBanner';
-import { customerStorageKey, DEMO_MODES } from '@/config/demoModes';
+import { customerStorageKey } from '@/config/demoModes';
+import { formatDemoCustomerName } from '@/utils/demoCustomerName';
 import { inspectedFetch } from '@/utils/inspectedFetch';
 import { buildDemoRequestHeaders } from '@/utils/demoRequestHeaders';
 import { consumeNdjsonStream } from '@/utils/ndjsonClient';
@@ -115,7 +116,11 @@ const SignInForm = () => {
         updateCustomer({
           id: seededCustomer.customerId,
           email,
-          name: `[${DEMO_MODES[demoMode].label}] ${deriveCustomerNameFromEmail(email)}`,
+          name: formatDemoCustomerName({
+            demoMode,
+            persona: 'b2b',
+            baseName: deriveCustomerNameFromEmail(email),
+          }),
           metronomeCustomerId: seededCustomer.customerId,
           ...(seededCustomer.stripeCustomerId
             ? { stripeCustomerId: seededCustomer.stripeCustomerId }
@@ -130,6 +135,7 @@ const SignInForm = () => {
       const { data } = await fetchClient.post('/api/auth/quickstart', {
         email,
         demoMode,
+        persona,
       });
 
       updateCustomer({

@@ -34,12 +34,6 @@ export default async function RootLayout({
   return (
     <html lang={locale} className={aleo.className}>
       <head>
-        <Script
-          src='https://js.stripe.com/v3'
-          strategy='beforeInteractive'
-          crossOrigin='anonymous'
-        />
-
         <link href='/favicon.png' rel='icon' />
         <meta name='robots' content='noindex, nofollow' />
 

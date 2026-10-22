@@ -46,8 +46,7 @@ const PricingTable = () => {
   useEffect(() => {
     if (!settings) return;
 
-    // Pricing is now handled through pricing plans
-    // Set empty products
+    // Pricing is loaded from Metronome packages on the dedicated pricing page.
     setProducts({
       plus: null,
       pro: null,
@@ -69,7 +68,7 @@ const PricingTable = () => {
       buttonStyle: 'bg-foreground text-white hover:bg-foreground-hover',
     },
     {
-      link: `/${settings?.language}/auth/sign-up?plan=pricing-plan-pro`,
+      link: `/${settings?.language}/auth/sign-up?plan=pro`,
       name: products.pro?.name || t('pricing.plans.pro.name'),
       price: t('pricing.plans.pro.price', { price: prices.pro }),
       features: products.pro?.marketing_features?.map(

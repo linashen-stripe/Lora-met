@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { ConfigProvider, useConfigContext } from '@/contexts/ConfigContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { UsageChartRefreshProvider } from '@/contexts/UsageChartRefreshContext';
@@ -11,6 +11,7 @@ import ThemeOverrides from './ThemeOverrides';
 import UmamiTracker from './UmamiTracker';
 import {
   ApiInspectorProvider,
+  useApiInspector,
 } from '@/contexts/ApiInspectorContext';
 import ApiInspectorPanel from '@/components/ApiInspectorPanel';
 
@@ -24,7 +25,9 @@ interface CustomCSSProperties extends React.CSSProperties {
 
 function AppContent({ children }: AppContentProps) {
   const { isToolsPanelOpen } = useConfigContext();
+  const { isOpen: isApiInspectorOpen } = useApiInspector();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
 
   useEffect(() => {
     if (isToolsPanelOpen) {
@@ -32,6 +35,20 @@ function AppContent({ children }: AppContentProps) {
       scrollContainerRef.current?.scrollTo(0, 0);
     }
   }, [isToolsPanelOpen]);
+
+  useEffect(() => {
+    const updateViewportWidth = () => setViewportWidth(window.innerWidth);
+    updateViewportWidth();
+    window.addEventListener('resize', updateViewportWidth);
+    return () => window.removeEventListener('resize', updateViewportWidth);
+  }, []);
+
+  const inspectorWidth =
+    viewportWidth >= 1280 ? 512 : viewportWidth >= 768 ? 384 : 0;
+  const inspectorScale =
+    isApiInspectorOpen && !isToolsPanelOpen && inspectorWidth
+      ? (viewportWidth - inspectorWidth) / viewportWidth
+      : 1;
 
   const containerClasses = `
     flex-grow transition-all ease-in-out
@@ -47,6 +64,9 @@ function AppContent({ children }: AppContentProps) {
   const containerStyle: CustomCSSProperties = {
     '--transition-duration': isToolsPanelOpen ? '700ms' : '300ms',
     transitionDuration: 'var(--transition-duration)',
+    ...(inspectorScale < 1
+      ? { transform: `scale(${inspectorScale})` }
+      : {}),
   };
 
   return (

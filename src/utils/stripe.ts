@@ -35,26 +35,57 @@ const initializeStripe = (
   const sessionId = headerList.get(API_INSPECTOR_SESSION_HEADER);
   const parentId = headerList.get(API_INSPECTOR_TRACE_HEADER) ?? undefined;
   if (sessionId) {
-    stripe.on('response', (event) => {
-      publishApiTrace(sessionId, {
-        id: createTraceId('stripe'),
-        parentId,
-        source: 'stripe',
-        method: String(event.method ?? 'GET').toUpperCase(),
-        url: `https://api.stripe.com${event.path ?? ''}`,
-        startedAt: new Date(
-          Number(event.request_start_time ?? Date.now()),
-        ).toISOString(),
-        durationMs: Number(event.elapsed ?? 0),
-        status: Number(event.status ?? 0),
-        state:
-          Number(event.status ?? 0) >= 400 ? 'error' : 'success',
-        response: {
-          requestId: event.request_id,
-          apiVersion: event.api_version,
-        },
-      });
-    });
+    const requestSender = (stripe as any)._requestSender;
+    const originalRequest = requestSender._request.bind(requestSender);
+    requestSender._request = (
+      method: string,
+      host: string,
+      path: string,
+      data: unknown,
+      authenticator: unknown,
+      requestOptions: { streaming?: boolean },
+      usage: unknown,
+      callback: (error: unknown, response: unknown) => void,
+      requestDataProcessor: unknown,
+    ) => {
+      const id = createTraceId('stripe');
+      const startedAt = new Date();
+      const tracedCallback = (error: any, response: any) => {
+        const status = Number(
+          response?.lastResponse?.statusCode ?? error?.statusCode ?? 0,
+        );
+        publishApiTrace(sessionId, {
+          id,
+          parentId,
+          source: 'stripe',
+          method: String(method).toUpperCase(),
+          url: `https://${host || 'api.stripe.com'}${path}`,
+          startedAt: startedAt.toISOString(),
+          durationMs: Date.now() - startedAt.getTime(),
+          status: status || undefined,
+          state: error ? 'error' : 'success',
+          request: data,
+          response: requestOptions?.streaming
+            ? '[streaming response]'
+            : response,
+          error: error ? String(error.message ?? error) : undefined,
+          stream: Boolean(requestOptions?.streaming),
+        });
+        callback(error, response);
+      };
+
+      return originalRequest(
+        method,
+        host,
+        path,
+        data,
+        authenticator,
+        requestOptions,
+        usage,
+        tracedCallback,
+        requestDataProcessor,
+      );
+    };
   }
   return stripe;
 };

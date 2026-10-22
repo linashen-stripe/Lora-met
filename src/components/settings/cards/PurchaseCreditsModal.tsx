@@ -59,7 +59,7 @@ export default function PurchaseCreditsModal({
     demoMode === 'generation' &&
     (!contractCreditTypeName ||
       isCustomMetronomeCreditType(contractCreditTypeName))
-      ? contractCreditTypeName ?? METRONOME_CATALOG.pricingUnit.name
+      ? (contractCreditTypeName ?? METRONOME_CATALOG.pricingUnit.name)
       : undefined;
   const formatAmount = (amount: number) =>
     formatMetronomeAmount(
@@ -70,8 +70,7 @@ export default function PurchaseCreditsModal({
     );
   const formatGenerationCreditPrice = (credits: number) =>
     formatPrice(
-      credits *
-        METRONOME_CATALOG.pricingUnit.fiatMinorUnitsPerCustomCredit,
+      credits * METRONOME_CATALOG.pricingUnit.fiatMinorUnitsPerCustomCredit,
       settings?.language || 'en',
       settings?.currency || 'usd',
     );
@@ -118,11 +117,7 @@ export default function PurchaseCreditsModal({
     } finally {
       setIsLoading(false);
     }
-  }, [
-    customer?.id,
-    customCreditTypeName,
-    metronomeContract?.creditTypeId,
-  ]);
+  }, [customer?.id, customCreditTypeName, metronomeContract?.creditTypeId]);
 
   useEffect(() => {
     if (open) {
@@ -325,11 +320,7 @@ export default function PurchaseCreditsModal({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={() => setOpen(false)}
-      className='relative z-50'
-    >
+    <Dialog open={open} onClose={() => {}} className='relative z-50'>
       <DialogBackdrop
         transition
         className='fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity data-[closed]:opacity-0'

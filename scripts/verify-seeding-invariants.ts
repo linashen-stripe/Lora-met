@@ -17,9 +17,13 @@ import {
   quickstartConsumptionFraction,
   type DemoUsageStory,
 } from '../src/utils/demoUsageSeedProfiles';
+import { packageByKey } from '../src/config/metronomeCatalog';
 import { seedGenerationUsage } from '../src/utils/metronomeGenerationSeedUsage';
+import { currentMetronomeMonthlyPeriod } from '../src/utils/metronomeBillingPeriod';
 
 const STORIES: DemoUsageStory[] = ['healthy', 'at-risk', 'burst'];
+const GENERATION_PRO_MONTHLY_CREDITS =
+  packageByKey('pro')?.monthlyCredits ?? 2_000;
 const GENERATION_SEAT_CREDITS = 10_000;
 const AI_BUILDER_SEAT_DOLLARS = 2_000;
 const B2B_MULTIPLIER = 0.85;
@@ -77,9 +81,7 @@ function verifySharedB2bProfiles(): void {
         B2B_MULTIPLIER,
       );
       listRateTargets.forEach((target, index) => {
-        assert.ok(
-          Math.abs(target * B2B_MULTIPLIER - targets[index]) < 1e-8,
-        );
+        assert.ok(Math.abs(target * B2B_MULTIPLIER - targets[index]) < 1e-8);
       });
     }
   }
@@ -95,7 +97,9 @@ async function verifyGenerationB2bEvents(): Promise<void> {
             data: [
               {
                 id: `contract-${story}`,
-                starting_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+                starting_at: new Date(
+                  Date.now() - 30 * 86_400_000,
+                ).toISOString(),
                 commits: [
                   {
                     access_schedule: {
@@ -119,10 +123,7 @@ async function verifyGenerationB2bEvents(): Promise<void> {
       },
     } as any;
     const users = ['seat-a', 'seat-b', 'seat-c', 'seat-d', 'seat-e'];
-    const targets = b2bSeatConsumptionTargets(
-      GENERATION_SEAT_CREDITS,
-      story,
-    );
+    const targets = b2bSeatConsumptionTargets(GENERATION_SEAT_CREDITS, story);
     await seedGenerationUsage({
       metronome,
       customerId: `customer-${story}`,
@@ -151,9 +152,8 @@ async function verifyGenerationB2bEvents(): Promise<void> {
       expectedSpillSeats,
     );
     assert.equal(
-      actual.filter(
-        (amount) => amount > 0 && amount < GENERATION_SEAT_CREDITS,
-      ).length,
+      actual.filter((amount) => amount > 0 && amount < GENERATION_SEAT_CREDITS)
+        .length,
       5 - expectedSpillSeats,
     );
     assert.equal(new Set(actual.map((amount) => Math.round(amount))).size, 5);
@@ -182,7 +182,9 @@ async function verifyGenerationPreparedPlans(): Promise<void> {
             data: [
               {
                 id: `pro-${story}`,
-                starting_at: new Date(Date.now() - 30 * 86_400_000).toISOString(),
+                starting_at: new Date(
+                  Date.now() - 30 * 86_400_000,
+                ).toISOString(),
                 commits: [
                   {
                     name: 'Seeded Pro Auto Top-Up',
@@ -195,9 +197,11 @@ async function verifyGenerationPreparedPlans(): Promise<void> {
                 credits: [
                   {
                     access_schedule: {
-                      schedule_items: [{ amount: 1_000 }],
+                      schedule_items: [
+                        { amount: GENERATION_PRO_MONTHLY_CREDITS },
+                      ],
                     },
-                    balance: 1_000,
+                    balance: GENERATION_PRO_MONTHLY_CREDITS,
                   },
                 ],
               },
@@ -218,11 +222,33 @@ async function verifyGenerationPreparedPlans(): Promise<void> {
       usageUserIds: ['creator@example.com'],
       persona: 'pro',
     });
-    const targetFraction = preparedProConsumptionFraction(story);
-    assert.ok(result.creditsConsumed <= 1_000 * targetFraction);
-    assert.ok(result.creditsConsumed >= 1_000 * targetFraction - 10);
+    const targetFraction = preparedProConsumptionFraction(
+      story,
+      `pro-customer-${story}`,
+    );
+    assert.ok(
+      result.creditsConsumed <=
+        GENERATION_PRO_MONTHLY_CREDITS * targetFraction,
+    );
+    assert.ok(
+      result.creditsConsumed >=
+        GENERATION_PRO_MONTHLY_CREDITS * targetFraction - 10,
+    );
     const events = batches.flat();
-    assert.ok(events.every((event) => Number.isInteger(event.properties.quantity)));
+    const largestEvent = Math.max(
+      ...events.map((event) => Number(event.properties.credits_consumed)),
+    );
+    assert.ok(largestEvent <= result.creditsConsumed * 0.15);
+    assert.ok(
+      new Set(events.map((event) => event.timestamp.slice(0, 10))).size >= 10,
+    );
+    assert.equal(
+      new Set(events.map((event) => event.properties.project_id)).size,
+      3,
+    );
+    assert.ok(
+      events.every((event) => Number.isInteger(event.properties.quantity)),
+    );
     assert.deepEqual(
       new Set(events.map((event) => event.properties.modality)),
       new Set(['image', 'video', '3d']),
@@ -353,7 +379,8 @@ async function verifyAiBuilderProEconomics(): Promise<void> {
     }
     assert.equal(result.ok, true);
     if (!result.ok) continue;
-    const expectedSpend = 20 * preparedProConsumptionFraction(story);
+    const expectedSpend =
+      20 * preparedProConsumptionFraction(story, contract.id);
     assert.ok(
       Math.abs(result.estimatedSpendDollars - expectedSpend) < 0.02,
       `AI Builder Pro ${story} spend was $${result.estimatedSpendDollars.toFixed(2)}, expected $${expectedSpend.toFixed(2)}`,
@@ -441,7 +468,17 @@ async function verifyAiBuilderQuickstartEconomics(): Promise<void> {
   }
   assert.equal(result.ok, true);
   if (!result.ok) return;
-  assert.ok(Math.abs(result.estimatedSpendDollars - 250) < 0.01);
+  const expectedQuickstartSpend =
+    2_500 *
+    quickstartConsumptionFraction({
+      story: 'healthy',
+      startingAt: contract.starting_at,
+      endingBefore: contract.ending_before,
+      variationKey: contract.id,
+    });
+  assert.ok(
+    Math.abs(result.estimatedSpendDollars - expectedQuickstartSpend) < 0.01,
+  );
   assert.ok(
     batches
       .flat()
@@ -498,12 +535,24 @@ async function verifyAiBuilderQuickstartEconomics(): Promise<void> {
     );
   }, 0);
   assert.ok(
-    Math.abs(actualSpendDollars - 250) < 0.02,
-    `AI Builder Quickstart events rate to $${actualSpendDollars.toFixed(2)}, expected $250.00`,
+    Math.abs(actualSpendDollars - expectedQuickstartSpend) < 0.02,
+    `AI Builder Quickstart events rate to $${actualSpendDollars.toFixed(2)}, expected $${expectedQuickstartSpend.toFixed(2)}`,
   );
 }
 
 async function main(): Promise<void> {
+  const anchoredPeriod = currentMetronomeMonthlyPeriod(
+    '2026-09-25T00:00:00.000Z',
+    new Date('2026-10-23T00:00:00.000Z'),
+  );
+  assert.equal(
+    anchoredPeriod.startingAt.toISOString(),
+    '2026-09-25T00:00:00.000Z',
+  );
+  assert.equal(
+    anchoredPeriod.endingBefore.toISOString(),
+    '2026-10-25T00:00:00.000Z',
+  );
   verifyAiBuilderProductNameMapping();
   verifyRollingContractStart();
   verifySharedB2bProfiles();

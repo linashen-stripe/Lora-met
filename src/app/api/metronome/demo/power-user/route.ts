@@ -6,10 +6,10 @@ import { createPowerUserDemoCustomer } from '@/utils/demoPowerUser';
 import { createGenerationPowerUser } from '@/utils/generationPowerUser';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
 import {
-  DEMO_MODES,
   normalizeDemoMode,
   type DemoMode,
 } from '@/config/demoModes';
+import { formatDemoCustomerName } from '@/utils/demoCustomerName';
 import { setDemoUsageSeedStatus } from '@/server/demoUsageSeedStatus';
 import { ensureAiBuilderUsageProductTags } from '@/server/aiBuilderPackages';
 import {
@@ -87,6 +87,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const customerName = (body.customerName ?? '').trim();
   const demoMode = normalizeDemoMode(body.demoMode as DemoMode);
+  const formattedCustomerName = formatDemoCustomerName({
+    demoMode,
+    persona: 'b2b',
+    baseName: customerName,
+  });
   const story = (body.story ?? 'healthy') as DemoUsageStory;
   const { metronomeDeliveryMethodId } = withFallbackHeaders(request.headers);
 
@@ -142,7 +147,7 @@ export async function POST(request: NextRequest) {
         ? await createGenerationPowerUser({
         metronome,
         stripe,
-        customerName,
+        customerName: formattedCustomerName,
         story,
         deliveryMethodId: metronomeDeliveryMethodId,
         onLog,
@@ -151,7 +156,7 @@ export async function POST(request: NextRequest) {
         : await createPowerUserDemoCustomer({
             metronome,
             stripe,
-            customerName: `[${DEMO_MODES['ai-builder'].label}] ${customerName}`,
+            customerName: formattedCustomerName,
             deliveryMethodId: metronomeDeliveryMethodId,
             rateCardName: body.rateCardName,
             commitDollars: body.commitDollars,

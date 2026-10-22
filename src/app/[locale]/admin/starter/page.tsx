@@ -151,8 +151,8 @@ function ModeReview({
         }),
         packages: [
           'Free · 100 one-time credits',
-          'Pro · $20/month + 1,000 monthly credits',
-          'Enterprise Quickstart · $1,000 prepaid · 100,000 credits · 12 months',
+          'Pro · $20/month + 2,000 monthly credits',
+          'Enterprise Quickstart · $1,000 prepaid · 110,000 credits · 12 months',
         ],
         b2b:
           '1,000,000-credit annual commit · 5 × $1,000/month seats · 10,000 monthly credits/seat · 15% usage discount',

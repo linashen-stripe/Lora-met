@@ -12,9 +12,7 @@ import PricingCard, { type Plan } from '@/components/pricing/PricingCard';
 import PayAsYouGoPricingTable from '@/components/pricing/PayAsYouGoPricingTable';
 import GenerationPricingTable from '@/components/pricing/GenerationPricingTable';
 import FaqSection from '@/components/pricing/FaqSection';
-import SubscribePricingPlanEmbeddedDialog from '@/components/subscribe/SubscribePricingPlanEmbeddedDialog';
 import SubscribeMetronomePackageDialog from '@/components/subscribe/SubscribeMetronomePackageDialog';
-import { PricingPlan } from '@/utils/types';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import {
   GENERATION_PLANS,
@@ -49,9 +47,6 @@ function PricingPageContent() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [premiumPlan, setPremiumPlan] = useState<PricingPlan | null>(null);
-  const [premiumPlanPrice, setPremiumPlanPrice] = useState<number | null>(null);
-  const [freePlan, setFreePlan] = useState<PricingPlan | null>(null);
   const [metronomePackages, setMetronomePackages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelectingPackage, setIsSelectingPackage] = useState(false);
@@ -59,7 +54,6 @@ function PricingPageContent() {
     null,
   );
   const [packageError, setPackageError] = useState<string | null>(null);
-  const [showUpgradePaymentModal, setShowUpgradePaymentModal] = useState(false);
 
   const isLoggedIn = Boolean(customer?.id);
   const hasMetronomeCustomer = Boolean(
@@ -74,7 +68,6 @@ function PricingPageContent() {
       normPackageName(metronomeContract?.name).includes(tier),
     );
   const hasMetronomeContract = Boolean(metronomeContract);
-  const checkoutModalEnabled = settings?.checkoutMethod === 'embedded-checkout';
   const currency = settings?.currency || 'usd';
 
   // For logged-in Metronome customers: create a contract directly without going through sign-up
@@ -125,7 +118,7 @@ function PricingPageContent() {
                     freeCredits:
                       generationFreePackage?.includedCredits ?? 100,
                     proCredits:
-                      generationProPackage?.monthlyCredits ?? 1_000,
+                      generationProPackage?.monthlyCredits ?? 2_000,
                   },
                 )}
               </p>
@@ -237,27 +230,10 @@ function PricingPageContent() {
         ];
 
   useEffect(() => {
-    const premiumPlanLookupKey = `llama_ai_premium_plan_${currency}`;
-    const freePlanLookupKey = `llama_ai_free_plan_${currency}`;
-
-    Promise.all([
-      demoMode === 'ai-builder'
-        ? fetchClient
-            .get(`/api/stripe/pricing-plan?lookup_keys=${premiumPlanLookupKey}`)
-            .catch(() => ({ data: { plans: [] } }))
-        : Promise.resolve({ data: { plans: [] } }),
-      demoMode === 'ai-builder'
-        ? fetchClient
-            .get(`/api/stripe/pricing-plan?lookup_keys=${freePlanLookupKey}`)
-            .catch(() => ({ data: { plans: [] } }))
-        : Promise.resolve({ data: { plans: [] } }),
-      fetchClient
-        .get('/api/metronome/packages')
-        .catch(() => ({ data: { packages: [] } })),
-    ])
-      .then(async ([premiumResponse, freeResponse, packagesResponse]) => {
-        const proPlan = premiumResponse.data.plans[0];
-        const freePlanData = freeResponse.data.plans[0];
+    fetchClient
+      .get('/api/metronome/packages')
+      .catch(() => ({ data: { packages: [] } }))
+      .then((packagesResponse) => {
         const rawPackages = packagesResponse.data.packages ?? [];
         const modePackageNames = new Set(
           demoMode === 'generation'
@@ -324,37 +300,19 @@ function PricingPageContent() {
               ? rawPackages.filter(isAllowedMetronomePricingPackage)
               : [];
 
-        if (freePlanData) setFreePlan(freePlanData);
         setMetronomePackages(packages);
-
-        if (proPlan) {
-          setPremiumPlan(proPlan);
-          try {
-            const { data } = await fetchClient.get(
-              `/api/stripe/pricing-plan/${proPlan.id}`,
-            );
-            if (data.expandedComponents) {
-              const licenseFees = data.expandedComponents
-                .filter((c: any) => c.type === 'license_fee')
-                .reduce(
-                  (acc: number, fee: any) =>
-                    acc + Number(fee.expanded_license_fee.unit_amount),
-                  0,
-                );
-              setPremiumPlanPrice(licenseFees);
-            }
-          } catch {
-            // premium plan price not critical
-          }
-        }
-
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error('Unable to fetch pricing plans:', err);
+        console.error('Unable to fetch Metronome packages:', err);
         setIsLoading(false);
       });
-  }, [currency, demoMode]);
+  }, [
+    demoMode,
+    generationFreePackage?.name,
+    generationProPackage?.name,
+    generationQuickstartPackage?.name,
+  ]);
 
   // Auto-open upgrade modal if upgrade=true in URL
   useEffect(() => {
@@ -368,8 +326,6 @@ function PricingPageContent() {
       );
       if (premiumPackage?.id) {
         setSelectedPackageId(premiumPackage.id);
-      } else if (demoMode === 'ai-builder' && checkoutModalEnabled) {
-        setShowUpgradePaymentModal(true);
       } else {
         setPackageError(
           `Could not find the ${DEMO_MODES[demoMode].label} paid package.`,
@@ -379,7 +335,6 @@ function PricingPageContent() {
   }, [
     searchParams,
     hasFreePlan,
-    checkoutModalEnabled,
     demoMode,
     isLoading,
     metronomePackages,
@@ -390,15 +345,7 @@ function PricingPageContent() {
   }
 
   const getUpgradeButtonProps = () => {
-    if (hasFreePlan && checkoutModalEnabled) {
-      return {
-        onClick: () => {
-          setShowUpgradePaymentModal(true);
-        },
-      };
-    }
-
-    if (hasFreePlan && !checkoutModalEnabled) {
+    if (hasFreePlan) {
       return {
         link: `/${settings?.language}/subscribe/metronome-package?upgrade=true&demoMode=${demoMode}`,
       };
@@ -406,7 +353,7 @@ function PricingPageContent() {
 
     if (!isLoggedIn) {
       return {
-        link: `/${settings?.language}/auth/sign-up?plan=pricing-plan-pro&demoMode=${demoMode}`,
+        link: `/${settings?.language}/auth/sign-up?plan=pro&demoMode=${demoMode}`,
       };
     }
 
@@ -427,7 +374,7 @@ function PricingPageContent() {
   const freeCard: Plan = {
     name: t(
       'products.default_free.name',
-      freePlan?.display_name || 'Free Plan',
+      'Free Plan',
     ),
     price: formatPrice(0, settings?.language, settings?.currency),
     priceDetails: t('plans.price_details.month', '/month'),
@@ -941,14 +888,6 @@ function PricingPageContent() {
         </section>
 
         <FaqSection faqs={faqs} />
-
-        {showUpgradePaymentModal && (
-          <SubscribePricingPlanEmbeddedDialog
-            open={showUpgradePaymentModal}
-            isUpgrade
-            onClose={() => setShowUpgradePaymentModal(false)}
-          />
-        )}
 
         <SubscribeMetronomePackageDialog
           open={!!selectedPackageId}

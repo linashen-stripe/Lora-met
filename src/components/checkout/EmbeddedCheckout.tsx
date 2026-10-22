@@ -18,7 +18,6 @@ interface Props {
   };
   settings: {
     language: string;
-    checkoutMethod?: string;
     country: string;
     currency: string;
     email: string;
@@ -73,7 +72,10 @@ export default function EmbeddedCheckoutComponent({
               {sidebar}
             </aside>
             <div className={`min-w-0 w-full ${innerPad}`}>
-              <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
+              <EmbeddedCheckoutProvider
+                stripe={stripePromise}
+                options={options}
+              >
                 <EmbeddedCheckout />
               </EmbeddedCheckoutProvider>
             </div>

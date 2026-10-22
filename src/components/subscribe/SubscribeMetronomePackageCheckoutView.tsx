@@ -52,7 +52,6 @@ function SubscribeMetronomePackageCheckoutBody({
       }
       settings={{
         language: settings.language,
-        checkoutMethod: settings.checkoutMethod,
         country: settings.country || 'US',
         currency: settings.currency || 'usd',
         email: settings.email || 'demo@example.com',
@@ -77,8 +76,8 @@ export default function SubscribeMetronomePackageCheckoutView() {
   const subscribeTier = tierParam === 'enterprise' ? 'enterprise' : 'premium';
   const isUpgrade = searchParams.get('upgrade') === 'true';
 
-  const [resolvedPackageId, setResolvedPackageId] = useState<string | null>(() =>
-    packageIdParam?.trim() ? packageIdParam.trim() : null,
+  const [resolvedPackageId, setResolvedPackageId] = useState<string | null>(
+    () => (packageIdParam?.trim() ? packageIdParam.trim() : null),
   );
   const [resolution, setResolution] = useState<'pending' | 'done'>(() =>
     packageIdParam?.trim() ? 'done' : 'pending',
@@ -99,7 +98,9 @@ export default function SubscribeMetronomePackageCheckoutView() {
     setResolveError(null);
 
     fetchClient
-      .get<{ packages?: { id: string; name?: string }[] }>('/api/metronome/packages')
+      .get<{ packages?: { id: string; name?: string }[] }>(
+        '/api/metronome/packages',
+      )
       .then(({ data }) => {
         if (cancelled) return;
         const list = data.packages ?? [];

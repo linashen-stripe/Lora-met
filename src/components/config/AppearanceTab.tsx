@@ -1,8 +1,6 @@
 /* eslint-disable i18next/no-literal-string */
-import { useState, ChangeEvent } from 'react';
-import ExternalElementsComboBox from './ExternalElementsCombobox';
+import { ChangeEvent } from 'react';
 import { useConfigContext } from '@/contexts/ConfigContext';
-import { defaultDemoSettings } from '@/config/config';
 import CurrencyInfoTooltip from './CurrencyInfoTooltip';
 
 interface SelectOption {
@@ -17,21 +15,13 @@ interface SettingConfig {
   checkoutMethod?: string; // Conditionally render based on settings.checkoutMethod
 }
 
-// Assuming ExternalElementsComboBox provides a method object like this in its callback,
-// or null/undefined if nothing is selected.
-interface EpmMethod {
-  id: string;
-  // ... other properties the method object might have
-}
-
 export default function AppearanceTab() {
   const {
     settings,
     updateSetting,
     customer,
     updateCustomer,
-    triggerElementsRefresh,
-    subscription,
+    metronomeContract,
   } = useConfigContext();
 
   const handleCurrencyChange = (value: string) => {
@@ -46,26 +36,7 @@ export default function AppearanceTab() {
     return null;
   }
 
-  const isCurrencyLocked = Boolean(
-    customer?.activeSubscription || subscription?.id,
-  );
-
-  const currentExternalPaymentMethod = (settings as any)[
-    'externalPaymentMethod'
-  ];
-  const defaultExternalPaymentMethod = (defaultDemoSettings as any)[
-    'externalPaymentMethod'
-  ];
-
-  const [localExternalPaymentMethod, setLocalExternalPaymentMethod] =
-    // TODO: this eslint rule is disabled because it's a bit of a hack to get the default value for the external payment method
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useState<string>(
-      currentExternalPaymentMethod &&
-        currentExternalPaymentMethod !== defaultExternalPaymentMethod
-        ? currentExternalPaymentMethod
-        : '',
-    );
+  const isCurrencyLocked = Boolean(metronomeContract);
 
   const uiSettings: SettingConfig[] = [
     {
@@ -97,25 +68,24 @@ export default function AppearanceTab() {
       ],
     },
     {
-      label: 'Checkout Integration',
+      label: 'Credit Purchase Checkout',
       key: 'checkoutMethod',
       options: [
-        { value: 'embedded-checkout', label: 'Embedded full page' },
-        { value: 'elements-checkout', label: 'Elements w/ PI' },
-        { value: 'stripe-checkout', label: 'Hosted full page' },
-        // {
-        //   value: 'elements-checkout-with-checkout-sessions',
-        //   label: 'Elements with Checkout Sessions',
-        // },
+        { value: 'elements', label: 'Elements' },
+        {
+          value: 'embedded_page',
+          label: 'Embedded page',
+        },
+        { value: 'form', label: 'Form' },
+        { value: 'hosted_page', label: 'Hosted page' },
       ],
     },
     {
-      label: 'Elements Style',
-      checkoutMethod: 'elements-checkout',
-      key: 'elementsStyle',
+      label: 'Checkout Form layout',
+      key: 'checkoutFormLayout',
       options: [
-        { value: 'tabs', label: 'Tabs' },
-        { value: 'accordion', label: 'Accordion' },
+        { value: 'compact', label: 'Compact (multi-step)' },
+        { value: 'expanded', label: 'Expanded (single page)' },
       ],
     },
   ];
@@ -136,7 +106,17 @@ export default function AppearanceTab() {
               </div>
               <select
                 disabled={key === 'currency' && isCurrencyLocked}
-                value={settings[key] as string} // Assuming settings values are strings for selects
+                value={
+                  key === 'checkoutMethod' &&
+                  ![
+                    'elements',
+                    'embedded_page',
+                    'form',
+                    'hosted_page',
+                  ].includes(settings[key] as string)
+                    ? 'form'
+                    : (settings[key] as string)
+                }
                 onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                   key === 'currency'
                     ? handleCurrencyChange(e.target.value)
@@ -150,61 +130,22 @@ export default function AppearanceTab() {
                   </option>
                 ))}
               </select>
+              {key === 'checkoutMethod' && (
+                <p className='mt-2 text-xs text-gray-500'>
+                  Credit purchase currently supports Form and Hosted page.
+                  Elements and Embedded page fall back to Form until they are
+                  supported.
+                </p>
+              )}
+              {key === 'checkoutFormLayout' && (
+                <p className='mt-2 text-xs text-gray-500'>
+                  Applies to Form and fallback Form modes only. Hosted page
+                  controls its own layout.
+                </p>
+              )}
             </div>
           ),
       )}
-
-      {settings.checkoutMethod === 'elements-checkout' && (
-        <>
-          <ExternalElementsComboBox
-            selectedMethod={localExternalPaymentMethod} // Assuming ExternalElementsComboBox expects string ID
-            setSelectedMethod={(method: EpmMethod | null) => {
-              const methodId = method?.id;
-              updateSetting('externalPaymentMethod', methodId);
-              triggerElementsRefresh();
-              setLocalExternalPaymentMethod(methodId || '');
-            }}
-          />
-
-          <div className='mt-4 space-y-2'>
-            <div className='flex items-center'>
-              <input
-                id='eceEnabled'
-                type='checkbox'
-                checked={!!settings['eceEnabled']} // Use bracket notation and ensure boolean
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  updateSetting('eceEnabled', e.target.checked)
-                }
-                className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-              />
-              <label
-                htmlFor='eceEnabled'
-                className='ml-2 block text-sm text-gray-900'
-              >
-                Express Checkout Element
-              </label>
-            </div>
-            <div className='flex items-center'>
-              <input
-                id='addressEnabled'
-                type='checkbox'
-                checked={!!settings['addressEnabled']} // Use bracket notation and ensure boolean
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  updateSetting('addressEnabled', e.target.checked)
-                }
-                className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
-              />
-              <label
-                htmlFor='addressEnabled'
-                className='ml-2 block text-sm text-gray-900'
-              >
-                Address Element
-              </label>
-            </div>
-          </div>
-        </>
-      )}
-
       {/* Assuming customer object structure from ConfigContext is { email: string, ... } */}
       {[{ label: 'Customer email', key: 'email' }].map(({ label, key }) => (
         <div key={key}>

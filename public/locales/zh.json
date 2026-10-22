@@ -605,8 +605,7 @@
     "errors": {
       "general": "发生错误。请重试。",
       "unexpected": "发生意外错误。请重试。",
-      "checkout_session": "无法创建嵌入式结账会话，您可能未登录。",
-      "legacy_api": "旧版订阅API不再可用。请使用定价计划订阅。"
+      "checkout_session": "无法创建嵌入式结账会话，您可能未登录。"
     }
   },
   "simulations": {
@@ -817,7 +816,7 @@
       "project_storage": {
         "title": "按项目用量",
         "used": "已用",
-        "capacity": "承诺额度",
+        "capacity": "有效积分总额",
         "available": "可用",
         "no_metrics": "未找到可计费指标。",
         "no_project_dimension": "当前指标不支持按 project_id 分组 — 请使用多项目演示种子或在 Metronome 中配置分组键。",
@@ -891,21 +890,32 @@
     },
     "usage_pacing": {
       "title": "用量追踪",
-      "description": "本月至今的可计费用量与月度承诺对比。",
+      "description": "账单周期内的可计费用量与月度承诺对比。",
+      "description_b2b": "账单周期内的用量与月度席位积分对比，共享合同承诺额度单独显示。",
+      "description_commit": "账单周期内的用量及预测与预付合同承诺额度对比。",
       "all_products": "所有产品",
       "all_models": "所有模型",
       "all_qualities": "所有质量",
       "all_tiers": "所有层级",
-      "month_to_date": "本月至今",
+      "month_to_date": "账单周期至今",
+      "pct_of_budget": "{{label}}的{{pct}}%",
+      "monthly_seat_credits": "月度席位积分",
+      "prepaid_commitment": "预付合同承诺额度",
+      "monthly_credit_balance": "月度积分余额",
+      "available_this_period": "本周期可用",
+      "prepaid_contract_term": "合同期限预付",
       "pct_of_monthly": "月度{{label}}的{{pct}}%",
       "monthly_label": "月度{{label}}",
       "prepaid_period": "本周期预付款",
-      "projected_month_end": "月末预测",
+      "projected_month_end": "预计账单周期结束",
       "within_prepaid": "在预付金额以内",
+      "uses_shared_commitment": "预计将使用共享承诺额度",
       "above_prepaid": "超出预付金额 — 将产生超额费用",
-      "commitment_cap": "月度{{label}}（上限）：{{amount}}",
-      "series_spend": "本月至今（累计）",
-      "series_projected": "月末预测（趋势）",
+      "commitment_cap": "{{label}}：{{amount}}",
+      "shared_commitment": "剩余共享合同承诺额度",
+      "of_total": "总计{{total}}",
+      "series_spend": "账单周期至今（累计）",
+      "series_projected": "预计账单周期结束（趋势）",
       "commitment": "承诺额度",
       "credit_balance": "积分余额",
       "error_load": "无法加载账单明细："
@@ -967,8 +977,21 @@
       "button_not_logged_in": "免费开始生成",
       "no_credit_card": "无需信用卡",
       "build_command": "构建",
-      "ai_builder": {"main_title": "Build Production Apps with AI", "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.", "button_logged_in": "Open AI Builder", "button_not_logged_in": "Start building for free"},
-      "generation": {"command": "generate", "typewriter": {"text1": "a cinematic product launch video", "text2": "a campaign image set in three visual styles", "text3": "a textured 3D product asset", "text4": "a storyboard with matching video clips"}}
+      "ai_builder": {
+        "main_title": "Build Production Apps with AI",
+        "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.",
+        "button_logged_in": "Open AI Builder",
+        "button_not_logged_in": "Start building for free"
+      },
+      "generation": {
+        "command": "generate",
+        "typewriter": {
+          "text1": "a cinematic product launch video",
+          "text2": "a campaign image set in three visual styles",
+          "text3": "a textured 3D product asset",
+          "text4": "a storyboard with matching video clips"
+        }
+      }
     },
     "aggregated_usage": {
       "title": "汇总使用量",
@@ -994,9 +1017,18 @@
   "faq": {
     "title": "常见问题",
     "generation": {
-      "credits": {"question": "How do Generation Credits work?", "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."},
-      "service_tier": {"question": "What changes with Priority service?", "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."},
-      "top_up": {"question": "What happens when credits run low?", "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."}
+      "credits": {
+        "question": "How do Generation Credits work?",
+        "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."
+      },
+      "service_tier": {
+        "question": "What changes with Priority service?",
+        "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."
+      },
+      "top_up": {
+        "question": "What happens when credits run low?",
+        "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."
+      }
     },
     "questions": {
       "credits": {
@@ -1140,7 +1172,16 @@
       "processing": "处理中...",
       "purchase_for": "购买{{amount}}",
       "select_amount": "选择金额",
-      "min_amount": "最低{{amount}}"
+      "min_amount": "最低{{amount}}",
+      "invoice_flow": "发票购买",
+      "checkout_flow": "Checkout购买",
+      "checkout_loading": "正在加载安全Checkout...",
+      "checkout_waiting_for_commit": "已收到付款。正在等待Metronome创建额度...",
+      "checkout_missing_contract": "需要有效的Metronome合同。",
+      "checkout_create_failed": "无法启动Checkout额度购买。",
+      "checkout_verify_failed": "无法验证已完成的额度购买。",
+      "checkout_commit_pending": "付款已完成，但Metronome commit仍在处理中。创建完成后余额将更新。",
+      "checkout_retry": "重试"
     }
   },
   "pricing_rates": {

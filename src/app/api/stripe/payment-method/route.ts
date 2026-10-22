@@ -94,30 +94,68 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const paymentMethod = intent.startsWith('seti')
       ? (await stripe.setupIntents.retrieve(intent)).payment_method
       : (await stripe.paymentIntents.retrieve(intent)).payment_method;
-
-    // Detach existing default payment method if exists
-    if (customer.invoice_settings.default_payment_method) {
-      if (customer.invoice_settings.default_payment_method === paymentMethod) {
-        return NextResponse.json({ success: true });
-      }
-      await stripe.paymentMethods.detach(
-        customer.invoice_settings.default_payment_method as string,
+    const paymentMethodId =
+      typeof paymentMethod === 'string' ? paymentMethod : paymentMethod?.id;
+    if (!paymentMethodId) {
+      return NextResponse.json(
+        { error: 'The intent has no payment method' },
+        { status: 409 },
       );
     }
 
-    // Attach new payment method and set as default
-    if (typeof paymentMethod === 'string') {
-      await stripe.paymentMethods.attach(paymentMethod, {
+    const existingDefault =
+      typeof customer.invoice_settings.default_payment_method === 'string'
+        ? customer.invoice_settings.default_payment_method
+        : customer.invoice_settings.default_payment_method?.id;
+    if (existingDefault === paymentMethodId) {
+      return NextResponse.json({ success: true });
+    }
+
+    const replacement = await stripe.paymentMethods.retrieve(paymentMethodId);
+    const attachedCustomer =
+      typeof replacement.customer === 'string'
+        ? replacement.customer
+        : replacement.customer?.id;
+    if (attachedCustomer && attachedCustomer !== customerId) {
+      return NextResponse.json(
+        { error: 'Payment method belongs to another customer' },
+        { status: 409 },
+      );
+    }
+    if (!attachedCustomer) {
+      await stripe.paymentMethods.attach(paymentMethodId, {
         customer: customerId,
       });
-      await stripe.customers.update(customerId, {
-        invoice_settings: { default_payment_method: paymentMethod },
-      });
-    } else {
-      return NextResponse.json(
-        { error: 'Invalid payment method' },
-        { status: 400 },
-      );
+    }
+
+    const replacementAddress = replacement.billing_details.address;
+    const customerAddress = customer.address;
+    const billingAddress = {
+      line1: replacementAddress?.line1 ?? customerAddress?.line1 ?? undefined,
+      line2: replacementAddress?.line2 ?? customerAddress?.line2 ?? undefined,
+      city: replacementAddress?.city ?? customerAddress?.city ?? undefined,
+      state: replacementAddress?.state ?? customerAddress?.state ?? undefined,
+      postal_code:
+        replacementAddress?.postal_code ??
+        customerAddress?.postal_code ??
+        undefined,
+      country:
+        replacementAddress?.country ?? customerAddress?.country ?? undefined,
+    };
+    await stripe.paymentMethods.update(paymentMethodId, {
+      allow_redisplay: 'always',
+      billing_details: {
+        name: replacement.billing_details.name ?? customer.name ?? undefined,
+        email: replacement.billing_details.email ?? customer.email ?? undefined,
+        phone: replacement.billing_details.phone ?? customer.phone ?? undefined,
+        address: billingAddress,
+      },
+    });
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: paymentMethodId },
+    });
+    if (existingDefault) {
+      await stripe.paymentMethods.detach(existingDefault);
     }
 
     return NextResponse.json({ success: true });

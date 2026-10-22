@@ -93,7 +93,6 @@ interface ConfigContextType extends State {
   triggerElementsRefresh: () => void;
   toggleToolsPanel: (panelName: string) => void;
   resetSettings: () => void;
-  triggerSubscriptionRefresh: () => Promise<void>;
   triggerMetronomeContractRefresh: () => Promise<void>;
 }
 
@@ -313,64 +312,6 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     }));
   }, [demoMode, state.isLoading]);
 
-  const fetchPlanAndSubscription = useCallback(async () => {
-    const customerId = state.customer?.id;
-    if (customerId) {
-      try {
-        const { data } = await fetchClient.get(
-          `/api/stripe/customer/${customerId}/pricing-plan-subscription`,
-        );
-
-        if (data?.pricing_plan && data?.subscription) {
-          const isActive = data.subscription.servicing_status === 'active';
-          const updates: any = {
-            plan: {
-              id: data.pricing_plan.id,
-              lookupKey: data.pricing_plan.lookup_key,
-              displayName: data.pricing_plan.display_name,
-            },
-            subscription: {
-              id: data.subscription.id,
-              status: data.subscription.servicing_status,
-              billingCadenceId: data.subscription.billing_cadence,
-            },
-          };
-
-          // Update/augment customer data and set activeSubscription flag for UI locking
-          // Normalize Stripe's snake_case test_clock to our camelCase testClockId
-          const stripeCustomer = data.subscription?.customer || {};
-          const { test_clock, ...otherCustomerFields } = stripeCustomer;
-
-          const stripeMeta = (
-            stripeCustomer as { metadata?: { metronome_customer_id?: string } }
-          )?.metadata;
-          updates.customer = {
-            ...state.customer,
-            ...otherCustomerFields,
-            testClockId: test_clock,
-            activeSubscription: isActive,
-            metronomeCustomerId:
-              stripeMeta?.metronome_customer_id ||
-              state.customer?.metronomeCustomerId ||
-              DEFAULT_METRONOME_CUSTOMER_ID,
-          };
-
-          updateState(updates);
-        }
-      } catch (error) {
-        console.error('Failed to fetch plan and subscription:', error);
-      }
-    }
-  }, [state.customer?.id]);
-
-  useEffect(() => {
-    const customerId = state.customer?.id;
-    if (customerId) {
-      // Get the customer's pricing plan subscription
-      fetchPlanAndSubscription();
-    }
-  }, [state.customer?.id, updateState]);
-
   const fetchMetronomeContracts = useCallback(async () => {
     const metronomeCustomerId = getEffectiveMetronomeCustomerId(state.customer);
     if (!metronomeCustomerId) return;
@@ -505,6 +446,10 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
           name: item.name ?? item.product?.name ?? 'Credit',
           available,
           total,
+          kind: (contract.commits ?? []).includes(item)
+            ? ('commit' as const)
+            : ('credit' as const),
+          isActive: activeItems.includes(item),
         };
       });
 
@@ -551,7 +496,11 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     // Metronome is the reconciliation source, not the per-request entitlement path.
     // Keep background reads infrequent; generation explicitly refreshes after an
     // accepted ingest batch and billing actions refresh at their own boundaries.
-    const interval = setInterval(fetchMetronomeContracts, 60_000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void fetchMetronomeContracts();
+      }
+    }, 5 * 60_000);
     return () => clearInterval(interval);
   }, [state.customer?.id, state.customer?.metronomeCustomerId]);
 
@@ -714,10 +663,6 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
     }));
   }, []);
 
-  const triggerSubscriptionRefresh = useCallback(async () => {
-    await fetchPlanAndSubscription();
-  }, [fetchPlanAndSubscription]);
-
   const triggerMetronomeContractRefresh = useCallback(async () => {
     await fetchMetronomeContracts();
   }, [fetchMetronomeContracts]);
@@ -733,7 +678,6 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
       updateSubscription,
       updateState,
       triggerElementsRefresh,
-      triggerSubscriptionRefresh,
       triggerMetronomeContractRefresh,
       toggleToolsPanel: (panelName: string) =>
         setState((state) => {
@@ -756,7 +700,6 @@ export function ConfigProvider({ children }: PropsWithChildren<unknown>) {
       updateSubscription,
       updateState,
       triggerElementsRefresh,
-      triggerSubscriptionRefresh,
       triggerMetronomeContractRefresh,
       resetSettings,
     ],

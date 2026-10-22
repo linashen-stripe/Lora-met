@@ -95,9 +95,9 @@ One Generation Credit converts to one USD cent. Metronome's
 `fiat_per_custom_credit` value is therefore `1` because fiat pricing units use
 minor units; `0.01` would mean one-hundredth of a cent.
 
-- Enterprise Quickstart: a 12-month, $1,000 prepaid commitment for 100,000
-  Generation Credits.
-- Pro: a $20 monthly subscription with 1,000 recurring monthly Generation
+- Enterprise Quickstart: a 12-month, $1,000 prepaid commitment for 110,000
+  Generation Credits, including a 10% credit bonus.
+- Pro: a $20 monthly subscription with 2,000 recurring monthly Generation
   Credits, plus a native threshold recharge below 500 credits back to 1,500.
 - B2B Power User: 1,000,000-credit / $10,000 annual prepaid commitment,
   five assigned seats at $1,000 per month, 10,000 monthly credits per seat,

@@ -13,7 +13,12 @@ export const supportedLanguages = [
 ];
 
 export const defaultDemoSettings = {
-  checkoutMethod: process.env.NEXT_PUBLIC_CHECKOUT_METHOD,
+  checkoutMethod: ['elements', 'embedded_page', 'form', 'hosted_page'].includes(
+    process.env.NEXT_PUBLIC_CHECKOUT_METHOD ?? '',
+  )
+    ? process.env.NEXT_PUBLIC_CHECKOUT_METHOD
+    : 'form',
+  checkoutFormLayout: 'compact',
   country: process.env.NEXT_PUBLIC_COUNTRY,
   currency: process.env.NEXT_PUBLIC_CURRENCY,
   language: process.env.NEXT_PUBLIC_LANGUAGE ?? 'default',

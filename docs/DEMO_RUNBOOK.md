@@ -58,7 +58,7 @@ Start the live product story on `/en/pricing?demoMode=generation`.
 6. Confirm the balance moves from 100 → 50 → 0.
 7. Select **Upgrade to Pro**.
 8. Add a Stripe test payment method through setup Checkout.
-9. Confirm the Pro contract and its 1,000 monthly Generation Credits.
+9. Confirm the Pro contract and its 2,000 monthly Generation Credits.
 
 The upgrade first attempts one exact transition timestamp. Until the target
 account has the millisecond-boundary capability, the temporary fallback places
@@ -76,7 +76,8 @@ boundary so Free usage cannot reduce the new Pro allowance.
    service tier, project, and user.
 6. Open the Stripe customer delivered through Metronome.
 7. Open the Metronome contract and explain the predefined 12-month `$1,000`
-   prepaid commitment for 100,000 Generation Credits.
+   prepaid commitment for 110,000 Generation Credits, including a 10% credit
+   bonus.
 
 Quickstart never creates or transitions from a Free contract.
 

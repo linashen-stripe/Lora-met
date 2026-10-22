@@ -62,6 +62,9 @@ export default function ToolsPanel() {
           {activeTab === 'Demo' && (
             <>
               <DemoModeSwitcher locale={settings.language || 'en'} />
+              <div className='mt-4 border-t border-gray-200 pt-4'>
+                <AppearanceTab />
+              </div>
               <div className='mt-4 space-y-2'>
                 <Link
                   href={`/${settings.language || 'en'}/admin`}
@@ -70,6 +73,11 @@ export default function ToolsPanel() {
                 >
                   Open admin tools
                 </Link>
+                <p className='px-1 text-xs leading-5 text-gray-500'>
+                  Set up target-account demo resources, create seeded customer
+                  personas, or clean up selected Metronome and Stripe test
+                  customers. Target credentials remain in the Admin session.
+                </p>
               </div>
               <details className='mt-4 rounded-md border border-gray-200 bg-gray-50'>
                 <summary className='cursor-pointer px-3 py-2 text-sm font-medium text-gray-700'>
@@ -96,10 +104,7 @@ export default function ToolsPanel() {
               </details>
             </>
           )}
-          {activeTab === 'Appearance' && <AppearanceTab />}
-          {activeTab === 'Account' && (
-            <AccountTab />
-          )}
+          {activeTab === 'Account' && <AccountTab />}
 
           <button
             onClick={handleResetClick}

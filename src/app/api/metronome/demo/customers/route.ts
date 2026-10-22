@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { initializeMetronome } from '@/utils/metronome';
 import { archiveMetronomeCustomers, listActiveMetronomeCustomers } from '@/utils/demoCleanup';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
-import { DEMO_MODES, normalizeDemoMode } from '@/config/demoModes';
+import { normalizeDemoMode } from '@/config/demoModes';
+import { hasDemoCustomerNamePrefix } from '@/utils/demoCustomerName';
 
 // Step 1 of the /admin/cleanup-environment wizard: list and archive Metronome
 // customers. This route only ever calls the archive endpoint — never delete,
@@ -19,11 +20,12 @@ export async function GET(request: NextRequest) {
   const filteredCustomers = rawMode
     ? customers.filter((customer) =>
         rawMode === 'all'
-          ? Object.values(DEMO_MODES).some((mode) =>
-              customer.name?.startsWith(`[${mode.label}]`),
+          ? (['generation', 'ai-builder'] as const).some((mode) =>
+              hasDemoCustomerNamePrefix(customer.name, mode),
             )
-          : customer.name?.startsWith(
-              `[${DEMO_MODES[normalizeDemoMode(rawMode)].label}]`,
+          : hasDemoCustomerNamePrefix(
+              customer.name,
+              normalizeDemoMode(rawMode),
             ),
       )
     : customers;

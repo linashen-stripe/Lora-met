@@ -3,11 +3,7 @@
  * Resolves the active (or explicitly chosen) contract, rate card products, pool cap,
  * then ingests synthetic `ai_platform.usage` events. HTTP routes wrap {@link seedMetronomeUsage}.
  */
-import {
-  addDays,
-  format,
-  differenceInCalendarDays,
-} from 'date-fns';
+import { addDays, format, differenceInCalendarDays } from 'date-fns';
 import Metronome from '@metronome/sdk';
 import { LORA_MODEL_SLUG } from '@/config/metronomeModelLabels';
 import { metronomeContractPoolCapCents } from '@/utils/metronomeContractPool';
@@ -55,11 +51,7 @@ function djb2Hash(str: string): number {
 
 function startOfUtcDay(date: Date): Date {
   return new Date(
-    Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-    ),
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
   );
 }
 
@@ -129,7 +121,8 @@ function extractPerSeatLimitDollars(contract: any, logLabel: string): number {
   // Step 1: get seat count from SEAT_BASED subscription
   const subscriptions: any[] = contract.subscriptions ?? [];
   const seatSub = subscriptions.find(
-    (s: any) => s.quantity_management_mode === 'SEAT_BASED' || s.seat_config != null,
+    (s: any) =>
+      s.quantity_management_mode === 'SEAT_BASED' || s.seat_config != null,
   );
   if (!seatSub) return 0;
   const seatCount: number =
@@ -149,7 +142,9 @@ function extractPerSeatLimitDollars(contract: any, logLabel: string): number {
       const totalCents = Number(item.amount ?? 0);
       if (totalCents <= 0) continue;
       const perSeatDollars = totalCents / seatCount / 100;
-      console.log(`${logLabel} per-seat limit resolved: seatCount=${seatCount}, monthlyCommit=${totalCents} cents → $${perSeatDollars}/seat`);
+      console.log(
+        `${logLabel} per-seat limit resolved: seatCount=${seatCount}, monthlyCommit=${totalCents} cents → $${perSeatDollars}/seat`,
+      );
       return perSeatDollars;
     }
   }
@@ -169,7 +164,9 @@ export const SEED_USAGE_MULTI_PROJECT_IDS = [
 ] as const;
 
 /** Spend share per project (must sum to 1; same order as {@link SEED_USAGE_MULTI_PROJECT_IDS}). */
-export const SEED_USAGE_MULTI_PROJECT_SPEND_SHARES = [0.42, 0.33, 0.25] as const;
+export const SEED_USAGE_MULTI_PROJECT_SPEND_SHARES = [
+  0.42, 0.33, 0.25,
+] as const;
 
 const FALLBACK_PRODUCTS: ProductConfig[] = [
   {
@@ -177,9 +174,33 @@ const FALLBACK_PRODUCTS: ProductConfig[] = [
     dailyShare: 0.6,
     supportsBatch: true,
     models: [
-      { name: LORA_MODEL_SLUG.mythic46, inputRate: 3.0, outputRate: 15.0, batchInputRate: 1.5, batchOutputRate: 7.5, supportsBatch: true, share: 0.5 },
-      { name: LORA_MODEL_SLUG.prime54, inputRate: 2.5, outputRate: 15.0, batchInputRate: 1.25, batchOutputRate: 7.5, supportsBatch: true, share: 0.3 },
-      { name: LORA_MODEL_SLUG.primeMini54, inputRate: 0.75, outputRate: 4.5, batchInputRate: 0.38, batchOutputRate: 2.25, supportsBatch: true, share: 0.2 },
+      {
+        name: LORA_MODEL_SLUG.mythic46,
+        inputRate: 3.0,
+        outputRate: 15.0,
+        batchInputRate: 1.5,
+        batchOutputRate: 7.5,
+        supportsBatch: true,
+        share: 0.5,
+      },
+      {
+        name: LORA_MODEL_SLUG.prime54,
+        inputRate: 2.5,
+        outputRate: 15.0,
+        batchInputRate: 1.25,
+        batchOutputRate: 7.5,
+        supportsBatch: true,
+        share: 0.3,
+      },
+      {
+        name: LORA_MODEL_SLUG.primeMini54,
+        inputRate: 0.75,
+        outputRate: 4.5,
+        batchInputRate: 0.38,
+        batchOutputRate: 2.25,
+        supportsBatch: true,
+        share: 0.2,
+      },
     ],
   },
   {
@@ -188,8 +209,22 @@ const FALLBACK_PRODUCTS: ProductConfig[] = [
     dailyShare: 0.1,
     supportsBatch: false,
     models: [
-      { name: LORA_MODEL_SLUG.spark45, inputRate: 1.0, outputRate: 5.0, batchInputRate: 0.5, batchOutputRate: 2.5, supportsBatch: true, share: 0.6 },
-      { name: LORA_MODEL_SLUG.echo15, inputRate: 32.0, outputRate: 64.0, supportsBatch: false, share: 0.4 },
+      {
+        name: LORA_MODEL_SLUG.spark45,
+        inputRate: 1.0,
+        outputRate: 5.0,
+        batchInputRate: 0.5,
+        batchOutputRate: 2.5,
+        supportsBatch: true,
+        share: 0.6,
+      },
+      {
+        name: LORA_MODEL_SLUG.echo15,
+        inputRate: 32.0,
+        outputRate: 64.0,
+        supportsBatch: false,
+        share: 0.4,
+      },
     ],
   },
   {
@@ -197,8 +232,24 @@ const FALLBACK_PRODUCTS: ProductConfig[] = [
     dailyShare: 0.3,
     supportsBatch: true,
     models: [
-      { name: LORA_MODEL_SLUG.mythic46, inputRate: 3.0, outputRate: 15.0, batchInputRate: 1.5, batchOutputRate: 7.5, supportsBatch: true, share: 0.6 },
-      { name: LORA_MODEL_SLUG.primeMini54, inputRate: 0.75, outputRate: 4.5, batchInputRate: 0.36, batchOutputRate: 2.25, supportsBatch: true, share: 0.4 },
+      {
+        name: LORA_MODEL_SLUG.mythic46,
+        inputRate: 3.0,
+        outputRate: 15.0,
+        batchInputRate: 1.5,
+        batchOutputRate: 7.5,
+        supportsBatch: true,
+        share: 0.6,
+      },
+      {
+        name: LORA_MODEL_SLUG.primeMini54,
+        inputRate: 0.75,
+        outputRate: 4.5,
+        batchInputRate: 0.36,
+        batchOutputRate: 2.25,
+        supportsBatch: true,
+        share: 0.4,
+      },
     ],
   },
 ];
@@ -306,9 +357,7 @@ interface RateCardBuildResult {
 export function eventProductKeyFromTokenProductName(
   name: string,
 ): { productKey: string; direction: 'input' | 'output' } | null {
-  const match = name.match(
-    /^(.+?)(?:\s+-\s+|\s+)(Input|Output)\s+Tokens$/i,
-  );
+  const match = name.match(/^(.+?)(?:\s+-\s+|\s+)(Input|Output)\s+Tokens$/i);
   if (!match) return null;
 
   const normalizedProductName = match[1]!.trim().toLowerCase();
@@ -330,8 +379,13 @@ async function pickCustomerContract(
   customerId: string,
   params: MetronomeSeedUsageParams,
 ): Promise<any | null> {
-  const { logLabel, contractId, contractListIndex = 0, useCoveringDateFilter, coveringDate } =
-    params;
+  const {
+    logLabel,
+    contractId,
+    contractListIndex = 0,
+    useCoveringDateFilter,
+    coveringDate,
+  } = params;
 
   const listParams: Record<string, unknown> = {
     customer_id: customerId,
@@ -360,7 +414,10 @@ async function pickCustomerContract(
       return null;
     }
     console.log(`${logLabel} using contract ${hit.id} (matched by contractId)`);
-    return await retrieveFullContract(metronome, customerId, hit.id, logLabel) ?? hit;
+    return (
+      (await retrieveFullContract(metronome, customerId, hit.id, logLabel)) ??
+      hit
+    );
   }
 
   const idx = Math.min(Math.max(0, contractListIndex), data.length - 1);
@@ -368,7 +425,10 @@ async function pickCustomerContract(
   console.log(
     `${logLabel} using contract ${chosen?.id ?? '?'} (list index ${idx} of ${data.length})`,
   );
-  return await retrieveFullContract(metronome, customerId, chosen.id, logLabel) ?? chosen;
+  return (
+    (await retrieveFullContract(metronome, customerId, chosen.id, logLabel)) ??
+    chosen
+  );
 }
 
 async function retrieveFullContract(
@@ -385,7 +445,10 @@ async function retrieveFullContract(
     } as any);
     return (res as any).data ?? res;
   } catch (err) {
-    console.warn(`${logLabel} failed to retrieve full contract ${contractId}, using list data:`, err);
+    console.warn(
+      `${logLabel} failed to retrieve full contract ${contractId}, using list data:`,
+      err,
+    );
     return null;
   }
 }
@@ -399,14 +462,18 @@ async function buildProductsFromContractRateCard(
     let rateCardId: string | undefined = contract.rate_card_id;
 
     if (!rateCardId && contract.package_id) {
-      const pkg = await metronome.v1.packages.retrieve({ package_id: contract.package_id });
+      const pkg = await metronome.v1.packages.retrieve({
+        package_id: contract.package_id,
+      });
       rateCardId = (pkg.data as any).rate_card_id;
     }
 
     if (!rateCardId) return { products: null, currency: null };
 
     const [rateCardRes, rates] = await Promise.all([
-      metronome.v1.contracts.rateCards.retrieve({ id: rateCardId }).catch(() => null),
+      metronome.v1.contracts.rateCards
+        .retrieve({ id: rateCardId })
+        .catch(() => null),
       (async () => {
         const acc: any[] = [];
         for await (const rate of metronome.v1.contracts.rateCards.rates.list({
@@ -445,7 +512,8 @@ async function buildProductsFromContractRateCard(
 
     for (const rate of rates) {
       const name: string = (rate as any).product_name ?? '';
-      const pgv: Record<string, string> = (rate as any).pricing_group_values ?? {};
+      const pgv: Record<string, string> =
+        (rate as any).pricing_group_values ?? {};
       const modelName: string = pgv.model ?? '';
       const tierRaw = String(pgv.processing_tier ?? 'standard').toLowerCase();
 
@@ -500,39 +568,49 @@ async function buildProductsFromContractRateCard(
       const modelNames = Array.from(modelMap.keys());
       const evenModelShare = 1 / modelNames.length;
 
-      const fallbackProduct = FALLBACK_PRODUCTS.find((p) => p.name === productKey);
+      const fallbackProduct = FALLBACK_PRODUCTS.find(
+        (p) => p.name === productKey,
+      );
       const supportsBatchFromCard = productHasBatchTokenRates.has(productKey);
 
       return {
         name: productKey,
         eventProductName: fallbackProduct?.eventProductName,
         dailyShare: fallbackProduct?.dailyShare ?? evenProductShare,
-        supportsBatch: supportsBatchFromCard || (fallbackProduct?.supportsBatch ?? false),
+        supportsBatch:
+          supportsBatchFromCard || (fallbackProduct?.supportsBatch ?? false),
         models: modelNames.map((modelName) => {
           const acc = modelMap.get(modelName)!;
           const inR = acc.inputRate > 0 ? acc.inputRate : acc.batchInputRate;
-          const outR = acc.outputRate > 0 ? acc.outputRate : acc.batchOutputRate;
+          const outR =
+            acc.outputRate > 0 ? acc.outputRate : acc.batchOutputRate;
           const bin = acc.batchInputRate > 0 ? acc.batchInputRate : inR;
           const bout = acc.batchOutputRate > 0 ? acc.batchOutputRate : outR;
-          const fallbackModel = fallbackProduct?.models.find((m) => m.name === modelName);
+          const fallbackModel = fallbackProduct?.models.find(
+            (m) => m.name === modelName,
+          );
           return {
             name: modelName,
             inputRate: inR,
             outputRate: outR,
             batchInputRate: bin,
             batchOutputRate: bout,
-            supportsBatch:
-              acc.batchInputRate > 0 && acc.batchOutputRate > 0,
+            supportsBatch: acc.batchInputRate > 0 && acc.batchOutputRate > 0,
             share: fallbackModel?.share ?? evenModelShare,
           };
         }),
       };
     });
 
-    console.log(`${logLabel} resolved ${products.length} products from rate card ${rateCardId}`);
+    console.log(
+      `${logLabel} resolved ${products.length} products from rate card ${rateCardId}`,
+    );
     return { products, currency };
   } catch (err) {
-    console.warn(`${logLabel} failed to fetch rate card, falling back to hardcoded products:`, err);
+    console.warn(
+      `${logLabel} failed to fetch rate card, falling back to hardcoded products:`,
+      err,
+    );
     return { products: null, currency: null };
   }
 }
@@ -567,10 +645,18 @@ function getDailyTargets(
     const isSpike = spikeDays.has(i);
     if (story === 'at-risk') {
       const base = 3 + Math.random() * 2;
-      raw.push(isSpike ? base + 7 + Math.random() * 8 : base + (Math.random() - 0.5) * 1.5);
+      raw.push(
+        isSpike
+          ? base + 7 + Math.random() * 8
+          : base + (Math.random() - 0.5) * 1.5,
+      );
     } else {
       const base = 1.5 + Math.random() * 1;
-      raw.push(isSpike ? base + 3.5 + Math.random() * 3 : base + (Math.random() - 0.5) * 0.8);
+      raw.push(
+        isSpike
+          ? base + 3.5 + Math.random() * 3
+          : base + (Math.random() - 0.5) * 0.8,
+      );
     }
   }
 
@@ -626,13 +712,22 @@ function compactSeedTransactionId(args: {
       ? `${args.userSlug.replace(/[^a-z0-9]/gi, '').slice(0, 6)}-`
       : '';
   const tierC =
-    args.tier === 'batch' ? 'b' : args.tier === 'standard' ? 's' : (args.tier[0] ?? 'x');
+    args.tier === 'batch'
+      ? 'b'
+      : args.tier === 'standard'
+        ? 's'
+        : (args.tier[0] ?? 'x');
   const j = args.multiProject ? `J${args.projectIndex}` : '';
-  const nonce = ((djb2Hash(`${args.runId}\0${args.seq}\0${args.kind}`) >>> 0) % 1_000_000_000)
+  const nonce = (
+    (djb2Hash(`${args.runId}\0${args.seq}\0${args.kind}`) >>> 0) %
+    1_000_000_000
+  )
     .toString(36)
     .slice(0, 7);
   const id = `${pfx}-${cust}-${u}${day}-P${args.productIndex}M${args.modelIndex}${tierC}${j}-${args.kind}-${args.seq}-${nonce}`;
-  return id.length > METRONOME_TX_ID_MAX ? id.slice(0, METRONOME_TX_ID_MAX) : id;
+  return id.length > METRONOME_TX_ID_MAX
+    ? id.slice(0, METRONOME_TX_ID_MAX)
+    : id;
 }
 
 export async function seedMetronomeUsage(
@@ -659,7 +754,8 @@ export async function seedMetronomeUsage(
   } = params;
 
   const usageUserIdsResolved =
-    usageUserIds?.length && usageUserIds.every((s) => typeof s === 'string' && s.length > 0)
+    usageUserIds?.length &&
+    usageUserIds.every((s) => typeof s === 'string' && s.length > 0)
       ? usageUserIds
       : undefined;
   if (
@@ -680,7 +776,9 @@ export async function seedMetronomeUsage(
 
   if (contract) {
     usedContractId = contract.id ?? null;
-    contractStart = contract.starting_at ? new Date(contract.starting_at) : null;
+    contractStart = contract.starting_at
+      ? new Date(contract.starting_at)
+      : null;
     commitmentCents = metronomeContractPoolCapCents({
       commits: contract.commits,
       credits: contract.credits,
@@ -716,10 +814,9 @@ export async function seedMetronomeUsage(
   const periodStart =
     effectiveContractStart > maxLookback ? effectiveContractStart : maxLookback;
   const seedStartDay = startOfUtcDay(periodStart);
-  const lastSeededDay = startOfUtcDay(
-    addDays(now, -trailingUnseededDays),
-  );
-  const seedEndDay = lastSeededDay < seedStartDay ? seedStartDay : lastSeededDay;
+  const lastSeededDay = startOfUtcDay(addDays(now, -trailingUnseededDays));
+  const seedEndDay =
+    lastSeededDay < seedStartDay ? seedStartDay : lastSeededDay;
   const daysToSeed = Math.max(
     1,
     differenceInCalendarDays(seedEndDay, seedStartDay) + 1,
@@ -739,23 +836,27 @@ export async function seedMetronomeUsage(
       : commitmentDollars;
   const profileSpendCap =
     persona === 'pro'
-      ? preparedProConsumptionFraction(story)
+      ? preparedProConsumptionFraction(
+          story,
+          seedRunKey ?? usedContractId ?? customerId,
+        )
       : persona === 'quickstart'
         ? quickstartConsumptionFraction({
             story,
             startingAt: contract?.starting_at,
             endingBefore: contract?.ending_before,
             now,
+            variationKey: seedRunKey ?? usedContractId ?? customerId,
           })
         : undefined;
   const spendCap =
-    commitmentSpendCapFractionRaw != null && Number.isFinite(commitmentSpendCapFractionRaw)
+    commitmentSpendCapFractionRaw != null &&
+    Number.isFinite(commitmentSpendCapFractionRaw)
       ? Math.min(0.95, Math.max(0.05, commitmentSpendCapFractionRaw))
-      : profileSpendCap ?? DEFAULT_COMMITMENT_SPEND_CAP_FRACTION;
-  const storyScale =
-    persona
-      ? 1
-      : story === 'at-risk'
+      : (profileSpendCap ?? DEFAULT_COMMITMENT_SPEND_CAP_FRACTION);
+  const storyScale = persona
+    ? 1
+    : story === 'at-risk'
       ? storyMultipliers.atRisk / Math.max(storyMultipliers.healthy, 1e-6)
       : 1;
 
@@ -794,7 +895,8 @@ export async function seedMetronomeUsage(
     // targets the full recurring credit and incorrectly exhausts the plan.
     const perSeatLimitDollars = extractPerSeatLimitDollars(contract, logLabel);
     if (perSeatLimitDollars > 0) {
-      targetTotal = perSeatLimitDollars * usageUserIdsResolved.length * storyScale;
+      targetTotal =
+        perSeatLimitDollars * usageUserIdsResolved.length * storyScale;
       console.log(
         `${logLabel} per-seat limit: $${perSeatLimitDollars}, numSeats: ${usageUserIdsResolved.length}, targetTotal: $${targetTotal.toFixed(2)} (seat-based, storyScale ${storyScale.toFixed(2)}×)`,
       );
@@ -840,14 +942,14 @@ export async function seedMetronomeUsage(
       : null;
   const perUserWeights =
     usageUserIdsResolved && usageUserIdsResolved.length > 0
-      ? explicitUserWeights ??
-        perUserSpendWeights(customerId, usageUserIdsResolved)
+      ? (explicitUserWeights ??
+        perUserSpendWeights(customerId, usageUserIdsResolved))
       : null;
 
   const perUserTailWeights =
     usageUserIdsResolved && usageUserIdsResolved.length > 1
-      ? explicitUserWeights ??
-        perUserTailMonthSpendWeights(customerId, usageUserIdsResolved)
+      ? (explicitUserWeights ??
+        perUserTailMonthSpendWeights(customerId, usageUserIdsResolved))
       : null;
 
   const tailMonthKey = format(seedEndDay, 'yyyy-MM');
@@ -892,17 +994,12 @@ export async function seedMetronomeUsage(
   const coverageProductSchedule = products.flatMap((product, productIndex) =>
     Array.from(
       {
-        length: Math.max(
-          product.models.length,
-          product.supportsBatch ? 2 : 1,
-        ),
+        length: Math.max(product.models.length, product.supportsBatch ? 2 : 1),
       },
       () => productIndex,
     ),
   );
-  const productOccurrences = seatSpendSlices.map(() =>
-    products.map(() => 0),
-  );
+  const productOccurrences = seatSpendSlices.map(() => products.map(() => 0));
 
   for (let dayIdx = 0; dayIdx < daysToSeed; dayIdx++) {
     const day = addDays(seedStartDay, dayIdx);
@@ -1007,10 +1104,18 @@ export async function seedMetronomeUsage(
 
   if (events.length > 0) {
     console.log(`${logLabel} total events to ingest: ${events.length}`);
-    console.log(`${logLabel} sample event:`, JSON.stringify(events[0], null, 2));
-    const voiceSample = events.find((e) => e.properties.api_product === 'realtime_voice');
+    console.log(
+      `${logLabel} sample event:`,
+      JSON.stringify(events[0], null, 2),
+    );
+    const voiceSample = events.find(
+      (e) => e.properties.api_product === 'realtime_voice',
+    );
     if (voiceSample) {
-      console.log(`${logLabel} sample voice event:`, JSON.stringify(voiceSample, null, 2));
+      console.log(
+        `${logLabel} sample voice event:`,
+        JSON.stringify(voiceSample, null, 2),
+      );
     } else {
       console.log(`${logLabel} no voice events found`);
     }
@@ -1027,13 +1132,16 @@ export async function seedMetronomeUsage(
   }
 
   const estimatedSpend = dailyTargets.reduce((s, d) => s + d, 0);
-  const models = [...new Set(products.flatMap((p) => p.models.map((m) => m.name)))];
+  const models = [
+    ...new Set(products.flatMap((p) => p.models.map((m) => m.name))),
+  ];
 
   const userSuffix = usageUserIdsResolved?.length
     ? ` (per-seat user_id: ${usageUserIdsResolved.join(', ')}; tail month ${tailMonthKey} uses skewed shares)`
     : '';
 
-  const currencySymbol = resolvedCurrency === 'gbp' ? '£' : resolvedCurrency === 'eur' ? '€' : '$';
+  const currencySymbol =
+    resolvedCurrency === 'gbp' ? '£' : resolvedCurrency === 'eur' ? '€' : '$';
   const baseMessage =
     projectSlices.length > 1
       ? `Seeded ${daysToSeed} days of ${story} usage (multi-project) across ${products.length} products for customer ${customerId}. Projects: ${projectSlices.map((p) => p.projectId).join(', ')}. Estimated spend: ${currencySymbol}${estimatedSpend.toFixed(2)} ${resolvedCurrency.toUpperCase()}${userSuffix}.`
@@ -1052,6 +1160,8 @@ export async function seedMetronomeUsage(
     usedRateCardSource,
     message: baseMessage,
     projectIds:
-      projectSlices.length > 1 ? projectSlices.map((p) => p.projectId) : undefined,
+      projectSlices.length > 1
+        ? projectSlices.map((p) => p.projectId)
+        : undefined,
   };
 }

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import initializeStripe from '@/utils/stripe';
 import { deleteStripeCustomers, listStripeCustomers } from '@/utils/demoCleanup';
 import { ndjsonStreamResponse } from '@/utils/ndjsonStream';
-import { DEMO_MODES, normalizeDemoMode } from '@/config/demoModes';
+import { normalizeDemoMode } from '@/config/demoModes';
+import { hasDemoCustomerNamePrefix } from '@/utils/demoCustomerName';
 
 // Step 2 of the /admin/cleanup-environment wizard: list and delete Stripe
 // customers. DELETE is irreversible — the client must gate this behind an
@@ -23,12 +24,14 @@ export async function GET(request: NextRequest) {
     rawMode === 'all'
       ? [
           "name~'Lora Generate'",
+          "name~'Generate -'",
           "name~'AI Builder'",
           "metadata['starter_namespace']:'metronome-starter'",
         ]
       : normalizedMode === 'generation'
         ? [
             "name~'Lora Generate'",
+            "name~'Generate -'",
             "metadata['starter_namespace']:'metronome-starter'",
           ]
         : normalizedMode === 'ai-builder'
@@ -39,12 +42,10 @@ export async function GET(request: NextRequest) {
     ? customers.filter((customer) =>
         rawMode === 'all'
           ? customer.metadata.starter_namespace === 'metronome-starter' ||
-            Object.values(DEMO_MODES).some((mode) =>
-              customer.name?.startsWith(`[${mode.label}]`),
+            (['generation', 'ai-builder'] as const).some((mode) =>
+              hasDemoCustomerNamePrefix(customer.name, mode),
             )
-          : customer.name?.startsWith(
-              `[${DEMO_MODES[normalizedMode!].label}]`,
-            ) ||
+          : hasDemoCustomerNamePrefix(customer.name, normalizedMode!) ||
             (normalizedMode === 'generation' &&
               customer.metadata.starter_namespace === 'metronome-starter'),
       )

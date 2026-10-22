@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Elements,
   PaymentElement,
@@ -19,11 +19,12 @@ import { CheckoutProvider } from '@/contexts/CheckoutContext';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import fetchClient from '@/utils/fetchClient';
 import appearance from '@/components/config/Appearance';
-import SubscribeButton from '@/components/checkout/SubscribeButton';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import SuccessBanner from '@/components/ui/SuccessBanner';
 import useElementsHighlight from '@/components/hooks/elementsHighlight';
 import { getStripeLocale } from '@/utils/stripe/localeUtils';
+import { getStripeCustomerIdFromCustomer } from '@/config/metronomeDefaults';
+import { dashboardKeys } from '@/components/dashboard/useDashboardData';
 
 const StripeWrappedSubscribeButton = ({
   onClick,
@@ -32,14 +33,21 @@ const StripeWrappedSubscribeButton = ({
   onClick: (stripe: Stripe | null, elements: StripeElements | null) => void;
   isProcessing: boolean;
 }) => {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
 
   return (
-    <SubscribeButton
+    <button
+      type='button'
       onClick={() => onClick(stripe, elements)}
       disabled={isProcessing || !stripe || !elements}
-    />
+      className='my-2 w-full rounded-md bg-accent px-4 py-2 text-accent-foreground transition duration-300 hover:bg-purple-hover disabled:opacity-50'
+    >
+      {isProcessing
+        ? t('return.please_wait')
+        : t('settings.payment.replace')}
+    </button>
   );
 };
 
@@ -49,7 +57,7 @@ interface PaymentMethodProps {
 
 const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const { customer, settings, updateCustomer } = useConfigContext();
   const [showUpdateElement, setShowUpdateElement] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -57,6 +65,7 @@ const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState('');
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const stripeCustomerId = getStripeCustomerIdFromCustomer(customer);
 
   useElementsHighlight();
 
@@ -78,11 +87,17 @@ const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
       defaultValues: {
         billingDetails: {
           email: customer?.email,
+          name: customer?.name,
         },
       },
       locale: (settings?.language || 'en') as StripeElementLocale,
     }),
-    [settings?.language, customer?.email],
+    [
+      customer?.email,
+      customer?.name,
+      settings?.currency,
+      settings?.language,
+    ],
   );
 
   const handleSubmit = useCallback(
@@ -94,24 +109,25 @@ const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
       setSuccessMessage(null);
 
       try {
+        if (!stripeCustomerId) {
+          throw new Error(t('payments.errors.unexpected_error'));
+        }
         const { error: submitError } = await elements.submit();
         if (submitError) {
           throw new Error(
-            submitError.message ||
-              t('payments.errors.validation_error'),
+            submitError.message || t('payments.errors.validation_error'),
           );
         }
 
         const { data } = await fetchClient.get('/api/stripe/payment-method', {
           params: {
-            mode: settings?.checkoutMethod,
-            customerId: customer?.id,
+            customerId: stripeCustomerId,
             language: settings?.language,
           },
         });
 
         // Always use the tab’s origin — not NEXT_PUBLIC_BASE_URL (often wrong port/host in .env, e.g. :8080).
-        const { error } = await stripe.confirmSetup({
+        const { error, setupIntent } = await stripe.confirmSetup({
           elements,
           clientSecret: data.clientSecret,
           confirmParams: {
@@ -121,9 +137,20 @@ const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
         });
 
         if (error) {
-          throw new Error(error.message || t('payments.errors.unexpected_error'));
+          throw new Error(
+            error.message || t('payments.errors.unexpected_error'),
+          );
         } else {
-          // On success
+          if (setupIntent?.status !== 'succeeded') {
+            throw new Error(t('payments.errors.unexpected_error'));
+          }
+          await fetchClient.post('/api/stripe/payment-method', {
+            customerId: stripeCustomerId,
+            intent: setupIntent.id,
+          });
+          await queryClient.invalidateQueries({
+            queryKey: dashboardKeys.all,
+          });
           setShowUpdateElement(false);
           updateCustomer({ forceSubscriptionRepoll: new Date() });
           setSuccessMessage(t('payments.success.payment_updated'));
@@ -135,9 +162,10 @@ const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
       }
     },
     [
+      queryClient,
       settings?.language,
-      settings?.checkoutMethod,
-      customer?.id,
+      stripeCustomerId,
+      t,
       updateCustomer,
     ],
   );
@@ -158,8 +186,8 @@ const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
           </div>
           <div className='flex-shrink-0'>
             <button
-              onClick={() => setShowUpdateElement(true)}
-              className='inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+              disabled
+              className='inline-flex cursor-not-allowed items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-400 shadow-sm ring-1 ring-inset ring-gray-200'
             >
               {t('settings.payment.add')}
             </button>
@@ -240,8 +268,14 @@ const PaymentMethod = ({ subscription }: PaymentMethodProps) => {
         </div>
         <div className='flex-shrink-0'>
           <button
-            onClick={() => setShowUpdateElement(true)}
-            className='inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+            type='button'
+            onClick={() => {
+              setErrorMessage(null);
+              setSuccessMessage(null);
+              setShowUpdateElement(true);
+            }}
+            disabled={!stripeCustomerId || isProcessing}
+            className='inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400'
           >
             {t('settings.payment.replace')}
           </button>

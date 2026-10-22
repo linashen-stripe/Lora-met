@@ -15,7 +15,7 @@ const CreditsCard = ({
   totalAvailable,
   totalAmount,
   creditBarVariant = 'remaining',
-  /** Minor units are in this currency (e.g. from GET /api/stripe/credit-balance/:id). */
+  /** Minor units are in this currency for fiat-denominated Metronome credits. */
   balanceCurrency,
   creditTypeName,
   autoTopUp,

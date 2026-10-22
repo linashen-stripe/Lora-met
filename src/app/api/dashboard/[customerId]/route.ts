@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DashboardService } from '@/utils/stripe/DashboardService';
 import { buildMetronomeForwardDashboard } from '@/utils/metronomeDashboardFallback';
 import { getStripeCustomerId } from '@/utils/withFallbackHeaders';
-import type { UnifiedDashboardData } from '@/utils/types';
 
 /**
- * Dashboard bundle for this Metronome-first app:
- * - With `mc` (Metronome customer id): returns contract-style snapshot + linked Stripe
- *   **Customer** only (default payment method for invoicing). No Stripe Billing V2
- *   subscriptions, preview invoice, or cadence aggregation.
- * - Without `mc`: legacy Stripe Billing dashboard (demo / tooling only).
+ * Dashboard bundle for this Metronome-first app. Returns a contract-style
+ * snapshot plus the linked Stripe Customer used for payment methods.
  */
 export async function GET(
   req: NextRequest,
@@ -28,45 +23,25 @@ export async function GET(
     const metronomeCustomerId =
       req.nextUrl.searchParams.get('mc')?.trim() ?? null;
 
-    if (metronomeCustomerId) {
-      const stripeCustomerIdForPayment =
-        getStripeCustomerId(req.headers) ||
-        (customerId.startsWith('cus_') ? customerId : null);
-
-      const dashboardData = await buildMetronomeForwardDashboard(
-        req.headers,
-        metronomeCustomerId,
-        stripeCustomerIdForPayment,
-      );
-      return NextResponse.json(dashboardData);
-    }
-
-    const dashboardService = new DashboardService(req.headers);
-
-    const stripeCustomerIdForBilling =
-      getStripeCustomerId(req.headers) ||
-      (customerId.startsWith('cus_') ? customerId : null);
-
-    if (!stripeCustomerIdForBilling) {
+    if (!metronomeCustomerId) {
       return NextResponse.json(
         {
           error: 'Failed to fetch dashboard data.',
-          details:
-            'Without query parameter `mc`, a Stripe customer id is required: set `demo-stripe-customer` to your `cus_…` id or use a `cus_…` path segment.',
+          details: 'A Metronome customer id is required in query parameter `mc`.',
         },
         { status: 400 },
       );
     }
 
-    const includeUsageData =
-      req.nextUrl.searchParams.get('includeUsage') === 'true';
+    const stripeCustomerIdForPayment =
+      getStripeCustomerId(req.headers) ||
+      (customerId.startsWith('cus_') ? customerId : null);
 
-    const dashboardData: UnifiedDashboardData =
-      await dashboardService.getUnifiedDashboardData(
-        stripeCustomerIdForBilling,
-        includeUsageData,
-      );
-
+    const dashboardData = await buildMetronomeForwardDashboard(
+      req.headers,
+      metronomeCustomerId,
+      stripeCustomerIdForPayment,
+    );
     return NextResponse.json(dashboardData);
   } catch (err) {
     const error = err as Error;

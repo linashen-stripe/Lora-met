@@ -11,10 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useApiInspector } from '@/contexts/ApiInspectorContext';
 import { useConfigContext } from '@/contexts/ConfigContext';
-import type {
-  ApiTraceEntry,
-  ApiTraceSource,
-} from '@/utils/apiInspector';
+import type { ApiTraceEntry, ApiTraceSource } from '@/utils/apiInspector';
 import { useTranslation } from 'react-i18next';
 
 function formatJson(value: unknown): string {
@@ -41,18 +38,12 @@ function statusStyles(entry: ApiTraceEntry): string {
 export default function ApiInspectorPanel() {
   const { t } = useTranslation();
   const { settings } = useConfigContext();
-  const {
-    entries,
-    isOpen,
-    isPaused,
-    setIsOpen,
-    setIsPaused,
-    clear,
-  } = useApiInspector();
+  const { entries, isOpen, isPaused, setIsOpen, setIsPaused, clear } =
+    useApiInspector();
   const [search, setSearch] = useState('');
-  const [source, setSource] = useState<
-    'upstream' | 'all' | ApiTraceSource
-  >('upstream');
+  const [source, setSource] = useState<'upstream' | 'all' | ApiTraceSource>(
+    'upstream',
+  );
   const [method, setMethod] = useState('all');
   const [outcome, setOutcome] = useState('all');
   const [selected, setSelected] = useState<ApiTraceEntry | null>(null);
@@ -70,8 +61,7 @@ export default function ApiInspectorPanel() {
   }, [isOpen, setIsOpen]);
 
   const methods = useMemo(
-    () =>
-      Array.from(new Set(entries.map((entry) => entry.method))).sort(),
+    () => Array.from(new Set(entries.map((entry) => entry.method))).sort(),
     [entries],
   );
   const entriesById = useMemo(
@@ -115,7 +105,7 @@ export default function ApiInspectorPanel() {
       )}
       <aside
         aria-labelledby='api-inspector-title'
-        className={`fixed right-0 top-0 z-[60] flex h-full w-full max-w-[32rem] transform flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 ${
+        className={`fixed right-0 top-0 z-[60] flex h-full w-full transform flex-col border-l border-gray-200 bg-white shadow-2xl transition-transform duration-300 md:w-96 xl:w-[32rem] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -180,10 +170,7 @@ export default function ApiInspectorPanel() {
               value={source}
               onChange={(event) =>
                 setSource(
-                  event.target.value as
-                    | 'upstream'
-                    | 'all'
-                    | ApiTraceSource,
+                  event.target.value as 'upstream' | 'all' | ApiTraceSource,
                 )
               }
               aria-label='Filter by service'
@@ -320,7 +307,7 @@ export default function ApiInspectorPanel() {
         type='button'
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isOpen ? 'Close API inspector' : 'Open API inspector'}
-        className='fixed bottom-16 right-0 z-50 rounded-l-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-gray-700'
+        className='fixed right-0 top-1/2 z-[70] -translate-y-1/2 rounded-l-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-gray-700'
       >
         {isOpen ? 'Close API' : 'API'}
         {entries.length > 0 && !isOpen ? ` ${entries.length}` : ''}

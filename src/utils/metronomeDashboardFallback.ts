@@ -3,9 +3,9 @@ import type { UnifiedDashboardData } from '@/utils/types';
 import initializeStripe from '@/utils/stripe';
 
 /**
- * Minimal unified dashboard payload when billing/UBB lives in Metronome and there is
- * no Stripe Billing V2 pricing plan subscription. Stripe is only used here to attach
- * the linked `cus_…` customer (default payment method) for {@link PaymentMethod}.
+ * Minimal unified dashboard payload for Metronome-managed billing. Stripe is
+ * only used here to attach the linked `cus_…` customer (default payment method)
+ * for {@link PaymentMethod}.
  */
 export function metronomeHybridDashboardPlaceholder(
   _metronomeCustomerId: string,
@@ -17,14 +17,6 @@ export function metronomeHybridDashboardPlaceholder(
       currency: 'usd',
     },
     billingCadence: {} as UnifiedDashboardData['billingCadence'],
-    pricingPlan: {
-      id: '',
-      display_name: 'Metronome',
-      currency: 'usd',
-      live_version: '',
-      lookup_key: 'metronome_contract',
-      components: { license_fee: { id: '_', unit_price: 0 } },
-    },
     meteredItems: [],
     meters: [],
     invoices: [],

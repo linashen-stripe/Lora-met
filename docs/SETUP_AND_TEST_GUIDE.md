@@ -173,11 +173,11 @@ Use a fresh email/customer.
 5. Confirm `100 → 50 → 0` immediately without a stale restoration.
 6. Confirm the Generation Pro upgrade prompt appears.
 7. Complete setup Checkout and upgrade.
-8. Confirm `Generate Pro`, `$20/month`, and 1,000 monthly Generation Credits.
+8. Confirm `Generate Pro`, `$20/month`, and 2,000 monthly Generation Credits.
 9. Run one Standard and one Priority job.
 10. Confirm `service_tier`, model, quality, operation, workspace, project, and
     user dimensions in usage.
-11. Confirm Free usage did not reduce the new 1,000-credit Pro pool.
+11. Confirm Free usage did not reduce the new 2,000-credit Pro pool.
 12. Confirm the upcoming invoice separates USD subscription charges from
     Generation Credit usage/adjustments.
 
@@ -207,6 +207,26 @@ Failure signals:
 5. Confirm the resulting Stripe-assisted top-up uses invoice payment when
    Stripe is connected.
 
+### Checkout credit purchase
+
+1. Confirm the Stripe test account is enrolled in
+   `metronome_checkout_preview` and has an applicable Stripe Tax registration.
+2. In the Tools panel, select **Form** and **Compact (multi-step)**, then open
+   **Checkout purchase** beside the existing **Purchase credits** invoice
+   action. Verify preset and custom amounts render before the payment step.
+3. Close Checkout, select **Expanded (single page)**, reopen it, and verify the
+   credit options and payment controls render together.
+4. Complete a card payment with a full billing address. Confirm tax is shown
+   when the address falls under the active registration.
+5. Confirm the app remains in its processing state until a new Metronome commit
+   appears, with an hour-aligned start and an end 90 days later.
+6. Confirm AI Builder records fiat minor units without `credit_type_id`, while
+   Generation records native Generation Credits with its custom credit type.
+7. Select **Hosted page**, repeat the purchase, and confirm Checkout returns to
+   Usage and refreshes only after the Metronome commit is visible. Confirm
+   **Elements** and **Embedded page** are selectable, show the fallback note,
+   and open the Form flow.
+
 Also load a legacy Generation contract using `USD (cents)` if one remains. Its
 purchase/top-up controls must use fiat semantics, not Generation Credit
 semantics.
@@ -217,7 +237,7 @@ semantics.
 
 - Twelve-month term from contract start.
 - `$1,000` prepaid invoice.
-- 100,000 Generation Credits.
+- 110,000 Generation Credits, including the 10% prepaid bonus.
 - No subscription and no transition from Free.
 - Seeded usage is large enough to produce a representative burndown.
 

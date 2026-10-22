@@ -5,7 +5,6 @@ import MetronomeNextPaymentCard from '@/components/dashboard/cards/metronome-nex
 import PreviewInvoice from '@/components/dashboard/PreviewInvoice';
 import MetronomePreviewInvoice from '@/components/dashboard/MetronomePreviewInvoice';
 import InvoiceList from '@/components/dashboard/InvoiceList';
-import Cancel from '@/components/dashboard/Cancel';
 import PaymentMethod from '@/components/settings/cards/PaymentMethod';
 import useDashboardData from '@/components/dashboard/useDashboardData';
 import { Card } from '@/components/ui/card';
@@ -107,7 +106,11 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
 
     setNetBalanceLoaded(false);
     fetchNetBalance();
-    const interval = setInterval(fetchNetBalance, 60_000);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchNetBalance();
+      }
+    }, 5 * 60_000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -142,7 +145,7 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
       // Keep invoice-derived balances inside the active contract boundary.
       // During Free → Pro, the finalized/open Free usage draft may still be the
       // only draft with usage; selecting it here would incorrectly turn
-      // 1,000 Pro credits into 900 even though Metronome attributed it to Free.
+      // 2,000 Pro credits into 1,900 even though Metronome attributed it to Free.
       const spend = pickMetronomeSpendInvoice(
         invoices,
         draftList,
@@ -166,10 +169,13 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
       })
       .finally(() => setInvoicesLoading(false));
 
-    const interval = setInterval(
-      () => fetchInvoices().catch((err) => console.error('Failed to fetch Metronome invoices:', err)),
-      60_000,
-    );
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchInvoices().catch((err) =>
+          console.error('Failed to fetch Metronome invoices:', err),
+        );
+      }
+    }, 5 * 60_000);
     return () => clearInterval(interval);
   }, [
     customer?.id,
@@ -382,7 +388,6 @@ const Billing = ({ creditsAnimationFrom }: { creditsAnimationFrom?: number }) =>
           isLoading={loading}
         />
       )}
-      <Cancel />
     </div>
   );
 };

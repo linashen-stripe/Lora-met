@@ -31,7 +31,7 @@ const EMAIL_PATTERN = /\b([A-Z0-9._%+-]{1,64})@([A-Z0-9.-]+\.[A-Z]{2,})\b/gi;
 const MAX_STRING_LENGTH = 2_000;
 const MAX_ARRAY_LENGTH = 50;
 const MAX_OBJECT_KEYS = 75;
-const MAX_DEPTH = 7;
+const MAX_DEPTH = 12;
 
 function maskEmails(value: string): string {
   return value.replace(EMAIL_PATTERN, (_match, local: string, domain: string) => {

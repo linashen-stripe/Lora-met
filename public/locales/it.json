@@ -605,8 +605,7 @@
     "errors": {
       "general": "Si è verificato un errore. Riprova.",
       "unexpected": "Si è verificato un errore inaspettato. Riprova.",
-      "checkout_session": "Impossibile creare la sessione di checkout incorporata, potresti non aver effettuato l'accesso.",
-      "legacy_api": "L'API di abbonamento legacy non è più disponibile. Utilizza gli abbonamenti ai piani tariffari."
+      "checkout_session": "Impossibile creare la sessione di checkout incorporata, potresti non aver effettuato l'accesso."
     }
   },
   "simulations": {
@@ -888,7 +887,7 @@
       "project_storage": {
         "title": "Utilizzo per progetto",
         "used": "Usato",
-        "capacity": "Impegno",
+        "capacity": "Crediti attivi totali",
         "available": "Disponibile",
         "no_metrics": "Nessuna metrica fatturabile trovata.",
         "no_project_dimension": "Questa metrica non ha raggruppamento project_id — usa il seed multi-progetto o configura le chiavi in Metronome.",
@@ -957,21 +956,32 @@
     },
     "usage_pacing": {
       "title": "Andamento utilizzo",
-      "description": "Utilizzo fatturabile da inizio mese rispetto al tuo impegno mensile.",
+      "description": "Utilizzo fatturabile del periodo rispetto al tuo impegno mensile.",
+      "description_b2b": "Utilizzo del periodo rispetto ai crediti mensili per postazione, con l'impegno condiviso mostrato separatamente.",
+      "description_commit": "Utilizzo e proiezione del periodo rispetto all'impegno contrattuale prepagato.",
       "all_products": "Tutti i prodotti",
       "all_models": "Tutti i modelli",
       "all_qualities": "Tutte le qualità",
       "all_tiers": "Tutti i livelli",
-      "month_to_date": "Da inizio mese",
+      "month_to_date": "Periodo di fatturazione a oggi",
+      "pct_of_budget": "{{pct}}% di {{label}}",
+      "monthly_seat_credits": "Crediti mensili per postazione",
+      "prepaid_commitment": "Impegno contrattuale prepagato",
+      "monthly_credit_balance": "Saldo crediti mensile",
+      "available_this_period": "disponibile per questo periodo",
+      "prepaid_contract_term": "prepagato per la durata del contratto",
       "pct_of_monthly": "{{pct}}% dell'{{label}} mensile",
       "monthly_label": "{{label}} mensile",
       "prepaid_period": "prepagato per questo periodo",
-      "projected_month_end": "Proiezione fine mese",
+      "projected_month_end": "Proiezione fine periodo",
       "within_prepaid": "Entro l'importo prepagato",
+      "uses_shared_commitment": "Previsto utilizzo dell'impegno condiviso",
       "above_prepaid": "Sopra il prepagato — si applica l'eccedenza",
-      "commitment_cap": "{{label}} mensile (limite): {{amount}}",
-      "series_spend": "Da inizio mese (cumulativo)",
-      "series_projected": "Proiezione fine mese (tendenza)",
+      "commitment_cap": "{{label}}: {{amount}}",
+      "shared_commitment": "Impegno contrattuale condiviso rimanente",
+      "of_total": "su {{total}} totali",
+      "series_spend": "Periodo di fatturazione a oggi (cumulativo)",
+      "series_projected": "Proiezione fine periodo (tendenza)",
       "commitment": "Impegno",
       "credit_balance": "Saldo crediti",
       "error_load": "Impossibile caricare i dettagli della fattura:"
@@ -1039,9 +1049,18 @@
   "faq": {
     "title": "Domande Frequenti",
     "generation": {
-      "credits": {"question": "How do Generation Credits work?", "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."},
-      "service_tier": {"question": "What changes with Priority service?", "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."},
-      "top_up": {"question": "What happens when credits run low?", "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."}
+      "credits": {
+        "question": "How do Generation Credits work?",
+        "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."
+      },
+      "service_tier": {
+        "question": "What changes with Priority service?",
+        "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."
+      },
+      "top_up": {
+        "question": "What happens when credits run low?",
+        "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."
+      }
     },
     "questions": {
       "credits": {
@@ -1089,8 +1108,21 @@
       "button_not_logged_in": "Inizia a generare gratis",
       "no_credit_card": "Nessuna carta di credito richiesta",
       "build_command": "costruire",
-      "ai_builder": {"main_title": "Build Production Apps with AI", "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.", "button_logged_in": "Open AI Builder", "button_not_logged_in": "Start building for free"},
-      "generation": {"command": "generate", "typewriter": {"text1": "a cinematic product launch video", "text2": "a campaign image set in three visual styles", "text3": "a textured 3D product asset", "text4": "a storyboard with matching video clips"}}
+      "ai_builder": {
+        "main_title": "Build Production Apps with AI",
+        "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.",
+        "button_logged_in": "Open AI Builder",
+        "button_not_logged_in": "Start building for free"
+      },
+      "generation": {
+        "command": "generate",
+        "typewriter": {
+          "text1": "a cinematic product launch video",
+          "text2": "a campaign image set in three visual styles",
+          "text3": "a textured 3D product asset",
+          "text4": "a storyboard with matching video clips"
+        }
+      }
     },
     "aggregated_usage": {
       "title": "Utilizzo Aggregato",
@@ -1140,7 +1172,16 @@
       "processing": "Elaborazione...",
       "purchase_for": "Acquista per {{amount}}",
       "select_amount": "Seleziona un importo",
-      "min_amount": "Min {{amount}}"
+      "min_amount": "Min {{amount}}",
+      "invoice_flow": "Acquisto con fattura",
+      "checkout_flow": "Acquisto con Checkout",
+      "checkout_loading": "Caricamento del Checkout sicuro...",
+      "checkout_waiting_for_commit": "Pagamento ricevuto. In attesa che Metronome crei i crediti...",
+      "checkout_missing_contract": "È richiesto un contratto Metronome attivo.",
+      "checkout_create_failed": "Impossibile avviare l’acquisto di crediti con Checkout.",
+      "checkout_verify_failed": "Impossibile verificare l’acquisto di crediti completato.",
+      "checkout_commit_pending": "Il pagamento è stato completato, ma il commit Metronome è ancora in sospeso. Il saldo verrà aggiornato dopo la creazione.",
+      "checkout_retry": "Riprova"
     }
   },
   "pricing_rates": {

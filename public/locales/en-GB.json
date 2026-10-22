@@ -605,8 +605,7 @@
     "errors": {
       "general": "An error occurred. Please try again.",
       "unexpected": "An unexpected error occurred. Please try again.",
-      "checkout_session": "Could not create embedded checkout session, you may not be signed in.",
-      "legacy_api": "Legacy subscription API is no longer available. Please use pricing plan subscriptions."
+      "checkout_session": "Could not create embedded checkout session, you may not be signed in."
     }
   },
   "simulations": {
@@ -888,7 +887,7 @@
       "project_storage": {
         "title": "Usage by project",
         "used": "Used",
-        "capacity": "Commitment",
+        "capacity": "Total active credits",
         "available": "Available",
         "no_metrics": "No billable metrics found.",
         "no_project_dimension": "This meter has no project_id grouping — use multi-project seeding or configure group keys in Metronome.",
@@ -957,21 +956,32 @@
     },
     "usage_pacing": {
       "title": "Usage Pacing",
-      "description": "Month-to-date billable usage vs. your monthly commitment.",
+      "description": "Billing-period usage vs. your monthly commitment.",
+      "description_b2b": "Billing-period usage against monthly seat credits, with the shared contract commitment shown separately.",
+      "description_commit": "Billing-period usage and projection against your prepaid contract commitment.",
       "all_products": "All products",
       "all_models": "All models",
       "all_qualities": "All qualities",
       "all_tiers": "All tiers",
-      "month_to_date": "Month-to-date",
+      "month_to_date": "Billing period-to-date",
+      "pct_of_budget": "{{pct}}% of {{label}}",
+      "monthly_seat_credits": "Monthly seat credits",
+      "prepaid_commitment": "Prepaid contract commitment",
+      "monthly_credit_balance": "Monthly credit balance",
+      "available_this_period": "available for this period",
+      "prepaid_contract_term": "prepaid for the contract term",
       "pct_of_monthly": "{{pct}}% of monthly {{label}}",
       "monthly_label": "Monthly {{label}}",
       "prepaid_period": "prepaid for this period",
-      "projected_month_end": "Projected month-end",
+      "projected_month_end": "Projected period-end",
       "within_prepaid": "Within prepaid amount",
+      "uses_shared_commitment": "Projected to use shared commitment",
       "above_prepaid": "Above prepaid — overage applies",
-      "commitment_cap": "Monthly {{label}} (cap): {{amount}}",
-      "series_spend": "Month-to-date (cumulative)",
-      "series_projected": "Projected month-end (trend)",
+      "commitment_cap": "{{label}}: {{amount}}",
+      "shared_commitment": "Shared contract commitment remaining",
+      "of_total": "of {{total}} total",
+      "series_spend": "Billing period-to-date (cumulative)",
+      "series_projected": "Projected period-end (trend)",
       "commitment": "Commitment",
       "credit_balance": "Credit balance",
       "error_load": "Could not load invoice breakdowns:"
@@ -1098,8 +1108,21 @@
       "button_not_logged_in": "Start generating for free",
       "no_credit_card": "No credit card required",
       "build_command": "build",
-      "ai_builder": {"main_title": "Build Production Apps with AI", "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.", "button_logged_in": "Open AI Builder", "button_not_logged_in": "Start building for free"},
-      "generation": {"command": "generate", "typewriter": {"text1": "a cinematic product launch video", "text2": "a campaign image set in three visual styles", "text3": "a textured 3D product asset", "text4": "a storyboard with matching video clips"}}
+      "ai_builder": {
+        "main_title": "Build Production Apps with AI",
+        "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.",
+        "button_logged_in": "Open AI Builder",
+        "button_not_logged_in": "Start building for free"
+      },
+      "generation": {
+        "command": "generate",
+        "typewriter": {
+          "text1": "a cinematic product launch video",
+          "text2": "a campaign image set in three visual styles",
+          "text3": "a textured 3D product asset",
+          "text4": "a storyboard with matching video clips"
+        }
+      }
     },
     "aggregated_usage": {
       "title": "Aggregated Usage",
@@ -1149,7 +1172,16 @@
       "processing": "Processing...",
       "purchase_for": "Purchase for {{amount}}",
       "select_amount": "Select an amount",
-      "min_amount": "Min {{amount}}"
+      "min_amount": "Min {{amount}}",
+      "invoice_flow": "Invoice purchase",
+      "checkout_flow": "Checkout purchase",
+      "checkout_loading": "Loading secure Checkout...",
+      "checkout_waiting_for_commit": "Payment received. Waiting for Metronome to create your credits...",
+      "checkout_missing_contract": "An active Metronome contract is required.",
+      "checkout_create_failed": "Could not start the Checkout credit purchase.",
+      "checkout_verify_failed": "Could not verify the completed credit purchase.",
+      "checkout_commit_pending": "Payment completed, but the Metronome commit is still pending. Your balance will update after commit creation.",
+      "checkout_retry": "Retry"
     }
   },
   "pricing_rates": {

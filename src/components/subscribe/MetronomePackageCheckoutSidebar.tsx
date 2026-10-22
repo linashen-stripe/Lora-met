@@ -56,7 +56,9 @@ export default function MetronomePackageCheckoutSidebar({
 
   function translatePackageName(name: string | undefined): string {
     const key = PACKAGE_NAME_TO_I18N_KEY[(name ?? '').trim().toLowerCase()];
-    return key ? t(key) : (name?.trim() || t('subscribe_metronome_package.unknown_name'));
+    return key
+      ? t(key)
+      : name?.trim() || t('subscribe_metronome_package.unknown_name');
   }
 
   if (isLoading) {
@@ -118,8 +120,8 @@ export default function MetronomePackageCheckoutSidebar({
         ) : null}
       </div>
 
-      <p className='mt-4 text-center font-semibold tabular-nums text-gray-900'>
-        {priceCents !== null ? (
+      {priceCents !== null && (
+        <p className='mt-4 text-center font-semibold tabular-nums text-gray-900'>
           <>
             {formatPrice(priceCents, language, currency)}
             {priceCents > 0 ? (
@@ -131,17 +133,8 @@ export default function MetronomePackageCheckoutSidebar({
               {t('subscribe_metronome_package.applicable_taxes')}
             </span>
           </>
-        ) : (
-          <>
-            <span className='font-medium text-gray-600'>
-              {t('subscribe_metronome_package.custom_pricing')}
-            </span>
-            <span className='ml-1 text-sm font-normal text-gray-500'>
-              {t('subscribe_metronome_package.applicable_taxes')}
-            </span>
-          </>
-        )}
-      </p>
+        </p>
+      )}
 
       {prepaidCommit && commitCredits != null && (
         <div className='mt-5 rounded-lg border border-violet-200 bg-violet-50 p-4 text-sm text-violet-950'>

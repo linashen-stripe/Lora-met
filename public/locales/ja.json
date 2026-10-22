@@ -605,8 +605,7 @@
     "errors": {
       "general": "エラーが発生しました。もう一度お試しください。",
       "unexpected": "予期せぬエラーが発生しました。もう一度お試しください。",
-      "checkout_session": "埋め込みチェックアウトセッションを作成できませんでした。サインインしていない可能性があります。",
-      "legacy_api": "レガシーサブスクリプションAPIは利用できなくなりました。料金プランのサブスクリプションを使用してください。"
+      "checkout_session": "埋め込みチェックアウトセッションを作成できませんでした。サインインしていない可能性があります。"
     }
   },
   "simulations": {
@@ -888,7 +887,7 @@
       "project_storage": {
         "title": "プロジェクト別使用量",
         "used": "使用済み",
-        "capacity": "コミット",
+        "capacity": "有効クレジット合計",
         "available": "残り",
         "no_metrics": "課金可能なメトリクスが見つかりません。",
         "no_project_dimension": "このメトリクスは project_id グループ化がありません。多プロジェクトのシードを使うか Metronome でグループキーを設定してください。",
@@ -957,21 +956,32 @@
     },
     "usage_pacing": {
       "title": "使用ペース",
-      "description": "月初からの請求可能な使用量と月間コミットメントの比較。",
+      "description": "請求期間内の使用量と月間コミットメントの比較。",
+      "description_b2b": "請求期間内の使用量を月間シートクレジットと比較し、共有契約コミットメントは別に表示します。",
+      "description_commit": "請求期間内の使用量と予測を前払い契約コミットメントと比較します。",
       "all_products": "すべての製品",
       "all_models": "すべてのモデル",
       "all_qualities": "すべての品質",
       "all_tiers": "すべてのティア",
-      "month_to_date": "月初から現在",
+      "month_to_date": "請求期間累計",
+      "pct_of_budget": "{{label}}の{{pct}}%",
+      "monthly_seat_credits": "月間シートクレジット",
+      "prepaid_commitment": "前払い契約コミットメント",
+      "monthly_credit_balance": "月間クレジット残高",
+      "available_this_period": "この期間に利用可能",
+      "prepaid_contract_term": "契約期間分を前払い",
       "pct_of_monthly": "月間{{label}}の{{pct}}%",
       "monthly_label": "月間{{label}}",
       "prepaid_period": "この期間の前払い分",
-      "projected_month_end": "月末予測",
+      "projected_month_end": "請求期間終了時予測",
       "within_prepaid": "前払い金額内",
+      "uses_shared_commitment": "共有コミットメントを使用する見込み",
       "above_prepaid": "前払い超過 — 超過料金が発生します",
-      "commitment_cap": "月間{{label}}（上限）：{{amount}}",
-      "series_spend": "月初から現在（累計）",
-      "series_projected": "月末予測（トレンド）",
+      "commitment_cap": "{{label}}：{{amount}}",
+      "shared_commitment": "共有契約コミットメント残高",
+      "of_total": "合計{{total}}のうち",
+      "series_spend": "請求期間累計",
+      "series_projected": "請求期間終了時予測（トレンド）",
       "commitment": "コミットメント",
       "credit_balance": "クレジット残高",
       "error_load": "請求書の詳細を読み込めませんでした："
@@ -1038,8 +1048,21 @@
       "button_not_logged_in": "無料で生成を開始",
       "no_credit_card": "クレジットカードは不要です",
       "build_command": "構築",
-      "ai_builder": {"main_title": "Build Production Apps with AI", "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.", "button_logged_in": "Open AI Builder", "button_not_logged_in": "Start building for free"},
-      "generation": {"command": "generate", "typewriter": {"text1": "a cinematic product launch video", "text2": "a campaign image set in three visual styles", "text3": "a textured 3D product asset", "text4": "a storyboard with matching video clips"}}
+      "ai_builder": {
+        "main_title": "Build Production Apps with AI",
+        "description": "Describe what you need and turn an idea into a working application with transparent usage pricing.",
+        "button_logged_in": "Open AI Builder",
+        "button_not_logged_in": "Start building for free"
+      },
+      "generation": {
+        "command": "generate",
+        "typewriter": {
+          "text1": "a cinematic product launch video",
+          "text2": "a campaign image set in three visual styles",
+          "text3": "a textured 3D product asset",
+          "text4": "a storyboard with matching video clips"
+        }
+      }
     },
     "aggregated_usage": {
       "title": "集計された使用量",
@@ -1065,9 +1088,18 @@
   "faq": {
     "title": "よくある質問",
     "generation": {
-      "credits": {"question": "How do Generation Credits work?", "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."},
-      "service_tier": {"question": "What changes with Priority service?", "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."},
-      "top_up": {"question": "What happens when credits run low?", "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."}
+      "credits": {
+        "question": "How do Generation Credits work?",
+        "answer": "Free includes {{freeCredits}} one-time credits. Pro includes {{proCredits}} credits each month. Every completed job consumes the amount shown in the pricing table."
+      },
+      "service_tier": {
+        "question": "What changes with Priority service?",
+        "answer": "Priority service applies the configured {{multiplier}}× rate to the same generation job. Model, operation, quality, project, and user dimensions remain independently visible."
+      },
+      "top_up": {
+        "question": "What happens when credits run low?",
+        "answer": "Pro customers can optionally configure an automatic recharge from {{threshold}} to {{target}} credits. Manual purchases start at {{minimum}} credits, and Stripe-connected accounts collect the resulting invoice."
+      }
     },
     "questions": {
       "credits": {
@@ -1140,7 +1172,16 @@
       "processing": "処理中...",
       "purchase_for": "{{amount}}で購入",
       "select_amount": "金額を選択",
-      "min_amount": "最小 {{amount}}"
+      "min_amount": "最小 {{amount}}",
+      "invoice_flow": "請求書で購入",
+      "checkout_flow": "Checkoutで購入",
+      "checkout_loading": "安全なCheckoutを読み込んでいます...",
+      "checkout_waiting_for_commit": "支払いを受け付けました。Metronomeがクレジットを作成するまでお待ちください...",
+      "checkout_missing_contract": "有効なMetronome契約が必要です。",
+      "checkout_create_failed": "Checkoutによるクレジット購入を開始できませんでした。",
+      "checkout_verify_failed": "完了したクレジット購入を確認できませんでした。",
+      "checkout_commit_pending": "支払いは完了しましたが、Metronomeコミットはまだ処理中です。作成後に残高が更新されます。",
+      "checkout_retry": "再試行"
     }
   },
   "pricing_rates": {

@@ -9,6 +9,7 @@ import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import Button from '@/components/ui/Button';
 import AutoTopUpModal from '@/components/dashboard/cards/AutoTopUpModal';
 import PurchaseCreditsModal from '@/components/settings/cards/PurchaseCreditsModal';
+import MetronomeCreditCheckoutModal from '@/components/settings/cards/MetronomeCreditCheckoutModal';
 import { useTranslation } from 'react-i18next';
 import useDashboardData, {
   useInvalidateDashboard,
@@ -20,6 +21,7 @@ export default function UsagePage() {
     customer,
     plan,
     metronomeContract,
+    updateCustomer,
     triggerMetronomeContractRefresh,
   } = useConfigContext();
   const { t } = useTranslation();
@@ -30,6 +32,8 @@ export default function UsagePage() {
 
   const [isAutoTopUpModalOpen, setIsAutoTopUpModalOpen] = useState(false);
   const [isPurchaseCreditsModalOpen, setIsPurchaseCreditsModalOpen] =
+    useState(false);
+  const [isCheckoutCreditsModalOpen, setIsCheckoutCreditsModalOpen] =
     useState(false);
   const [isTopUpActionLoading, setIsTopUpActionLoading] = useState(false);
   const [topUpActionError, setTopUpActionError] = useState<string | null>(null);
@@ -44,6 +48,53 @@ export default function UsagePage() {
   const handleCreditsPurchased = () => {
     invalidateDashboard();
   };
+
+  useEffect(() => {
+    const sessionId = new URLSearchParams(window.location.search).get(
+      'credit_purchase_session_id',
+    );
+    if (!sessionId) return;
+
+    let cancelled = false;
+    const verifyHostedPurchase = async () => {
+      try {
+        for (let attempt = 0; attempt < 30 && !cancelled; attempt += 1) {
+          const { data } = await fetchClient.get(
+            `/api/stripe/metronome-credit-checkout?session_id=${encodeURIComponent(
+              sessionId,
+            )}`,
+          );
+          if (data.ready) {
+            await triggerMetronomeContractRefresh();
+            updateCustomer({ forceSubscriptionRepoll: new Date() });
+            invalidateDashboard();
+            const url = new URL(window.location.href);
+            url.searchParams.delete('credit_purchase_session_id');
+            window.history.replaceState({}, '', url);
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1_000));
+        }
+        if (!cancelled) {
+          setTopUpActionError(
+            t('modals.purchase_credits.checkout_commit_pending'),
+          );
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setTopUpActionError(
+            error.response?.data?.error ||
+              t('modals.purchase_credits.checkout_verify_failed'),
+          );
+        }
+      }
+    };
+
+    void verifyHostedPurchase();
+    return () => {
+      cancelled = true;
+    };
+  }, [invalidateDashboard, t, triggerMetronomeContractRefresh, updateCustomer]);
 
   const prevAutoTopUpOpen = useRef(false);
   useEffect(() => {
@@ -120,6 +171,11 @@ export default function UsagePage() {
                   onClick={() => setIsPurchaseCreditsModalOpen(true)}
                   className='h-9 w-auto min-w-0 shrink-0 bg-purple px-4 py-0 text-sm font-semibold text-button-color shadow-none hover:bg-purple-hover'
                 />
+                <Button
+                  text={t('modals.purchase_credits.checkout_flow')}
+                  onClick={() => setIsCheckoutCreditsModalOpen(true)}
+                  className='h-9 w-auto min-w-0 shrink-0 border border-purple bg-white px-4 py-0 text-sm font-semibold text-purple shadow-none hover:bg-purple-50'
+                />
               </div>
               {topUpActionError && (
                 <p className='mt-2 text-sm text-red-600'>{topUpActionError}</p>
@@ -138,6 +194,11 @@ export default function UsagePage() {
           <PurchaseCreditsModal
             open={isPurchaseCreditsModalOpen}
             setOpen={setIsPurchaseCreditsModalOpen}
+            onCreditsPurchased={handleCreditsPurchased}
+          />
+          <MetronomeCreditCheckoutModal
+            open={isCheckoutCreditsModalOpen}
+            setOpen={setIsCheckoutCreditsModalOpen}
             onCreditsPurchased={handleCreditsPurchased}
           />
         </>

@@ -14,8 +14,6 @@ import {
 } from 'recharts';
 import {
   format,
-  startOfMonth,
-  endOfMonth,
   addDays,
   eachDayOfInterval,
 } from 'date-fns';
@@ -32,12 +30,17 @@ import { useConfigContext } from '@/contexts/ConfigContext';
 import { getEffectiveMetronomeCustomerId } from '@/config/metronomeDefaults';
 import { TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { formatMetronomeAmount } from '@/utils/metronomeAmount';
+import {
+  formatMetronomeAmount,
+  isCustomMetronomeCreditType,
+} from '@/utils/metronomeAmount';
 import { GENERATION_SERVICE_TIER_PROPERTY } from '@/config/generationCatalog';
+import { resolveMetronomeUsageBudget } from '@/utils/metronomeUsageBudget';
+import { currentMetronomeMonthlyPeriod } from '@/utils/metronomeBillingPeriod';
 
 const PURPLE = '#7C3AED';
-const BLUE = '#3B82F6';
 const GREEN = '#10B981';
+const AMBER = '#F59E0B';
 const RED = '#EF4444';
 const GRAY = '#E5E7EB';
 
@@ -79,7 +82,8 @@ export default function InvoicePacingChart({
 }: {
   refreshKey?: number;
 }) {
-  const { customer, metronomeContract, settings, demoMode } = useConfigContext();
+  const { customer, metronomeContract, settings, demoMode } =
+    useConfigContext();
   const { t } = useTranslation();
   const currency = settings?.currency || 'usd';
   const formatAmount = useMemo(
@@ -92,10 +96,20 @@ export default function InvoicePacingChart({
       ),
     [currency, metronomeContract?.creditTypeName, settings?.language],
   );
+  const formatAxisAmount = useMemo(
+    () => (amount: number) =>
+      isCustomMetronomeCreditType(metronomeContract?.creditTypeName)
+        ? new Intl.NumberFormat(settings?.language || 'en', {
+            maximumFractionDigits: 1,
+          }).format(amount)
+        : formatAmount(amount),
+    [formatAmount, metronomeContract?.creditTypeName, settings?.language],
+  );
   const metronomeCustomerId = getEffectiveMetronomeCustomerId(customer);
 
   const [breakdowns, setBreakdowns] = useState<any[]>([]);
   const [periodStart, setPeriodStart] = useState<Date | null>(null);
+  const [periodEnd, setPeriodEnd] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Tracks the last customer+refreshKey combo to distinguish hard resets from silent contract-date refinements.
@@ -105,13 +119,21 @@ export default function InvoicePacingChart({
   const [selectedQuality, setSelectedQuality] = useState('all');
   const [selectedServiceTier, setSelectedServiceTier] = useState('all');
 
-  const commitTotalCents = metronomeContract?.commitTotal ?? 0;
-  const commitmentCents =
-    commitTotalCents > 0
-      ? commitTotalCents
-      : (metronomeContract?.creditBalance?.totalAmount ?? 0);
-  const commitmentLabel =
-    commitTotalCents > 0 ? t('dashboard.usage_pacing.commitment') : t('dashboard.usage_pacing.credit_balance');
+  const isB2BContract = /b2b|power user/i.test(metronomeContract?.name ?? '');
+  const usageBudget = resolveMetronomeUsageBudget(metronomeContract);
+  const commitTotalCents = usageBudget.contractTermCommitTotal;
+  const monthlySeatCreditCents = usageBudget.monthlySeatCreditTotal;
+  const sharedCommitAvailableCents = usageBudget.contractTermCommitAvailable;
+  const planBudgetCents = usageBudget.amount;
+  const topUpAvailableCents = usageBudget.addOnAvailable;
+  const pacingBudgetLabel =
+    usageBudget.kind === 'monthly-seat-credits'
+      ? t('dashboard.usage_pacing.monthly_seat_credits')
+      : usageBudget.kind === 'prepaid-commitment'
+        ? t('dashboard.usage_pacing.prepaid_commitment')
+        : t('dashboard.usage_pacing.monthly_credit_balance');
+  const showSharedCommitmentCard =
+    isB2BContract && commitTotalCents > 0 && monthlySeatCreditCents > 0;
 
   useEffect(() => {
     if (!metronomeCustomerId) {
@@ -133,17 +155,14 @@ export default function InvoicePacingChart({
     setError(null);
 
     const now = new Date();
-    // Use the contract's actual start month so quickstart (1-month backdated) shows full history.
-    const contractStart = metronomeContract?.startingAt
-      ? new Date(metronomeContract.startingAt)
-      : startOfMonth(now);
-    const billingStart = startOfMonth(contractStart);
-    setPeriodStart(billingStart);
-    const startingOn = format(billingStart, "yyyy-MM-dd'T'00:00:00'Z'");
-    const endingBefore = format(
-      addDays(endOfMonth(now), 1),
-      "yyyy-MM-dd'T'00:00:00'Z'",
+    const billingPeriod = currentMetronomeMonthlyPeriod(
+      metronomeContract?.startingAt,
+      now,
     );
+    setPeriodStart(billingPeriod.startingAt);
+    setPeriodEnd(billingPeriod.endingBefore);
+    const startingOn = billingPeriod.startingAt.toISOString();
+    const endingBefore = billingPeriod.endingBefore.toISOString();
 
     fetchClient
       .get(
@@ -191,14 +210,10 @@ export default function InvoicePacingChart({
 
   const qualities = useMemo(() => {
     const set = new Set<string>();
-    const dimension =
-      demoMode === 'generation' ? 'quality' : 'processing_tier';
+    const dimension = demoMode === 'generation' ? 'quality' : 'processing_tier';
     for (const bd of breakdowns)
       for (const li of bd.line_items ?? [])
-        if (
-          li.type === 'usage' &&
-          li.pricing_group_values?.[dimension]
-        )
+        if (li.type === 'usage' && li.pricing_group_values?.[dimension])
           set.add(li.pricing_group_values[dimension]);
     return Array.from(set).sort();
   }, [breakdowns, demoMode]);
@@ -209,9 +224,7 @@ export default function InvoicePacingChart({
     for (const breakdown of breakdowns)
       for (const lineItem of breakdown.line_items ?? []) {
         const value =
-          lineItem.pricing_group_values?.[
-            GENERATION_SERVICE_TIER_PROPERTY
-          ];
+          lineItem.pricing_group_values?.[GENERATION_SERVICE_TIER_PROPERTY];
         if (lineItem.type === 'usage' && value) set.add(value);
       }
     return Array.from(set).sort();
@@ -247,9 +260,8 @@ export default function InvoicePacingChart({
           if (
             demoMode === 'generation' &&
             selectedServiceTier !== 'all' &&
-            li.pricing_group_values?.[
-              GENERATION_SERVICE_TIER_PROPERTY
-            ] !== selectedServiceTier
+            li.pricing_group_values?.[GENERATION_SERVICE_TIER_PROPERTY] !==
+              selectedServiceTier
           )
             return false;
           return true;
@@ -268,10 +280,13 @@ export default function InvoicePacingChart({
   ]);
 
   const chartData = useMemo(() => {
-    if (!periodStart) return [];
+    if (!periodStart || !periodEnd) return [];
 
     const now = new Date();
-    const days = eachDayOfInterval({ start: periodStart, end: endOfMonth(now) });
+    const days = eachDayOfInterval({
+      start: periodStart,
+      end: addDays(periodEnd, -1),
+    });
     const todayKey = format(now, 'yyyy-MM-dd');
     const todayIdx = days.findIndex(
       (d) => format(d, 'yyyy-MM-dd') === todayKey,
@@ -286,35 +301,27 @@ export default function InvoicePacingChart({
         date: format(day, 'MMM d'),
         spend: todayIdx === -1 || i <= todayIdx ? cumulative : null,
       };
-      if (todayIdx >= 0 && i >= todayIdx) {
-        point.projected =
-          cumulative + (cumulative / (todayIdx + 1)) * (i - todayIdx);
-      }
       return point;
     });
-  }, [dailySpend, periodStart]);
+  }, [dailySpend, periodEnd, periodStart]);
 
   const stats = useMemo(() => {
     const todayKey = format(new Date(), 'MMM d');
     const currentSpend = chartData.find((p) => p.date === todayKey)?.spend ?? 0;
-    const projectedEnd =
-      chartData[chartData.length - 1]?.projected ?? currentSpend;
-    const filtersAreAll =
-      selectedProduct === 'all' &&
-      selectedModel === 'all' &&
-      selectedQuality === 'all' &&
-      selectedServiceTier === 'all';
-    const compareToCommit = commitmentCents > 0 && filtersAreAll;
-    const pctUsed = compareToCommit ? (currentSpend / commitmentCents) * 100 : 0;
-    return { currentSpend, projectedEnd, pctUsed };
-  }, [
-    chartData,
-    commitmentCents,
-    selectedProduct,
-    selectedModel,
-    selectedQuality,
-    selectedServiceTier,
-  ]);
+    return { currentSpend };
+  }, [chartData]);
+
+  const spendableBalanceCents =
+    metronomeContract?.creditBalance.totalAvailable ?? 0;
+  const pacingBudgetCents = isB2BContract
+    ? planBudgetCents
+    : Math.max(
+        planBudgetCents,
+        stats.currentSpend + spendableBalanceCents,
+        planBudgetCents + topUpAvailableCents,
+      );
+  const pctUsed =
+    pacingBudgetCents > 0 ? (stats.currentSpend / pacingBudgetCents) * 100 : 0;
 
   if (loading) {
     return (
@@ -355,12 +362,37 @@ export default function InvoicePacingChart({
     selectedModel === 'all' &&
     selectedQuality === 'all' &&
     selectedServiceTier === 'all';
-  /** Commitment line only when viewing all products/models/qualities (full invoice scope). */
-  const showCommitmentComparison = commitmentCents > 0 && filtersAreAll;
+  /** Budget comparison only when viewing the full, unfiltered invoice scope. */
+  const showCommitmentComparison = pacingBudgetCents > 0 && filtersAreAll;
+  const showTopUpCreditsCard = !isB2BContract && topUpAvailableCents > 0;
+  const comparisonBudgetLabel = showTopUpCreditsCard
+    ? t('dashboard.usage_pacing.credit_balance')
+    : pacingBudgetLabel;
+  const summaryCardCount =
+    2 +
+    (showCommitmentComparison ? 1 : 0) +
+    (showTopUpCreditsCard ? 1 : 0) +
+    (showSharedCommitmentCard ? 1 : 0);
+  const summaryGridClass =
+    summaryCardCount >= 5
+      ? 'grid-cols-5'
+      : summaryCardCount === 4
+        ? 'grid-cols-4'
+        : summaryCardCount === 3
+          ? 'grid-cols-3'
+          : 'grid-cols-2';
 
-  const onTrack = commitmentCents > 0
-    ? stats.projectedEnd <= commitmentCents
-    : true;
+  const withinBudget =
+    pacingBudgetCents > 0 ? stats.currentSpend <= pacingBudgetCents : true;
+  const chartPeak = Math.max(stats.currentSpend, 1);
+  const isTermCommitment = usageBudget.kind === 'prepaid-commitment';
+  const showBudgetReferenceLine =
+    showCommitmentComparison &&
+    (!isTermCommitment || pacingBudgetCents <= chartPeak * 2.5);
+  const yAxisMax = Math.max(
+    chartPeak * 1.2,
+    showBudgetReferenceLine ? pacingBudgetCents * 1.1 : 0,
+  );
 
   return (
     <Card className='bg-white'>
@@ -375,7 +407,13 @@ export default function InvoicePacingChart({
               {t('dashboard.usage_pacing.title')}
             </CardTitle>
             <CardDescription>
-              {t('dashboard.usage_pacing.description')}
+              {t(
+                isB2BContract
+                  ? 'dashboard.usage_pacing.description_b2b'
+                  : commitTotalCents > 0
+                    ? 'dashboard.usage_pacing.description_commit'
+                    : 'dashboard.usage_pacing.description',
+              )}
             </CardDescription>
           </div>
           <div className='flex shrink-0 flex-nowrap items-center gap-2 self-start'>
@@ -384,9 +422,13 @@ export default function InvoicePacingChart({
               onChange={(e) => setSelectedProduct(e.target.value)}
               className='rounded-md border border-border bg-white px-2 py-1 text-xs text-gray-700'
             >
-              <option value='all'>{t('dashboard.usage_pacing.all_products')}</option>
+              <option value='all'>
+                {t('dashboard.usage_pacing.all_products')}
+              </option>
               {products.map((p) => (
-                <option key={p} value={p}>{p}</option>
+                <option key={p} value={p}>
+                  {p}
+                </option>
               ))}
             </select>
             <select
@@ -394,7 +436,9 @@ export default function InvoicePacingChart({
               onChange={(e) => setSelectedModel(e.target.value)}
               className='rounded-md border border-border bg-white px-2 py-1 text-xs text-gray-700'
             >
-              <option value='all'>{t('dashboard.usage_pacing.all_models')}</option>
+              <option value='all'>
+                {t('dashboard.usage_pacing.all_models')}
+              </option>
               {models.map((m) => (
                 <option key={m} value={m}>
                   {m}
@@ -424,10 +468,7 @@ export default function InvoicePacingChart({
                 className='rounded-md border border-border bg-white px-2 py-1 text-xs text-gray-700'
               >
                 <option value='all'>
-                  {t(
-                    'dashboard.usage_pacing.all_tiers',
-                    'All service tiers',
-                  )}
+                  {t('dashboard.usage_pacing.all_tiers', 'All service tiers')}
                 </option>
                 {serviceTiers.map((tier) => (
                   <option key={tier} value={tier}>
@@ -439,46 +480,79 @@ export default function InvoicePacingChart({
           </div>
         </div>
 
-        <div
-          className={`grid gap-4 mt-4 ${showCommitmentComparison ? 'grid-cols-3' : 'grid-cols-2'}`}
-        >
+        <div className={`grid gap-4 mt-4 ${summaryGridClass}`}>
           <div className='rounded-lg bg-gray-50 border border-border px-4 py-3'>
-            <p className='text-xs text-muted-foreground'>{t('dashboard.usage_pacing.month_to_date')}</p>
+            <p className='text-xs text-muted-foreground'>
+              {t('dashboard.usage_pacing.month_to_date')}
+            </p>
             <p className='text-lg font-bold tabular-nums'>
               {formatAmount(stats.currentSpend)}
             </p>
             {showCommitmentComparison && (
               <p className='text-xs text-muted-foreground'>
-                {t('dashboard.usage_pacing.pct_of_monthly', { pct: stats.pctUsed.toFixed(1), label: commitmentLabel.toLowerCase() })}
+                {t('dashboard.usage_pacing.pct_of_budget', {
+                  pct: pctUsed.toFixed(1),
+                  label: comparisonBudgetLabel.toLowerCase(),
+                })}
               </p>
             )}
           </div>
           {showCommitmentComparison && (
             <div className='rounded-lg bg-gray-50 border border-border px-4 py-3'>
               <p className='text-xs text-muted-foreground'>
-                {t('dashboard.usage_pacing.monthly_label', { label: commitmentLabel.toLowerCase() })}
+                {pacingBudgetLabel}
               </p>
               <p className='text-lg font-bold tabular-nums'>
-                {formatAmount(commitmentCents)}
+                {formatAmount(planBudgetCents)}
               </p>
-              <p className='text-xs text-muted-foreground'>{t('dashboard.usage_pacing.prepaid_period')}</p>
+              <p className='text-xs text-muted-foreground'>
+                {t(
+                  commitTotalCents > 0 && monthlySeatCreditCents === 0
+                    ? 'dashboard.usage_pacing.prepaid_contract_term'
+                    : 'dashboard.usage_pacing.available_this_period',
+                )}
+              </p>
             </div>
           )}
-          <div
-            className={`rounded-lg border px-4 py-3 ${showCommitmentComparison ? (onTrack ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200') : 'bg-gray-50 border-border'}`}
-          >
-            <p className='text-xs text-muted-foreground'>{t('dashboard.usage_pacing.projected_month_end')}</p>
-            <p
-              className={`text-lg font-bold tabular-nums ${showCommitmentComparison ? (onTrack ? 'text-green-700' : 'text-red-700') : ''}`}
-            >
-              {formatAmount(stats.projectedEnd)}
-            </p>
-            {showCommitmentComparison && (
-              <p className={`text-xs ${onTrack ? 'text-green-600' : 'text-red-600'}`}>
-                {onTrack ? t('dashboard.usage_pacing.within_prepaid') : t('dashboard.usage_pacing.above_prepaid')}
+          {showTopUpCreditsCard && (
+            <div className='rounded-lg border border-violet-200 bg-violet-50 px-4 py-3'>
+              <p className='text-xs text-violet-700'>
+                {t('modals.purchase_credits.top_up_credits_title')}
               </p>
-            )}
+              <p className='text-lg font-bold tabular-nums text-violet-950'>
+                {formatAmount(topUpAvailableCents)}
+              </p>
+              <p className='text-xs text-violet-700'>
+                {t('dashboard.usage_pacing.available_this_period')}
+              </p>
+            </div>
+          )}
+          <div className='rounded-lg border border-border bg-gray-50 px-4 py-3'>
+            <p className='text-xs text-muted-foreground'>
+              {t('dashboard.usage_pacing.credit_balance')}
+            </p>
+            <p className='text-lg font-bold tabular-nums'>
+              {formatAmount(spendableBalanceCents)}
+            </p>
+            <p className='text-xs text-muted-foreground'>
+              {t('dashboard.usage_pacing.available_this_period')}
+            </p>
           </div>
+          {showSharedCommitmentCard && (
+            <div className='rounded-lg border border-border bg-gray-50 px-4 py-3'>
+              <p className='text-xs text-muted-foreground'>
+                {t('dashboard.usage_pacing.shared_commitment')}
+              </p>
+              <p className='text-lg font-bold tabular-nums'>
+                {formatAmount(sharedCommitAvailableCents)}
+              </p>
+              <p className='text-xs text-muted-foreground'>
+                {t('dashboard.usage_pacing.of_total', {
+                  total: formatAmount(commitTotalCents),
+                })}
+              </p>
+            </div>
+          )}
         </div>
       </CardHeader>
 
@@ -486,16 +560,12 @@ export default function InvoicePacingChart({
         <ResponsiveContainer width='100%' height={280}>
           <AreaChart
             data={chartData}
-            margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+            margin={{ top: 20, right: 10, left: 0, bottom: 4 }}
           >
             <defs>
               <linearGradient id='ipSpend' x1='0' y1='0' x2='0' y2='1'>
                 <stop offset='5%' stopColor={PURPLE} stopOpacity={0.15} />
                 <stop offset='95%' stopColor={PURPLE} stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id='ipProj' x1='0' y1='0' x2='0' y2='1'>
-                <stop offset='5%' stopColor={BLUE} stopOpacity={0.1} />
-                <stop offset='95%' stopColor={BLUE} stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -514,12 +584,9 @@ export default function InvoicePacingChart({
               tickLine={false}
               axisLine={false}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
-              tickFormatter={(v) => formatAmount(v)}
-              domain={[
-                0,
-                Math.max((commitmentCents || 0) * 1.1, stats.projectedEnd * 1.1),
-              ]}
-              width={52}
+              tickFormatter={(v) => formatAxisAmount(v)}
+              domain={[0, yAxisMax]}
+              width={44}
             />
             <Tooltip content={<CustomTooltip formatAmount={formatAmount} />} />
             <Legend
@@ -527,17 +594,20 @@ export default function InvoicePacingChart({
               iconSize={8}
               wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}
             />
-            {showCommitmentComparison && (
+            {showBudgetReferenceLine && (
               <ReferenceLine
-                y={commitmentCents}
-                stroke={onTrack ? GREEN : RED}
+                y={pacingBudgetCents}
+                stroke={withinBudget ? GREEN : isB2BContract ? AMBER : RED}
                 strokeDasharray='6 3'
                 strokeWidth={1.5}
                 label={{
-                  value: t('dashboard.usage_pacing.commitment_cap', { label: commitmentLabel.toLowerCase(), amount: formatAmount(commitmentCents) }),
+                  value: t('dashboard.usage_pacing.commitment_cap', {
+                    label: comparisonBudgetLabel,
+                    amount: formatAmount(pacingBudgetCents),
+                  }),
                   position: 'insideTopRight',
                   fontSize: 11,
-                  fill: onTrack ? GREEN : RED,
+                  fill: withinBudget ? GREEN : isB2BContract ? AMBER : RED,
                 }}
               />
             )}
@@ -550,17 +620,6 @@ export default function InvoicePacingChart({
               fill='url(#ipSpend)'
               dot={false}
               activeDot={{ r: 4, fill: PURPLE }}
-            />
-            <Area
-              type='linear'
-              dataKey='projected'
-              name={t('dashboard.usage_pacing.series_projected')}
-              stroke={BLUE}
-              strokeDasharray='5 3'
-              strokeWidth={1.5}
-              fill='url(#ipProj)'
-              dot={false}
-              activeDot={false}
             />
           </AreaChart>
         </ResponsiveContainer>

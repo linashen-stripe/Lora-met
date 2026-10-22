@@ -1,5 +1,4 @@
 import Stripe from 'stripe';
-import { MeteredItem } from '@/utils/types';
 import { STRIPE_API_VERSION } from '@/utils/stripe';
 
 export interface UsageRecord {
@@ -7,25 +6,6 @@ export interface UsageRecord {
   timestamp?: string;
   amount: number;
   meter_segment_conditions?: { dimension: string; value: string }[];
-}
-
-export interface RateCardRate {
-  id: string;
-  display_name?: string;
-  metered_item: {
-    id: string;
-    display_name?: string;
-    meter: string;
-    meter_segment_conditions?: Array<{
-      dimension: string;
-      value: string;
-    }>;
-  };
-}
-
-export interface PricingPlanComponent {
-  type: string;
-  expanded_rate_card_rates?: RateCardRate[];
 }
 
 /**
@@ -49,55 +29,6 @@ export class MeterService {
       status: 'active',
     });
     return meters.data;
-  }
-
-  /**
-   * Generate metered items list from meters and pricing plan components
-   * @param meters - List of meters
-   * @param pricingPlanComponents - Pricing plan components
-   * @returns Generated metered items
-   */
-  generateMeteredItemsList(
-    meters: Stripe.Billing.Meter[],
-    pricingPlanComponents: PricingPlanComponent[],
-  ): MeteredItem[] {
-    // Create a dictionary of meters for quick lookup
-    const metersDictionary: Record<string, Stripe.Billing.Meter> =
-      meters.reduce(
-        (
-          acc: Record<string, Stripe.Billing.Meter>,
-          meter: Stripe.Billing.Meter,
-        ) => {
-          acc[meter.id] = meter;
-          return acc;
-        },
-        {},
-      );
-
-    // Get the metered items for the pricing plan
-    const meteredItems: MeteredItem[] = pricingPlanComponents?.reduce(
-      (acc: MeteredItem[], component: PricingPlanComponent) => {
-        if (
-          component.type === 'rate_card' &&
-          component.expanded_rate_card_rates
-        ) {
-          acc = [
-            ...acc,
-            ...component.expanded_rate_card_rates.map((r: RateCardRate) => ({
-              ...r.metered_item,
-              display_name: r.metered_item.display_name || 'Unknown Item',
-              // Decorate data structure with meter event name
-              meter_event_name:
-                metersDictionary[r.metered_item.meter]?.event_name,
-            })),
-          ];
-        }
-        return acc;
-      },
-      [],
-    );
-
-    return meteredItems || [];
   }
 
   /**

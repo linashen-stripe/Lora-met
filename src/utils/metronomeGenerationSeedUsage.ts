@@ -19,11 +19,15 @@ import {
 
 export type GenerationSeedStory = 'healthy' | 'at-risk' | 'burst';
 
-const PROJECTS = ['project-atlas', 'project-borealis', 'project-cipher'] as const;
+const PROJECTS = [
+  'project-atlas',
+  'project-borealis',
+  'project-cipher',
+] as const;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const GENERATION_PRO_PACKAGE = packageByKey('pro');
 const GENERATION_PRO_MONTHLY_CREDITS =
-  GENERATION_PRO_PACKAGE?.monthlyCredits ?? 1_000;
+  GENERATION_PRO_PACKAGE?.monthlyCredits ?? 2_000;
 const GENERATION_PRO_AUTO_TOP_UP_THRESHOLD =
   GENERATION_PRO_PACKAGE?.autoTopUpThresholdCredits ?? 500;
 const GENERATION_PRO_HEALTHY_SAFETY_BUFFER_CREDITS = 10;
@@ -97,14 +101,8 @@ export async function seedGenerationUsage({
     safeLookback - 1,
     Math.max(0, Math.floor(trailingUnseededDays)),
   );
-  const users =
-    usageUserIds?.length
-      ? [...usageUserIds]
-      : [customerId];
-  if (
-    perUserTargetCredits &&
-    perUserTargetCredits.length !== users.length
-  ) {
+  const users = usageUserIds?.length ? [...usageUserIds] : [customerId];
+  if (perUserTargetCredits && perUserTargetCredits.length !== users.length) {
     throw new Error(
       'perUserTargetCredits must contain exactly one target per usage user.',
     );
@@ -139,13 +137,14 @@ export async function seedGenerationUsage({
     : 0;
   const defaultSpendFraction =
     persona === 'pro'
-      ? preparedProConsumptionFraction(story)
+      ? preparedProConsumptionFraction(story, seedRunKey ?? customerId)
       : persona === 'quickstart'
         ? quickstartConsumptionFraction({
             story,
             startingAt: contract?.starting_at,
             endingBefore: contract?.ending_before,
             now,
+            variationKey: seedRunKey ?? customerId,
           })
         : story === 'at-risk'
           ? 0.82
@@ -163,14 +162,13 @@ export async function seedGenerationUsage({
   // whole video seconds. See the Generation matrix in the regression checklist.
   // Prepared Pro pacing is based on the monthly plan grant only. The contract
   // may also contain an unused auto-top-up commit; counting it would make a
-  // Healthy seed exhaust the entire 1,000-credit monthly grant.
+  // Healthy seed exhaust the monthly plan grant.
   const targetPoolCredits =
     persona === 'pro' ? GENERATION_PRO_MONTHLY_CREDITS : poolCredits;
   const uncappedTargetCredits =
     targetPoolCredits > 0 ? targetPoolCredits * spendFraction : 0;
-  // A 50% target would leave exactly 500 credits, which satisfies the seeded
-  // Pro auto-top-up threshold. Keep Healthy one smallest whole-job step above
-  // that boundary so it remains a near-50% story without triggering recharge.
+  // Keep Healthy above the seeded Pro auto-top-up threshold even if package
+  // sizing or profile ranges change later.
   const targetCredits =
     persona === 'pro' && story === 'healthy'
       ? Math.min(
@@ -237,6 +235,11 @@ export async function seedGenerationUsage({
   for (const [userIndex, userId] of users.entries()) {
     let remaining = listRateTargets[userIndex] ?? 0;
     let userCandidateIndex = 0;
+    const targetEventCount = Math.max(12, Math.min(24, dayOffsets.length));
+    const maxCreditsPerEvent = Math.max(
+      smallestFirst[0]?.credits ?? 1,
+      remaining / targetEventCount,
+    );
     while (remaining >= (smallestFirst[0]?.credits ?? Infinity)) {
       const coverageCandidate =
         userCandidateIndex < coverageCandidates.length
@@ -251,22 +254,26 @@ export async function seedGenerationUsage({
       if (!candidate) break;
 
       // First cover every modality/model in both service tiers with individual
-      // events. Afterwards aggregate whole jobs/seconds into larger events so
-      // even a large Quickstart history remains a small number of ingest calls.
+      // events. Afterwards aggregate whole jobs/seconds into bounded daily
+      // events. The adaptive cap keeps Pro histories smooth while still
+      // keeping large Quickstart and B2B seeds to a practical request count.
       const quantityMultiplier =
         userCandidateIndex < coverageCandidates.length
           ? 1
           : Math.max(
               1,
-              Math.min(100, Math.floor(remaining / candidate.credits)),
+              Math.min(
+                100,
+                Math.floor(maxCreditsPerEvent / candidate.credits),
+                Math.floor(remaining / candidate.credits),
+              ),
             );
       const dayIndex =
         story === 'burst' && sequence >= coverageCandidates.length
           ? Math.max(0, dayOffsets.length - 1 - (sequence % 4))
           : (sequence * 7) % dayOffsets.length;
       const dayOffset = dayOffsets[dayIndex] ?? 1;
-      const timeOfDayMs =
-        (8 * 60 + (sequence * 43) % (12 * 60)) * 60 * 1000;
+      const timeOfDayMs = (8 * 60 + ((sequence * 43) % (12 * 60))) * 60 * 1000;
       const timestamp = new Date(
         Math.max(
           utcTodayMs - dayOffset * MS_PER_DAY + timeOfDayMs,
@@ -315,12 +322,15 @@ export async function seedGenerationUsage({
     ),
     estimatedBalanceConsumption:
       events.reduce(
-        (total, event) =>
-          total + Number(event.properties.credits_consumed),
+        (total, event) => total + Number(event.properties.credits_consumed),
         0,
       ) * usageMultiplier,
-    products: Array.from(new Set(events.map((event) => String(event.properties.modality)))),
-    models: Array.from(new Set(events.map((event) => String(event.properties.model)))),
+    products: Array.from(
+      new Set(events.map((event) => String(event.properties.modality))),
+    ),
+    models: Array.from(
+      new Set(events.map((event) => String(event.properties.model))),
+    ),
     projectIds: [...PROJECTS],
     message: perUserTargetCredits
       ? `Seeded ${events.length} aggregated generation events with explicit per-seat targets.`

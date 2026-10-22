@@ -79,9 +79,9 @@ const useDashboardData = (
         metronomeCustomerId,
       }),
     enabled,
-    staleTime: 30 * 1000,
+    staleTime: Infinity,
     gcTime: 5 * 60 * 1000,
-    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const triggerRefetch = () => {

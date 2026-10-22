@@ -108,14 +108,14 @@
     {
       "key": "quickstart",
       "name": "Generate Enterprise Quickstart",
-      "includedCredits": 100000,
+      "includedCredits": 110000,
       "prepaidInvoiceCents": 100000,
       "durationMonths": 12
     },
     {
       "key": "pro",
       "name": "Generate Pro",
-      "monthlyCredits": 1000,
+      "monthlyCredits": 2000,
       "monthlyPriceCents": 2000,
       "autoTopUpThresholdCredits": 500,
       "autoTopUpToCredits": 1500

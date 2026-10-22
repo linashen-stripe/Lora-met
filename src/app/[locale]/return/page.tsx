@@ -5,20 +5,13 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'next-i18next';
 import { useConfigContext } from '@/contexts/ConfigContext';
 import fetchClient from '@/utils/fetchClient';
-import Stripe from 'stripe';
-import { DEMO_MODES } from '@/config/demoModes';
 
 function ReturnPageContent() {
   const { t } = useTranslation();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const {
-    settings,
-    customer,
-    demoMode,
-    triggerSubscriptionRefresh,
-  } = useConfigContext();
+  const { settings, customer } = useConfigContext();
   /** Prefer `[locale]` from the URL — `settings.language` can be `default` or out of sync. */
   const locale =
     (typeof params?.locale === 'string' && params.locale) ||
@@ -77,62 +70,7 @@ function ReturnPageContent() {
           return;
         }
 
-        const sessionId = searchParams.get('session_id');
-
-        if (!sessionId) {
-          throw new Error('No session ID found');
-        }
-
-        if (!customer?.stripeCustomerId) {
-          throw new Error('No Stripe customer linked to this account');
-        }
-
-        // Fetch session data
-        const { data: sessionData } =
-          await fetchClient.get<Stripe.Checkout.Session>(
-            `/api/stripe/checkout-session/${sessionId}`,
-          );
-
-        // Check for incomplete session
-        if (sessionData.status !== 'complete') {
-          console.log(
-            `Warning: checkout-session not completed, status: ${sessionData.status}`,
-          );
-          setError(
-            'Checkout session not completed, please try again. If the problem persists, please contact support.',
-          );
-          return;
-        }
-
-        // Update the customer's saved payment method
-        const intent = sessionData.setup_intent || sessionData.payment_intent;
-        await savePaymentMethod(customer.stripeCustomerId, intent as string);
-
-        const meta = (sessionData.metadata ?? {}) as Record<string, string | undefined>;
-        const rawUpgrade = meta.isUpgrade;
-        const isUpgrade =
-          rawUpgrade === 'true' || rawUpgrade === '1' || rawUpgrade === 'True';
-        const currentSubscriptionId = meta.currentSubscriptionId;
-        const billingCadenceId = meta.billingCadenceId;
-
-        // If the checkout is complete and this is an upgrade, cancel the current subscription
-        if (isUpgrade && currentSubscriptionId && billingCadenceId) {
-          // Cancel the current subscription
-          await fetchClient.post(
-            '/api/stripe/pricing-plan-subscription/cancel',
-            {
-              customerId: customer.stripeCustomerId,
-              pricingPlanSubscriptionId: currentSubscriptionId,
-              billingCadenceId: billingCadenceId,
-              enableAutomaticReenrollment: false,
-            },
-          );
-
-          // Refresh subscription data in the
-          await triggerSubscriptionRefresh();
-        }
-
-        router.replace(`/${locale}${DEMO_MODES[demoMode].route}`);
+        throw new Error('Unsupported return flow');
       } catch (err) {
         console.error('Error handling return:', err);
         setError(
@@ -146,12 +84,10 @@ function ReturnPageContent() {
     handleReturn();
   }, [
     customer?.stripeCustomerId,
-    demoMode,
     router,
     searchParams,
     settings,
     locale,
-    triggerSubscriptionRefresh,
   ]);
 
   if (isLoading) {

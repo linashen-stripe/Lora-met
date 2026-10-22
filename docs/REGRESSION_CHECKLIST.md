@@ -36,6 +36,9 @@ Changes in these areas require both-mode review:
 - [ ] Home and pricing Free actions create the same intended contract.
 - [ ] Signup does not silently succeed when required contract creation fails.
 - [ ] Customer identity, local state, and ingest alias are mode/customer scoped.
+- [ ] Newly created signup and prepared customers use the selected mode/persona
+      prefix (`[Generate - …]` or `[AI Builder - …]`); existing customer names
+      are not rewritten.
 - [ ] Seeded-persona login does not reseed usage on every login.
 - [ ] Seeded personas land on Plans & Billing.
 - [ ] Login-created Pro and Quickstart personas use the same embedded Checkout
@@ -51,9 +54,9 @@ Changes in these areas require both-mode review:
       separately; Reset clears the story but preserves both spend totals.
 - [ ] Plans & Billing honors the playground's pending local deduction
       immediately. Each accepted chat ingestion schedules one contract
-      reconciliation after two seconds; Plans & Billing retains only its normal
-      60-second safety interval. An unconfirmed local deduction expires after
-      60 seconds rather than remaining indefinitely.
+      reconciliation after two seconds; Plans & Billing retains only its
+      five-minute, visible-tab safety interval. An unconfirmed local deduction
+      expires after 60 seconds rather than remaining indefinitely.
 - [ ] New persona background seeding shows progress on Plans & Billing and
       refreshes billing data after Metronome has had time to aggregate accepted
       events; "ready" must not reveal an empty invoice.
@@ -67,6 +70,9 @@ Changes in these areas require both-mode review:
 - [ ] Account Setup and login/Admin customer creation route through the same
       mode-specific usage seeder; there is no bootstrap-only event generator
       with separate target, unit, or seat-distribution logic.
+- [ ] Pricing, dashboard initialization, checkout, cancellation, credit
+      display, and auto top-up do not call Stripe Billing V2 pricing-plan or
+      pricing-plan-subscription APIs; plans remain Metronome contracts.
 - [ ] Admin Customer Seeding invokes the same mode-specific starter persona
       and contract builders as Account Setup, changing only the selected
       persona, customer identity, and usage profile. Login/Signup still uses
@@ -104,7 +110,7 @@ Changes in these areas require both-mode review:
       the seed window.
 - [ ] Healthy, At-Risk, and Late-month Spike are selectable for both AI Builder
       and Generation; Account Setup still defaults every persona to Healthy.
-- [ ] Generation Pro Healthy consumes about 500 of the 1,000 monthly plan
+- [ ] Generation Pro Healthy consumes about 920–980 of the 2,000 monthly plan
       credits. Its pre-created 1,500-credit auto-top-up commit is excluded from
       pacing and remains unused.
 
@@ -136,6 +142,9 @@ Changes in these areas require both-mode review:
 - [ ] A changed contract resets the old pending reservation safely.
 - [ ] Subscription-only invoice lines do not reduce included credit.
 - [ ] Draft metered usage can lower availability before balance catches up.
+- [ ] Usage Pacing and project breakdown totals use the same contract-anchored
+      monthly period; Usage Pacing shows current available balance rather than
+      a linear forecast.
 - [ ] Every dashboard invoice selection is scoped to the active contract ID;
       it never selects another contract merely because that draft has usage.
 - [ ] AI Builder displays USD; Generation custom wallets display Generation
@@ -158,16 +167,25 @@ Changes in these areas require both-mode review:
 
 ## Generation matrix
 
-- [ ] Pricing shows Free 100, Pro 1,000 at `$20/month`, Enterprise
-      Quickstart 100,000 / `$1,000` / 12 months, and custom Enterprise.
+- [ ] Pricing shows Free 100, Pro 2,000 at `$20/month`, Enterprise
+      Quickstart 110,000 / `$1,000` / 12 months, and custom Enterprise.
 - [ ] Pricing includes image, video, and 3D credit costs.
 - [ ] Customer-facing pricing does not expose per-credit USD conversion.
 - [ ] Playground supports all modalities, Standard/Priority, and `1×/5×/10×`.
 - [ ] Free can visibly burn `100 → 50 → 0`.
-- [ ] Upgrade begins with the full 1,000-credit Pro pool.
+- [ ] Upgrade begins with the full 2,000-credit Pro pool.
 - [ ] Usage carries separate model, quality, operation, and `service_tier`.
 - [ ] Usage carries `workspace_id`, `project_id`, and `user_id`.
 - [ ] Purchase minimum/presets remain 500 / 1,000 / 2,500 credits.
+- [ ] Checkout purchases receive 5% at exactly 2,000 units and 10% at exactly
+      5,000 units in both modes; inclusive API boundaries are 1,999 / 4,999.
+- [ ] A fresh Checkout Session redisplays `always`, `limited`, and legacy
+      `unspecified` saved payment methods and permits saving/removing them;
+      removal is tested only on disposable test customers because it detaches
+      the method from the Stripe customer.
+- [ ] The Payment Method card's Replace action opens the setup Payment Element,
+      saves the successful method as the Stripe customer's invoice default,
+      refreshes the card, and removes the superseded default.
 - [ ] Fiat `getNetBalance` values are treated as `USD (cents)` minor units even
       when fractional; Purchase Credits must not inflate the balance by 100×.
 - [ ] Internal fiat credit-type names such as `USD (cents)` display as `USD`;
@@ -175,13 +193,17 @@ Changes in these areas require both-mode review:
 - [ ] Ordinary Pro signup does not automatically enable auto top-up.
 - [ ] Prepared seeded Pro uses below 500 → recharge to 1,500.
 - [ ] Prepared Generation Pro seeds only whole image/3D jobs and whole video
-      seconds; seeded usage cannot exceed the 1,000-credit monthly grant before
+      seconds; seeded usage cannot exceed the 2,000-credit monthly grant before
       any configured auto top-up.
-- [ ] Prepared Pro Healthy consumes approximately 50% of its monthly grant but
-      leaves more than the 500-credit threshold, so Healthy does not trigger
-      auto top-up. At-Risk and Late-month Spike may trigger it.
-- [ ] Quickstart targets elapsed 12-month term pace, with demo floors of 10%
-      Healthy, 15% At-Risk, and 12% Late-month Spike inside the supported
+- [ ] No single prepared Generation Pro event represents more than 15% of its
+      seeded consumption, and usage spans at least ten dates and three projects.
+- [ ] Prepared Pro targets vary deterministically per customer: Healthy consumes
+      46–49% and remains above the 500-credit threshold; At-Risk consumes
+      81–87%; Late-month Spike consumes 89–94%. Healthy does not trigger
+      auto top-up, while At-Risk and Late-month Spike may trigger it.
+- [ ] Quickstart targets elapsed 12-month term pace, with base demo floors of
+      10% Healthy, 15% At-Risk, and 12% Late-month Spike plus a stable
+      per-customer 0.4–2 percentage-point offset inside the supported
       backdating window.
 - [ ] Prepared Generation Pro retains a nonzero balance after every supported
       story; Quickstart consumes only a bounded fraction of its annual commit.
@@ -195,7 +217,7 @@ Changes in these areas require both-mode review:
 
 - [ ] Quickstart has no subscription and never transitions from Free.
 - [ ] Quickstart usage produces a representative graph, consumes only its
-      100,000-credit annual commitment, and leaves a nonzero balance.
+      110,000-credit annual commitment, and leaves a nonzero balance.
 - [ ] B2B Power User is a direct contract, not a package.
 - [ ] B2B has five nonzero seat quantities/assignments.
 - [ ] AI Builder and Generation B2B seat subscriptions start exactly at the
@@ -207,6 +229,9 @@ Changes in these areas require both-mode review:
       seat has varied, nonzero usage below its allocation.
 - [ ] B2B targets are derived from the monthly per-seat allocation, not from
       the annual shared commitment or the sum of all contract balances.
+- [ ] B2B Usage Pacing compares month-to-date usage with active monthly seat
+      credits, labels the shared commitment as contract-term rather than
+      monthly, and keeps an off-scale shared commitment out of the chart axis.
 - [ ] AI Builder B2B targets remain USD amounts and Generation B2B targets
       remain Generation Credits. Both account for the 0.85 usage multiplier
       when converting desired balance consumption to list-rate events.
@@ -235,6 +260,28 @@ Changes in these areas require both-mode review:
 - [ ] If `tax_provider: stripe` is unavailable, the supported retry removes the
       tax provider rather than abandoning customer setup.
 - [ ] Credit purchase/top-up creates the intended invoice-gated action.
+- [ ] Credit purchase still offers the existing invoice flow plus Stripe
+      Checkout. Checkout uses a `metronome_commit`, starts on the current UTC
+      hour, expires in 90 days, and does not report success until the new commit
+      is visible on the Metronome contract.
+- [ ] Checkout sends `applicable_metronome_product_tags: ['usage']`; the
+      invoice purchase path sends `applicable_product_tags: ['usage']`.
+      Purchased credits apply to usage products and never subscription lines.
+- [ ] A purchased or auto-top-up commit augments total active credits without
+      replacing the monthly plan-credit category. Non-B2B Usage Pacing shows
+      available top-up credits separately and compares its forecast and project
+      bar with total active credits; pending/unpaid purchases do not count.
+- [ ] Credit Purchase Checkout setting offers `form` and `hosted_page`;
+      `elements` and `embedded_page` are selectable but clearly noted as
+      falling back to `form`. Form supports selectable compact multi-step and
+      expanded single-page layouts, while hosted Checkout returns to Usage and
+      waits for the Metronome commit before refreshing balances.
+- [ ] Checkout credit purchase uses automatic billing address collection and
+      enables automatic tax with exclusive tax behavior and a tax code. An
+      applicable Stripe Tax registration is present when validating a nonzero
+      tax amount.
+- [ ] AI Builder Checkout amounts are fiat minor units without `credit_type_id`;
+      Generation amounts are native credits with its custom credit type ID.
 - [ ] Finalize/pay is used only for intended Stripe test invoices.
 - [ ] Cleanup deletes only recorded starter-owned Stripe customers.
 
