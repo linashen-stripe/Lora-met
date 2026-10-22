@@ -21,6 +21,30 @@ Use:
 The older [implementation plan](docs/IMPLEMENTATION_PLAN.md) records the
 original project direction and may contain superseded prices or names.
 
+## Supported demo flows
+
+- **Self-serve:** Free signup, metered usage, credit exhaustion, and Pro
+  upgrade through Stripe Checkout.
+- **Prepared customers:** deterministic Healthy, At-Risk, and Late-month Spike
+  histories for Pro, Enterprise Quickstart, and negotiated five-seat B2B
+  contracts.
+- **Usage & Analytics:** contract-period pacing, project and product
+  breakdowns, plan and top-up balances, invoice detail, and B2B seat usage.
+- **Credit management:** invoice-gated credit purchase, Stripe Checkout credit
+  purchase, 90-day credits, volume discounts, auto top-up, and payment-method
+  replacement.
+- **Admin tools:** previewable account setup, optional Stripe test billing,
+  customer preparation, generated-email refresh, customer sorting, and
+  namespace-scoped cleanup.
+- **API learning:** a searchable inspector for supported browser and
+  server-side Metronome and Stripe requests and responses.
+
+Generation uses `1 Generation Credit = $0.01`: Free includes 100 credits, Pro
+includes 2,000 credits for `$20/month`, and Enterprise Quickstart includes
+110,000 credits for a `$1,000` twelve-month prepaid term. Checkout credit
+purchases receive 5% off from 2,000 units and 10% off from 5,000 units in both
+modes.
+
 ## Local setup
 
 Use Node.js 24.11.1 and npm:
@@ -32,25 +56,27 @@ npm run dev
 
 Open `http://localhost:3000/en`.
 
-The static generation and pricing experiences work without credentials. Live
-signup, contracts, usage ingestion, and checkout require:
+Static pricing and playground views work without credentials. Metronome-backed
+signup, contracts, and usage require `METRONOME_API_KEY`. Stripe Checkout and
+payment flows also use the Stripe keys below; a delivery-method ID is needed
+for Stripe-assisted provisioning when it cannot be resolved unambiguously:
 
 ```bash
 METRONOME_API_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
-METRONOME_DELIVERY_METHOD_ID=
+METRONOME_DELIVERY_METHOD_ID= # optional unless selection is ambiguous
 ```
 
 Store secrets in the ignored `.env` or `.env.local`; never commit them.
 
 ## Account starter
 
-Settings → Admin → Account setup can prepare AI Builder, Generation, or both
-on a target account. Nothing is selected by default; selected modes are
-previewed and seeded independently, including concurrent jobs when both are
-selected.
+Settings → Demo → Open admin tools → Target account setup can prepare AI
+Builder, Generation, or both on a target account. Nothing is selected by
+default; selected modes are previewed and seeded independently, including
+concurrent jobs when both are selected.
 AI Builder uses `model × processing_tier`; Generation uses
 `operation × quality × model × service_tier`.
 Account setup/reset always uses explicit memory-only credentials. Demo customer
@@ -78,10 +104,10 @@ npm run starter:reset -- --confirm=metronome-starter
 
 ## Metronome Starter Kit
 
-Use the Starter Seed page under Settings or the CLI workflow. Metronome-only is
-the default. The admin page can optionally use a matching `sk_test_` key to
-create linked Stripe test customers, payment methods, invoice routing, and
-payment while keeping credentials memory-only.
+Use Target account setup under Admin tools or the CLI workflow.
+Metronome-only is the default. The admin page can optionally use a matching
+`sk_test_` key to create linked Stripe test customers, payment methods,
+invoice routing, and payment while keeping credentials memory-only.
 
 See [the Starter Kit guide](docs/METRONOME_STARTER.md) for credentials, preview,
 seed, canonical pricing dimensions, and namespace-scoped reset commands.
@@ -107,6 +133,7 @@ confirmed namespaced cleanup. See
 ```bash
 npx tsc --noEmit
 npm run lint
+npm run verify:seeding
 npm run build
 git diff --check
 ```

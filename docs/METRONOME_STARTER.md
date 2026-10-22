@@ -38,12 +38,13 @@ npm run starter:reset
 npm run starter:reset -- --confirm=metronome-starter
 ```
 
-The multi-mode workflow is available under **Settings → Admin: seed a new
-account**. No mode is selected by default. If both are selected, AI Builder is
-shown first, but both modes remain independent and may run concurrently. Each
-mode has its own prefix, review, job state, ownership journal, and reset
-controls. The API key entered there is kept only in page memory for the current
-job and is never written to browser storage or an environment file.
+The multi-mode workflow is available under **Settings → Demo → Open admin
+tools → Target account setup**. No mode is selected by default. If both are
+selected, AI Builder is shown first, but both modes remain independent and may
+run concurrently. Each mode has its own prefix, review, job state, ownership
+journal, and reset controls. The API key entered there is kept only in page
+memory for the current job and is never written to browser storage or an
+environment file.
 
 ## Pricing dimensions
 
@@ -63,8 +64,9 @@ starter easy to inspect while satisfying both product pricing and presentation
 keys. Add alternate group keys later only when the account needs additional
 aggregation paths.
 
-Use `--validate-config` to print the resolved Generation product group keys
-and `service_tier` rate variants without credentials or API calls.
+Use `npm run starter:plan -- --validate-config` to print the resolved
+Generation product group keys and `service_tier` rate variants without
+credentials or API calls.
 
 If a seed stops after creating billable metrics but before creating products,
 use the same reset flow before retrying. Reset archives the partial metrics;
@@ -98,14 +100,14 @@ minor units; `0.01` would mean one-hundredth of a cent.
 - Enterprise Quickstart: a 12-month, $1,000 prepaid commitment for 110,000
   Generation Credits, including a 10% credit bonus.
 - Pro: a $20 monthly subscription with 2,000 recurring monthly Generation
-  Credits, plus a native threshold recharge below 500 credits back to 1,500.
+  Credits. Only the prepared Pro persona receives the native threshold
+  recharge below 500 credits back to 1,500.
 - B2B Power User: 1,000,000-credit / $10,000 annual prepaid commitment,
   five assigned seats at $1,000 per month, 10,000 monthly credits per seat,
-  a 0.85 usage multiplier, and a seat-rate override. Seeded utilization targets
-  approximately 115%, 60%, 42%, 25%, and 12% of each seat allocation. The
-  busiest seat has enough headroom beyond the 15% discount to exhaust its
-  monthly credits and spill into the shared annual commitment; the other seats
-  retain clearly different balances.
+  a 0.85 usage multiplier, and a seat-rate override. Healthy and At-Risk
+  profiles spill one seat into the shared annual commitment; Generation
+  Late-month Spike spills two. The other seats retain clearly different,
+  nonzero balances.
 
 The per-seat recurring credits use priority `50`, matching the Admin power-user
 flow. The annual commitment keeps Metronome's default priority so usage is
@@ -126,14 +128,18 @@ several Stripe methods are connected, explicitly provide
 `METRONOME_DELIVERY_METHOD_ID` or select it in the admin page. The starter then:
 
 - creates one state-owned Stripe test customer and default test card per persona;
+- supplies the customer's billing identity/address and invoice default in that
+  customer-creation request;
 - links each Metronome customer with the existing tax-provider fallback;
-- routes package and direct contracts through the linked billing configuration;
-- creates Pro with a Stripe invoice payment gate; and
+- routes Pro and Quickstart through `charge_automatically` and B2B through
+  `send_invoice`;
+- adds the seeded Pro threshold after contract creation, with a Stripe invoice
+  payment gate; and
 - finalizes and pays generated test invoices when they become available.
 
 Do not put a live Stripe key in this flow; only `sk_test_` keys are accepted.
 Switching an existing seed between billing modes requires reset and reseed
-because the package payment gate is part of the package definition.
+because the customer billing configuration and threshold payment gate differ.
 
 ## Ownership and state
 

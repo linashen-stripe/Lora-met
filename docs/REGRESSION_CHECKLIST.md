@@ -185,7 +185,9 @@ Changes in these areas require both-mode review:
       the method from the Stripe customer.
 - [ ] The Payment Method card's Replace action opens the setup Payment Element,
       saves the successful method as the Stripe customer's invoice default,
-      refreshes the card, and removes the superseded default.
+      fills missing billing identity from the Stripe Customer, marks the new
+      method reusable for redisplay, refreshes the card, and removes the
+      superseded default.
 - [ ] Fiat `getNetBalance` values are treated as `USD (cents)` minor units even
       when fractional; Purchase Credits must not inflate the balance by 100×.
 - [ ] Internal fiat credit-type names such as `USD (cents)` display as `USD`;
@@ -269,8 +271,9 @@ Changes in these areas require both-mode review:
       Purchased credits apply to usage products and never subscription lines.
 - [ ] A purchased or auto-top-up commit augments total active credits without
       replacing the monthly plan-credit category. Non-B2B Usage Pacing shows
-      available top-up credits separately and compares its forecast and project
-      bar with total active credits; pending/unpaid purchases do not count.
+      available top-up credits separately and compares current usage and the
+      project bar with total active credits; pending/unpaid purchases do not
+      count.
 - [ ] Credit Purchase Checkout setting offers `form` and `hosted_page`;
       `elements` and `embedded_page` are selectable but clearly noted as
       falling back to `form`. Form supports selectable compact multi-step and
@@ -292,6 +295,8 @@ Changes in these areas require both-mode review:
       is entered.
 - [ ] Account Setup, Demo Customers, and Customer Cleanup each link back to the
       Admin tools page.
+- [ ] Demo Customer Seeding sorts by Created or Name and can generate a fresh
+      suggested email without changing an existing customer.
 - [ ] AI Builder can plan/seed/reset on a blank target account without legacy
       Demo Hub packages.
 - [ ] With both modes selected, either mode can run independently or
@@ -327,11 +332,14 @@ Changes in these areas require both-mode review:
       seat allocations do not gain pricing dimensions.
 - [ ] API Inspector captures supported browser and server-side Metronome/Stripe
       calls, supports search/filtering, and redacts credentials.
+- [ ] Opening API Inspector does not cover the main page; it remains clickable
+      beside the credit-purchase modal without moving the modal off center.
 
 ## Verification and handoff
 
 - [ ] `npx tsc --noEmit`
 - [ ] `npm run lint` (record known warnings; introduce no new errors)
+- [ ] `npm run verify:seeding`
 - [ ] `npm run build`
 - [ ] `git diff --check`
 - [ ] IDE diagnostics checked for edited files.

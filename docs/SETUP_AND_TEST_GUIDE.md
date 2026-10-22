@@ -38,7 +38,7 @@ METRONOME_DELIVERY_METHOD_ID=...           # required with Stripe when ambiguous
 
 ### Admin UI
 
-Open **Settings → Admin: seed a new account**.
+Open **Settings → Demo → Open admin tools → Target account setup**.
 
 1. Explicitly select AI Builder, Generation, or both; nothing is selected by
    default.
@@ -66,8 +66,8 @@ These frequent operations require an explicit account choice:
   They survive Admin-page navigation but are cleared by a refresh.
 
 Verify the displayed Metronome fingerprint and Stripe account ID before
-creating, reseeding, archiving, or deleting customers. Account Setup and starter
-reset never fall back to configured demo credentials.
+preparing, archiving, or deleting customers. Account Setup and starter reset
+never fall back to configured demo credentials.
 
 ### CLI
 
@@ -100,8 +100,10 @@ Generation:
   credits, shared annual commitment, and 15% rate discount.
 
 Stripe-assisted mode additionally creates one recorded Stripe test customer
-and default test card per persona, links billing configurations, enables the
-Pro invoice-gated threshold, and finalizes/pays available test invoices.
+with billing address and invoice-default test card per persona, links billing
+configurations, enables the Pro invoice-gated threshold after contract
+creation, and finalizes/pays available test invoices. B2B uses `send_invoice`;
+Pro and Quickstart use `charge_automatically`.
 
 AI Builder:
 
@@ -129,6 +131,11 @@ After seeding:
    to the expected test accounts.
 7. Open the API Inspector and perform one simple operation before using reset
    as the first tracing test.
+8. Confirm Usage Pacing and project breakdown use the same contract-anchored
+   period. Plan/prepaid budget, top-up balance, and current balance remain
+   distinct; no linear forecast is shown.
+9. For B2B, confirm monthly seat credits set the chart scale while the annual
+   shared commitment remains a separate summary value.
 
 ## 5. AI Builder Free → Pro test
 
@@ -183,7 +190,7 @@ Use a fresh email/customer.
 
 Failure signals:
 
-- The new Pro balance starts at 900.
+- The new Pro balance starts below 2,000 before paid usage.
 - Custom credits are shown as `$` or cents.
 - The invoice reports unit prices instead of Generation Credit quantities.
 - The product filter contains a monthly-credit adjustment.
@@ -226,6 +233,9 @@ Failure signals:
    Usage and refreshes only after the Metronome commit is visible. Confirm
    **Elements** and **Embedded page** are selectable, show the fallback note,
    and open the Form flow.
+8. Use **Replace** on the Payment Method card. Confirm the new method becomes
+   the Stripe invoice default and appears without a page reload. Reopen
+   Checkout and confirm the method is eligible for saved-method redisplay.
 
 Also load a legacy Generation contract using `USD (cents)` if one remains. Its
 purchase/top-up controls must use fiat semantics, not Generation Credit
@@ -282,6 +292,8 @@ amounts; Generation evaluates them in Generation Credits.
 8. With the matching Stripe key, confirm only state-recorded Stripe test
    customers are deleted.
 9. Reseed and confirm no alias or uniqueness-key collision.
+10. On Demo Customer Seeding, sort by Created and Name, then generate a new
+    suggested email before preparing another customer.
 
 ## 10. Final engineering checks
 
@@ -291,6 +303,7 @@ Create a fresh customer for each end-to-end flow.
 ```bash
 npx tsc --noEmit
 npm run lint
+npm run verify:seeding
 npm run build
 git diff --check
 git status --short

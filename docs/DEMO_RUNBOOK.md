@@ -12,8 +12,10 @@ Before preparing a new account, read:
 1. Configure Metronome sandbox and Stripe test credentials in `.env` or
    the Tools panel.
 2. Confirm the Metronome Stripe integration and delivery method.
-3. Preview and, when needed, provision the Generation catalog:
-   `npm run starter:plan` then `npm run starter:seed`.
+3. In **Settings → Demo → Open admin tools → Target account setup**, preview
+   and prepare AI Builder, Generation, or both. The Generation-only CLI
+   alternative is
+   `npm run starter:plan` followed by `npm run starter:seed`.
 4. Open these tabs:
    - `/en/demos/ai-builder`
    - `/en/demos/generation`
@@ -22,8 +24,8 @@ Before preparing a new account, read:
    - `/en/dashboard/usage`
    - The matching Stripe test customer
    - The matching Metronome customer and contract
-5. In `/en/admin/customers`, load `bufo-studios@example.com` and seed the
-   **Healthy growth** story.
+5. In `/en/admin/customers`, generate a fresh email, choose the persona and
+   **Healthy growth** profile, then prepare the customer.
 
 ## Demo switcher — two monetization models
 
@@ -68,14 +70,17 @@ boundary so Free usage cannot reduce the new Pro allowance.
 ## Chapter 3 — Enterprise Quickstart
 
 1. Open `/en/admin/customers`.
-2. Load `bufo-studios@example.com`.
-3. If it is new, complete setup Checkout once to prepare the Enterprise
-   contract. Otherwise the prepared customer loads directly.
-4. Seed **Healthy growth**, **At risk**, or **Late-month spike** usage.
+2. Generate a fresh email and select **Enterprise Quickstart**.
+3. Choose **Healthy growth**, **At risk**, or **Late-month spike** before
+   preparing the customer.
+4. Prepare the customer. Stripe linkage is optional on this Admin path; the
+   selected immutable usage history is created as part of preparation.
 5. Open the usage dashboard and filter by generation product, model, quality,
    service tier, project, and user.
-6. Open the Stripe customer delivered through Metronome.
-7. Open the Metronome contract and explain the predefined 12-month `$1,000`
+6. Show period usage, plan/prepaid budget, top-up balance when present, current
+   balance, and the project breakdown over the same contract-anchored period.
+7. Open the Stripe customer delivered through Metronome.
+8. Open the Metronome contract and explain the predefined 12-month `$1,000`
    prepaid commitment for 110,000 Generation Credits, including a 10% credit
    bonus.
 
@@ -92,10 +97,23 @@ Quickstart never creates or transitions from a Free contract.
    nonzero balances.
 6. Show the 15% negotiated usage discount.
 
+## Optional chapter — Purchase credits
+
+1. Open Usage for a Stripe-linked Pro customer.
+2. Show the existing invoice-gated **Purchase credits** action.
+3. Open **Checkout purchase** and select a preset or custom amount.
+4. Use the Tools panel to compare Form Compact, Form Expanded, and Hosted page.
+5. Complete payment and show that the app waits for the 90-day Metronome
+   credit to appear before refreshing the wallet.
+6. Reopen Checkout to demonstrate saved payment methods, or use the Payment
+   Method card to replace the invoice default.
+
 ## Reset and fallback
 
-- Reset the local Free wallet from Lora Generate.
-- Reseed usage safely; deterministic transaction IDs prevent duplicate jobs.
+- Use **Reset trial** in Lora Generate to start a new local story.
+- Retry an interrupted prepared-customer seed safely; deterministic
+  transaction IDs prevent duplicate jobs. Create a fresh customer to show a
+  different immutable usage profile.
 - Use `/en/admin/cleanup-environment` to archive selected Metronome demo
   customers before deleting matching Stripe test customers.
 - Preview starter cleanup with `npm run starter:reset`. Apply it only after
@@ -106,8 +124,11 @@ Quickstart never creates or transitions from a Free contract.
 ## Expected local verification
 
 ```bash
+npx tsc --noEmit
 npm run lint
+npm run verify:seeding
 npm run build
+git diff --check
 ```
 
 Do a fresh-customer Free → Pro check for both modes before presenting. Existing

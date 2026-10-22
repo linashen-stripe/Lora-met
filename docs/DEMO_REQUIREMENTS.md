@@ -1,9 +1,8 @@
 # Demo product and billing requirements
 
 This is the durable product/design source of truth for the unified Metronome
-demo. It consolidates decisions made while building the demo. When this
-document conflicts with an old package, customer, screenshot, or archived
-resource, this document and the canonical configuration files win.
+demo. This document and the canonical configuration files define the current
+intended behavior.
 
 ## Goals
 
@@ -21,7 +20,8 @@ resource, this document and the canonical configuration files win.
 
 ## Global experience
 
-- The active demo mode is selected in the left Tools panel.
+- The active demo mode, appearance, and credit-purchase Checkout presentation
+  are selected in the left Tools panel's Demo tab.
 - Home, pricing, playground, account, usage, and seeded-customer behavior must
   follow the selected mode. Content from one mode must not appear in the other.
 - The primary home action and the Free pricing action both lead to a simple
@@ -42,10 +42,10 @@ resource, this document and the canonical configuration files win.
   creation and seeded exactly once. Usage is immutable and additive, so Admin
   must not present post-creation "reseed" controls that silently combine
   stories; create a fresh customer to compare another story.
-- Naming exposed to users is `AI Builder`, `Generation`, `Free`, `Pro`,
-  `Enterprise Quickstart`, and `Enterprise`. Do not expose internal catalog
-  versions such as `v3`, the old `Premium` name, or unexplained `Lora` prefixes
-  in generic seeded resources.
+- The two experience labels are `AI Builder` and `Lora Generate`. Catalog and
+  plan naming uses `Free`, `Pro`, `Enterprise Quickstart`, and `Enterprise`.
+  Do not expose internal catalog versions such as `v3`, the old `Premium`
+  name, or redundant `Lora` prefixes in generic seeded resources.
 - New demo customers include a compact mode-and-persona prefix:
   `[Generate - Free|Pro|Quickstart|B2B]` or
   `[AI Builder - Free|Pro|Quickstart|B2B]`. Existing customers are not renamed.
@@ -276,14 +276,19 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
   contract state.
 - The dashboard Payment Method card allows replacement through a setup
   Payment Element. A successful replacement becomes the Stripe customer's
-  invoice default before the prior default method is detached.
+  invoice default before the prior default method is detached. Missing
+  payment-method billing identity is filled from the Stripe Customer and the
+  replacement is marked reusable for future Checkout redisplay.
 
 ## Account starter and Admin
 
-- **Settings → Admin** is one mode-independent hub with:
+- **Admin tools**, opened from **Settings → Demo**, is one mode-independent
+  hub with:
   1. account/catalog setup;
   2. demo-customer seeding; and
   3. customer/environment cleanup.
+- Demo Customer Seeding supports sorting by creation time or name and can
+  generate a fresh suggested email before preparing another customer.
 - Account Setup selects AI Builder, Generation, or both explicitly; no mode is
   selected by default. With both selected, the modes remain independent and
   may seed concurrently.
@@ -387,9 +392,12 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
 ## API Inspector
 
 - The inspector is an advanced option enabled from Settings.
-- It opens as a right-side panel with live search/filtering.
+- It opens as a right-side panel with live search/filtering without covering
+  the main page. It remains operable while the credit-purchase modal is open,
+  and opening it must not move that modal away from the viewport center.
 - It captures both browser requests and supported server-side calls to
-  Metronome and Stripe during operations such as starter seeding.
+  Metronome and Stripe during operations such as starter seeding, including
+  the actual available response payload and deeply nested Checkout fields.
 - Secrets and sensitive headers must be redacted.
 - Traces are scoped to the inspector session and are diagnostic only; they are
   not durable audit logs.
@@ -398,7 +406,7 @@ custom Enterprise. Package card titles omit redundant `Generate` prefixes.
 
 - Package manager is npm; local app default is port 3000.
 - Do not run nonexistent tests. Required static checks are TypeScript, lint,
-  production build, and `git diff --check`.
+  the seeding-invariant verifier, production build, and `git diff --check`.
 - Never edit `.env` as part of implementation or verification.
 - Always distinguish:
   - modified files in the working tree;
